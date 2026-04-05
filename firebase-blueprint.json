@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "Event": {
+      "title": "Event",
+      "description": "A calendar event",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns the event" },
+        "title": { "type": "string", "description": "The title of the event" },
+        "start": { "type": "string", "format": "date-time", "description": "The start time of the event" },
+        "end": { "type": "string", "format": "date-time", "description": "The end time of the event" },
+        "category": { "type": "string", "description": "The category of the event" },
+        "description": { "type": "string", "description": "The description of the event" }
+      },
+      "required": ["userId", "title", "start", "end"]
+    },
+    "ViceChiefTask": {
+      "title": "Vice Chief Task",
+      "description": "A task assigned to a vice chief",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "importance": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "progress": { "type": "integer" },
+        "viceChiefId": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "importance", "progress", "viceChiefId"]
+    },
+    "ViceChiefAssignment": {
+      "title": "Vice Chief Assignment",
+      "description": "Assignment of a user to a vice chief slot",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["userId", "displayName"]
+    }
+  },
+  "firestore": {
+    "/events/{eventId}": {
+      "schema": { "$ref": "Event" },
+      "description": "Collection of calendar events"
+    },
+    "/vice_chief_tasks/{taskId}": {
+      "schema": { "$ref": "ViceChiefTask" },
+      "description": "Tasks for vice chiefs"
+    },
+    "/vice_chief_assignments/{assignmentId}": {
+      "schema": { "$ref": "ViceChiefAssignment" },
+      "description": "Assignments of vice chiefs to columns"
+    }
+  }
+}
