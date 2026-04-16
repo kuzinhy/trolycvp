@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, CheckCircle, AlertCircle, Plus, Trash2, Edit2, Play, Loader2, Copy, Eraser, Sparkles, BookOpen, Settings2, PenTool, Upload, Layers, Mic, FileCheck, Mail, Send, UserCheck, MessageSquare } from 'lucide-react';
+import { FileText, CheckCircle, CheckCircle2, AlertCircle, Plus, Trash2, Edit2, Play, Loader2, Copy, Eraser, Sparkles, BookOpen, Settings2, PenTool, Upload, Layers, Mic, FileCheck, Mail, Send, UserCheck, MessageSquare, Brain } from 'lucide-react';
 import { generateContentWithRetry } from '../lib/ai-utils';
 import { ToastType } from './ui/Toast';
 import { DraftingRule } from '../hooks/useDraftingRules';
@@ -8,9 +8,9 @@ import ReactMarkdown from 'react-markdown';
 import { cn } from '../lib/utils';
 import { ComposePro } from './ComposePro';
 import { InvitationGenerator } from './InvitationGenerator';
+import { PartyDocumentChecker } from './PartyDocumentChecker';
 import { SmartEmailAssistant } from './SmartEmailAssistant';
 import { SpeechAssistant } from './SpeechAssistant';
-import { PartyDocumentChecker } from './PartyDocumentChecker';
 import { ProgressPopup } from './ui/ProgressPopup';
 import { useSimulatedProgress } from '../hooks/useSimulatedProgress';
 import { useKnowledgeSuggestions } from '../hooks/useKnowledgeSuggestions';
@@ -28,21 +28,19 @@ interface DraftingModuleProps {
   updateRule: (id: string, content: string) => void;
   showToast: (msg: string, type?: ToastType) => void;
   aiKnowledge: any[];
-  initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'email' | 'speech' | 'party-docs';
-  speechProps?: {
-    aiKnowledge: any[];
-  };
+  initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'party-docs' | 'email' | 'speech';
+  navigationParams?: any;
 }
 
 export const DraftingModule: React.FC<DraftingModuleProps> = ({
-  rules, addRule, toggleRule, deleteRule, updateRule, showToast, aiKnowledge, initialMainTab = 'compose', speechProps
+  rules, addRule, toggleRule, deleteRule, updateRule, showToast, aiKnowledge, initialMainTab = 'compose', navigationParams
 }) => {
-  const [mainTab, setMainTab] = useState<'review' | 'compose' | 'invitation' | 'bulk' | 'email' | 'speech' | 'party-docs'>(initialMainTab);
-  const [documentText, setDocumentText] = useState('');
+  const [mainTab, setMainTab] = useState<'review' | 'compose' | 'invitation' | 'bulk' | 'party-docs' | 'email' | 'speech'>(initialMainTab);
+  const [documentText, setDocumentText] = useState(navigationParams?.content || '');
   const [author, setAuthor] = useState('');
   const [status, setStatus] = useState('draft');
   const [complianceCheck, setComplianceCheck] = useState(true);
-  const [template, setTemplate] = useState('none');
+  const [template, setTemplate] = useState(navigationParams?.template || 'none');
   const [isChecking, setIsChecking] = useState(false);
   const [activeTab, setActiveTab] = useState<'editor' | 'feedback'>('editor');
   const [feedback, setFeedback] = useState('');
@@ -166,23 +164,23 @@ export const DraftingModule: React.FC<DraftingModuleProps> = ({
     setActiveTab('feedback');
 
     try {
-      let prompt = `Bạn là một chuyên viên văn phòng Đảng ủy dày dạn kinh nghiệm.
+      let prompt = `Bạn là một chuyên gia văn phòng Đảng ủy dày dạn kinh nghiệm, đóng vai trò là "Co-pilot" hỗ trợ soạn thảo văn bản cấp cao.
 Hãy kiểm tra văn bản dưới đây dựa trên các tiêu chí sau:
 1. Quy tắc bắt buộc:
 ${activeRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
-${complianceCheck ? '2. Tuân thủ quy định Đảng: Kiểm tra chặt chẽ các thuật ngữ, thể thức văn bản theo quy định của Đảng.' : ''}
+${complianceCheck ? '2. Tuân thủ quy định Đảng: Kiểm tra chặt chẽ các thuật ngữ, thể thức văn bản theo quy định của Đảng (ví dụ: Quy định 66-QĐ/TW về thể thức văn bản của Đảng).' : ''}
 3. Mẫu văn bản: ${template !== 'none' ? `Sử dụng mẫu: ${template}` : 'Không áp dụng mẫu cụ thể.'}
 
 Thông tin bổ sung:
 - Cán bộ soạn thảo: ${author || 'Không xác định'}
 - Trạng thái văn bản: ${status}
 
-Nhiệm vụ của bạn:
+Nhiệm vụ chuyên gia của bạn:
 1. PHÁT HIỆN LỖI: Chỉ ra các lỗi vi phạm quy tắc, lỗi chính tả, ngữ pháp, hoặc văn phong không phù hợp. Trích dẫn đoạn văn bản bị lỗi.
 2. ĐỀ XUẤT SỬA: Đưa ra cách sửa lại cho đúng, chuẩn mực và chuyên nghiệp hơn theo văn phong Đảng.
-3. RÀ SOÁT CĂN CỨ VĂN BẢN: Kiểm tra các tên căn cứ văn bản (luật, nghị định, thông tư, quy định...) có đúng tên, số hiệu, ngày ban hành không? Có phù hợp với nội dung văn bản không? Có văn bản nào mới hơn thay thế các văn bản này không? Nếu có, hãy đề xuất thay thế cụ thể.
-4. ĐÁNH GIÁ CHẤT LƯỢNG: Đưa ra nhận xét chuyên sâu về chất lượng tham mưu.
-5. ĐÁNH GIÁ CHUNG: Nhận xét ngắn gọn về chất lượng văn bản.
+3. ĐỐI CHIẾU TRI THỨC: So sánh nội dung văn bản với các quy định và kiến thức trong bộ nhớ chung (nếu có bên dưới) để đảm bảo tính thống nhất.
+4. RÀ SOÁT CĂN CỨ VĂN BẢN: Kiểm tra các tên căn cứ văn bản (luật, nghị định, thông tư, quy định...) có đúng tên, số hiệu, ngày ban hành không? Có văn bản nào mới hơn thay thế các văn bản này không?
+5. ĐÁNH GIÁ CHUYÊN SÂU: Nhận xét về tính logic, tính thuyết phục và độ sắc bén của các luận điểm trong văn bản.
 6. ĐIỂM SỐ: Hãy đánh giá chất lượng văn bản trên thang điểm 10. Trả về điểm số dưới dạng JSON: {"score": <điểm_số>}.
 
 Trình bày bằng Markdown rõ ràng, sử dụng các tiêu đề (###), danh sách (-, 1.), và in đậm (** **) để làm nổi bật.
@@ -298,13 +296,38 @@ ${documentText}
         message="AI đang phân tích chuyên sâu văn bản của bạn..." 
       />
 
-      <div className="mb-8 flex items-end justify-between">
+      <div className="mb-8 flex items-end justify-between border-b border-slate-100 pb-6">
         <div>
           <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
             <Sparkles className="text-indigo-600" size={32} />
             Trợ lý Soạn thảo Chuyên sâu
           </h2>
           <p className="text-slate-500 mt-2 text-sm font-medium">Soạn thảo, hiệu đính, chuẩn hóa văn phong và kiểm tra tuân thủ quy tắc hành chính</p>
+          
+          <div className="flex items-center gap-1 mt-6 bg-slate-100/50 p-1 rounded-2xl border border-slate-200/60 w-fit">
+            {[
+              { id: 'compose', label: 'Soạn thảo Pro', icon: <PenTool size={14} /> },
+              { id: 'review', label: 'Kiểm tra văn bản', icon: <FileCheck size={14} /> },
+              { id: 'invitation', label: 'Tạo thư mời', icon: <Mail size={14} /> },
+              { id: 'email', label: 'Soạn Email', icon: <Send size={14} /> },
+              { id: 'speech', label: 'Bài phát biểu', icon: <Mic size={14} /> },
+              { id: 'party-docs', label: 'Văn bản Đảng', icon: <UserCheck size={14} /> },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setMainTab(tab.id as any)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  mainTab === tab.id 
+                    ? "bg-white text-indigo-600 shadow-sm border border-slate-200/60" 
+                    : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                )}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -314,238 +337,297 @@ ${documentText}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <PartyDocumentChecker />
         </div>
-      ) : mainTab === 'email' ? (
-        <SmartEmailAssistant aiKnowledge={aiKnowledge} showToast={showToast} />
       ) : mainTab === 'invitation' ? (
         <InvitationGenerator />
+      ) : mainTab === 'email' ? (
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
+          <SmartEmailAssistant aiKnowledge={aiKnowledge} showToast={showToast} />
+        </div>
       ) : mainTab === 'speech' ? (
-        <SpeechAssistant {...(speechProps || { aiKnowledge: [] })} />
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <SpeechAssistant aiKnowledge={aiKnowledge} />
+        </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 min-h-0 p-2">
-          {/* Left Column - Document Editor */}
-          <div className="flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText size={18} className="text-slate-400" />
-                <span className="text-sm font-bold text-slate-700 uppercase tracking-widest">Văn bản gốc</span>
+        <div className="flex gap-8 flex-1 min-h-0 p-2 overflow-hidden">
+          {/* Left Column - Document Editor & Controls */}
+          <div className="flex-[1.2] flex flex-col min-h-0 bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20">
+                  <FileText size={18} />
+                </div>
+                <span className="text-xs font-black text-slate-700 uppercase tracking-[0.2em]">Văn bản gốc</span>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <select
-                  value={template}
-                  onChange={(e) => setTemplate(e.target.value)}
-                  className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                >
-                  <option value="none">Chọn mẫu văn bản</option>
-                  <option value="nghi_quyet">Nghị quyết</option>
-                  <option value="chi_thi">Chỉ thị</option>
-                  <option value="to_trinh">Tờ trình</option>
-                  <option value="bao_cao">Báo cáo</option>
-                </select>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                >
-                  <option value="draft">Nháp</option>
-                  <option value="review">Đang duyệt</option>
-                  <option value="approved">Đã duyệt</option>
-                  <option value="issued">Ban hành</option>
-                </select>
-                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={complianceCheck}
-                    onChange={(e) => setComplianceCheck(e.target.checked)}
-                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
-                  />
-                  Tuân thủ Đảng
-                </label>
-                <input
-                  type="text"
-                  value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
-                  placeholder="Tên cán bộ"
-                  className="w-32 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                  title="Tải lên file Word"
-                >
-                  <Upload size={16} />
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".docx" className="hidden" />
-                <button
-                  onClick={handleExport}
-                  className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                  title="Xuất văn bản"
-                >
-                  <Copy size={16} />
-                </button>
-                <button
-                  onClick={clearText}
-                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                  title="Xóa trắng"
-                >
-                  <Eraser size={16} />
-                </button>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleCheck()}
                   disabled={isChecking || !documentText.trim()}
-                  className="ml-2 px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {isChecking ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-                  Phân tích
+                  {isChecking ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  Phân tích & Sửa lỗi
                 </button>
               </div>
             </div>
-            
-            <div className="flex-1 p-6 bg-slate-50/30 flex flex-col">
-              <textarea
-                ref={textareaRef}
-                value={documentText}
-                onChange={(e) => setDocumentText(e.target.value)}
-                placeholder="Dán hoặc gõ nội dung văn bản cần kiểm tra vào đây, hoặc tải lên file Word (.docx)..."
-                className="w-full flex-1 bg-transparent border-none focus:ring-0 resize-none text-base leading-loose text-slate-800 placeholder:text-slate-400 custom-scrollbar"
-                spellCheck={false}
-              />
-              {suggestions.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Kiến thức gợi ý:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestions.map((s, i) => (
-                      <button
-                        key={i}
-                        onClick={() => insertKnowledge(s.content)}
-                        className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all flex items-center gap-2"
-                      >
-                        <Sparkles size={12} />
-                        {s.title || 'Kiến thức'}
-                      </button>
-                    ))}
+
+            <div className="flex-1 flex overflow-hidden">
+              {/* Mini Sidebar for Controls */}
+              <div className="w-16 border-r border-slate-100 bg-slate-50/30 flex flex-col items-center py-6 gap-6 shrink-0">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
+                  title="Tải lên file Word"
+                >
+                  <Upload size={20} />
+                </button>
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".docx" className="hidden" />
+                
+                <button
+                  onClick={handleExport}
+                  className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
+                  title="Xuất văn bản"
+                >
+                  <Copy size={20} />
+                </button>
+
+                <button
+                  onClick={copyText}
+                  className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
+                  title="Sao chép"
+                >
+                  <Layers size={20} />
+                </button>
+
+                <button
+                  onClick={clearText}
+                  className="p-3 text-slate-400 hover:text-rose-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md mt-auto"
+                  title="Xóa trắng"
+                >
+                  <Eraser size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 flex flex-col p-8 bg-white overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Mẫu văn bản</p>
+                    <select
+                      value={template}
+                      onChange={(e) => setTemplate(e.target.value)}
+                      className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition-all font-bold text-slate-700"
+                    >
+                      <option value="none">Không áp dụng mẫu</option>
+                      <option value="nghi_quyet">Nghị quyết</option>
+                      <option value="chi_thi">Chỉ thị</option>
+                      <option value="to_trinh">Tờ trình</option>
+                      <option value="bao_cao">Báo cáo</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</p>
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition-all font-bold text-slate-700"
+                    >
+                      <option value="draft">Bản nháp</option>
+                      <option value="review">Đang duyệt</option>
+                      <option value="approved">Đã duyệt</option>
+                      <option value="issued">Ban hành</option>
+                    </select>
                   </div>
                 </div>
-              )}
+
+                <div className="flex items-center gap-6 mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="flex-1 space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cán bộ soạn thảo</p>
+                    <input
+                      type="text"
+                      value={author}
+                      onChange={(e) => setAuthor(e.target.value)}
+                      placeholder="Nhập tên cán bộ..."
+                      className="w-full px-0 bg-transparent border-none focus:ring-0 text-sm font-black text-slate-900 placeholder:text-slate-300"
+                    />
+                  </div>
+                  <div className="w-px h-10 bg-slate-200" />
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className={cn(
+                      "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
+                      complianceCheck ? "bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-600/20" : "border-slate-300 group-hover:border-indigo-400"
+                    )}>
+                      {complianceCheck && <CheckCircle2 size={12} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={complianceCheck}
+                      onChange={(e) => setComplianceCheck(e.target.checked)}
+                      className="hidden"
+                    />
+                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Tuân thủ Đảng</span>
+                  </label>
+                </div>
+
+                <textarea
+                  ref={textareaRef}
+                  value={documentText}
+                  onChange={(e) => setDocumentText(e.target.value)}
+                  placeholder="Dán hoặc gõ nội dung văn bản cần kiểm tra vào đây..."
+                  className="w-full flex-1 bg-transparent border-none focus:ring-0 resize-none text-base leading-loose text-slate-800 placeholder:text-slate-300 custom-scrollbar min-h-[400px]"
+                  spellCheck={false}
+                />
+
+                {suggestions.length > 0 && (
+                  <div className="mt-8 pt-6 border-t border-slate-100">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Kiến thức gợi ý từ bộ não:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          onClick={() => insertKnowledge(s.content)}
+                          className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all flex items-center gap-2 border border-indigo-100/50"
+                        >
+                          <Sparkles size={12} />
+                          {s.title || 'Kiến thức'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Right Column - Stacked Feedback & Rules */}
-          <div className="flex flex-col gap-6 min-h-0 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 flex flex-col gap-6 min-h-0 overflow-hidden">
             {/* Feedback Section */}
-            <div className="flex-[2] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-              <div className="p-5 border-b border-slate-100 bg-slate-50 font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                <CheckCircle size={18} className="text-indigo-600" />
-                Kết quả phân tích
+            <div className="flex-[2] bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex flex-col">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-600/20">
+                    <CheckCircle size={18} />
+                  </div>
+                  <span className="text-xs font-black text-slate-700 uppercase tracking-[0.2em]">Kết quả phân tích</span>
+                </div>
+                {score > 0 && (
+                  <div className="px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-black">
+                    Điểm: {score}/10
+                  </div>
+                )}
               </div>
-              <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/20">
                 {isChecking ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
-                    <Loader2 size={48} className="animate-spin text-indigo-500" />
-                    <p className="text-sm font-medium animate-pulse">AI đang phân tích chuyên sâu...</p>
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-6">
+                    <div className="relative">
+                      <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin" />
+                      <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-400 animate-pulse" size={24} />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-black text-slate-600 uppercase tracking-widest">AI đang thẩm định...</p>
+                      <p className="text-[10px] text-slate-400 mt-2">Đang rà soát quy tắc và đối chiếu tri thức</p>
+                    </div>
                   </div>
                 ) : feedback ? (
-                  <div className="prose prose-slate max-w-none prose-headings:text-indigo-900 prose-headings:font-bold prose-a:text-indigo-600 prose-strong:text-slate-900 prose-p:leading-relaxed prose-li:leading-relaxed">
+                  <div className="prose prose-slate max-w-none prose-headings:text-indigo-900 prose-headings:font-black prose-headings:uppercase prose-headings:tracking-widest prose-headings:text-xs prose-a:text-indigo-600 prose-strong:text-slate-900 prose-p:leading-relaxed prose-li:leading-relaxed text-sm">
                     <ReactMarkdown>{feedback}</ReactMarkdown>
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-6 opacity-60">
-                    <BookOpen size={64} strokeWidth={1} />
-                    <p className="text-base font-medium text-center px-8">
-                      Chưa có kết quả phân tích.<br/>Hãy nhập văn bản hoặc tải lên file Word<br/>và bấm "Phân tích & Sửa lỗi".
-                    </p>
+                  <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-6 opacity-40">
+                    <Brain size={80} strokeWidth={1} />
+                    <div className="text-center max-w-xs">
+                      <p className="text-sm font-black uppercase tracking-widest">Sẵn sàng phân tích</p>
+                      <p className="text-[10px] mt-2 leading-relaxed">Hãy nhập nội dung văn bản và nhấn nút "Phân tích" để bắt đầu quá trình thẩm định chuyên sâu.</p>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Rules Section */}
-            <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-              <div className="p-5 border-b border-slate-100 bg-slate-50 font-bold text-slate-700 uppercase tracking-widest flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Settings2 size={18} className="text-amber-600" />
-                  Bộ quy tắc ({rules.filter(r => r.isActive).length}/{rules.length})
+            <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex flex-col">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/20">
+                    <Settings2 size={18} />
+                  </div>
+                  <span className="text-xs font-black text-slate-700 uppercase tracking-[0.2em]">Bộ quy tắc ({rules.filter(r => r.isActive).length})</span>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-3">
-                <div className="space-y-3 shrink-0">
-                  <textarea
+              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
                     value={newRuleContent}
                     onChange={(e) => setNewRuleContent(e.target.value)}
-                    placeholder="Thêm quy tắc mới..."
-                    rows={2}
-                    className="w-full text-sm px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all resize-none shadow-sm"
+                    placeholder="Thêm quy tắc thẩm định mới..."
+                    className="flex-1 text-xs px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
                   />
                   <button
                     onClick={handleAddRule}
                     disabled={!newRuleContent.trim()}
-                    className="w-full py-2.5 bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-amber-500/20"
+                    className="p-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 disabled:opacity-50 transition-all shadow-lg shadow-amber-500/20"
                   >
-                    <Plus size={16} /> Thêm quy tắc
+                    <Plus size={18} />
                   </button>
                 </div>
-                {rules.map((rule) => (
-                  <div 
-                    key={rule.id} 
-                    className={cn(
-                      "p-4 rounded-xl border transition-all",
-                      rule.isActive 
-                        ? "bg-white border-slate-200 hover:border-amber-300 shadow-sm" 
-                        : "bg-slate-50 border-slate-100 opacity-60"
-                    )}
-                  >
-                    {editingRuleId === rule.id ? (
-                      <div className="space-y-3">
-                        <textarea
-                          value={editRuleContent}
-                          onChange={(e) => setEditRuleContent(e.target.value)}
-                          className="w-full text-sm px-3 py-2 bg-white border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all resize-none"
-                          rows={3}
-                        />
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => setEditingRuleId(null)} className="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">Hủy</button>
-                          <button onClick={() => saveEdit(rule.id)} className="text-xs font-bold text-amber-700 px-3 py-1.5 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors">Lưu lại</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-start gap-3">
-                        <input 
-                          type="checkbox" 
-                          checked={rule.isActive}
-                          onChange={() => toggleRule(rule.id)}
-                          className="mt-1 w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "text-sm leading-relaxed",
-                            rule.isActive ? "text-slate-700" : "text-slate-500 line-through"
-                          )}>
-                            {rule.content}
-                          </p>
-                          <div className="flex items-center gap-3 mt-3">
-                            <button 
-                              onClick={() => { setEditingRuleId(rule.id); setEditRuleContent(rule.content); }}
-                              className="text-[11px] font-medium text-slate-400 hover:text-amber-600 transition-colors flex items-center gap-1"
-                            >
-                              <Edit2 size={12} /> Sửa
-                            </button>
-                            <button 
-                              onClick={() => deleteRule(rule.id)}
-                              className="text-[11px] font-medium text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1"
-                            >
-                              <Trash2 size={12} /> Xóa
-                            </button>
+                <div className="space-y-2">
+                  {rules.map((rule) => (
+                    <div 
+                      key={rule.id} 
+                      className={cn(
+                        "p-4 rounded-2xl border transition-all group",
+                        rule.isActive 
+                          ? "bg-white border-slate-100 hover:border-amber-200 shadow-sm" 
+                          : "bg-slate-50 border-transparent opacity-50"
+                      )}
+                    >
+                      {editingRuleId === rule.id ? (
+                        <div className="space-y-3">
+                          <textarea
+                            value={editRuleContent}
+                            onChange={(e) => setEditRuleContent(e.target.value)}
+                            className="w-full text-xs px-3 py-2 bg-white border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 transition-all resize-none"
+                            rows={2}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => setEditingRuleId(null)} className="text-[10px] font-black uppercase text-slate-400 hover:text-slate-600">Hủy</button>
+                            <button onClick={() => saveEdit(rule.id)} className="text-[10px] font-black uppercase text-amber-600 hover:text-amber-700">Lưu</button>
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {rules.length === 0 && (
-                  <div className="text-center py-8">
-                    <AlertCircle size={32} className="mx-auto text-slate-300 mb-3" />
-                    <p className="text-sm text-slate-500 font-medium">Chưa có quy tắc nào.</p>
-                  </div>
-                )}
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <input 
+                            type="checkbox" 
+                            checked={rule.isActive}
+                            onChange={() => toggleRule(rule.id)}
+                            className="mt-1 w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className={cn(
+                              "text-xs leading-relaxed font-medium",
+                              rule.isActive ? "text-slate-700" : "text-slate-400 line-through"
+                            )}>
+                              {rule.content}
+                            </p>
+                            <div className="flex items-center gap-3 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => { setEditingRuleId(rule.id); setEditRuleContent(rule.content); }}
+                                className="text-[9px] font-black uppercase text-slate-400 hover:text-amber-600 transition-colors"
+                              >
+                                Sửa
+                              </button>
+                              <button 
+                                onClick={() => deleteRule(rule.id)}
+                                className="text-[9px] font-black uppercase text-slate-400 hover:text-rose-500 transition-colors"
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

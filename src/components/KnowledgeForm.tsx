@@ -28,7 +28,10 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
     title: '',
     content: '',
     category: 'Quy định - Hướng dẫn',
-    tags: [] as string[]
+    tags: [] as string[],
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    deadline: '',
+    status: 'Pending' as 'Pending' | 'In Progress' | 'Completed'
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -43,8 +46,8 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
     if (!newKnowledge.title || !newKnowledge.content) return;
     setIsGenerating(true);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const ai = new GoogleGenAI({ apiKey });
+      const apiKey = process.env.GEMINI_API_KEY;
+      const ai = new GoogleGenAI({ apiKey: apiKey || '' });
       
       const prompt = `Phân tích nội dung tài liệu sau và:
       1. Đề xuất 3-5 thẻ (tags) ngắn gọn, phù hợp để phân loại.
@@ -90,8 +93,8 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
 
   const validateKnowledge = () => {
     const duplicate = existingKnowledge.find(k => 
-      k.title.toLowerCase().trim() === newKnowledge.title.toLowerCase().trim() ||
-      k.content.toLowerCase().trim() === newKnowledge.content.toLowerCase().trim()
+      (k.title || '').toLowerCase().trim() === newKnowledge.title.toLowerCase().trim() ||
+      (k.content || '').toLowerCase().trim() === newKnowledge.content.toLowerCase().trim()
     );
 
     setValidationResult({
@@ -108,7 +111,10 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
       title: '',
       content: '',
       category: 'Quy định - Hướng dẫn',
-      tags: []
+      tags: [],
+      priority: 'medium',
+      deadline: '',
+      status: 'Pending'
     });
     setIsAddingManual(false);
     setShowConfirmModal(false);
@@ -122,10 +128,10 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
 
   return (
     <div className="space-y-6 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div 
           onClick={() => fileInputRef.current?.click()}
-          className="bento-card group p-6 flex items-center gap-5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+          className="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-sm border border-slate-200/60 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
         >
           <input 
             type="file" 
@@ -134,31 +140,31 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
             className="hidden" 
             accept=".pdf,.docx,.doc,.txt"
           />
-          <div className="flex-shrink-0 p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl group-hover:scale-110 transition-transform">
+          <div className="flex-shrink-0 p-4 bg-blue-50 text-blue-600 rounded-2xl group-hover:scale-110 transition-transform">
             {isUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6" />}
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-foreground text-base">Tải lên tài liệu</h3>
-            <p className="text-xs text-muted-foreground mt-1">Hỗ trợ PDF, Word, Text (Tối đa 20MB)</p>
+            <h3 className="font-bold text-slate-900 text-base">Tải lên tài liệu</h3>
+            <p className="text-xs text-slate-500 mt-1">Hỗ trợ PDF, Word, Text (Tối đa 20MB)</p>
           </div>
-          <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-            <Plus className="w-4 h-4" />
+          <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+            <Plus className="w-5 h-5" />
           </div>
         </div>
 
         <div 
           onClick={() => setIsAddingManual(true)}
-          className="bento-card group p-6 flex items-center gap-5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+          className="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-sm border border-slate-200/60 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group"
         >
-          <div className="flex-shrink-0 p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:scale-110 transition-transform">
+          <div className="flex-shrink-0 p-4 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:scale-110 transition-transform">
             <PenLine className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-foreground text-base">Nhập thủ công</h3>
-            <p className="text-xs text-muted-foreground mt-1">Thêm kiến thức mới trực tiếp vào hệ thống</p>
+            <h3 className="font-bold text-slate-900 text-base">Nhập thủ công</h3>
+            <p className="text-xs text-slate-500 mt-1">Thêm kiến thức mới trực tiếp vào hệ thống</p>
           </div>
-          <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-            <Plus className="w-4 h-4" />
+          <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <Plus className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -167,7 +173,7 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bento-card p-8 bg-white dark:bg-slate-900"
+          className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200/60"
         >
           <KnowledgeConfirmModal 
             isOpen={showConfirmModal}
@@ -252,6 +258,43 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
                     placeholder="huong-dan, quy-dinh..."
                   />
                   <p className="text-[10px] text-muted-foreground italic">Phân cách bằng dấu phẩy (,)</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Mức độ ưu tiên</label>
+                    <select
+                      value={newKnowledge.priority}
+                      onChange={(e) => setNewKnowledge(prev => ({ ...prev, priority: e.target.value as any }))}
+                      className="w-full px-4 py-3 bg-slate-50 border border-border/40 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary/30 outline-none transition-all text-sm font-medium"
+                    >
+                      <option value="low">Thấp</option>
+                      <option value="medium">Trung bình</option>
+                      <option value="high">Cao</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Trạng thái</label>
+                    <select
+                      value={newKnowledge.status}
+                      onChange={(e) => setNewKnowledge(prev => ({ ...prev, status: e.target.value as any }))}
+                      className="w-full px-4 py-3 bg-slate-50 border border-border/40 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary/30 outline-none transition-all text-sm font-medium"
+                    >
+                      <option value="Pending">Chờ xử lý</option>
+                      <option value="In Progress">Đang thực hiện</option>
+                      <option value="Completed">Đã hoàn thành</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Hạn chót</label>
+                  <input
+                    type="date"
+                    value={newKnowledge.deadline}
+                    onChange={(e) => setNewKnowledge(prev => ({ ...prev, deadline: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-50 border border-border/40 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary/30 outline-none transition-all text-sm font-medium"
+                  />
                 </div>
 
                 <div className="pt-6 border-t border-border/40 flex flex-col gap-2">

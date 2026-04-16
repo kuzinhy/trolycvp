@@ -29,7 +29,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Task } from '../constants';
 import { db } from '../lib/firebase';
-import { collection, query, getDocs, addDoc, deleteDoc, doc, updateDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, deleteDoc, doc, updateDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { useNotifications } from '../hooks/useNotifications';
 
 interface ViceChiefTask {
@@ -199,7 +199,6 @@ export const AssignmentTracking: React.FC<AssignmentTrackingProps> = ({ tasks: s
       
       await updateDoc(doc(db, 'vice_chief_assignments', assignmentId), assignmentData).catch(async () => {
         // If doc doesn't exist, create it
-        const { setDoc } = await import('firebase/firestore');
         await setDoc(doc(db, 'vice_chief_assignments', assignmentId), assignmentData);
       });
 

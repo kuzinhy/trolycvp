@@ -31,21 +31,21 @@
   }
 
   .dark {
-    --background: 222 47% 8%; /* Deep Blue-Black */
-    --foreground: 210 40% 95%; /* Soft White */
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 95%;
-    --primary: 220 90% 60%; /* Vibrant Blue */
+    --background: 222 47% 12%; /* Deeper, more distinct Dark Blue */
+    --foreground: 210 40% 98%; /* Brighter White for contrast */
+    --card: 222 47% 15%; /* Slightly lighter blue for cards */
+    --card-foreground: 210 40% 98%;
+    --primary: 217 91% 60%; /* Brighter Blue */
     --primary-foreground: 210 40% 98%;
-    --secondary: 220 30% 15%; /* Deep Blue-Slate */
-    --secondary-foreground: 210 40% 95%;
-    --muted: 220 30% 15%;
-    --muted-foreground: 215 20% 70%; /* Slate 400 */
-    --border: 220 30% 20%; /* Subtle Border */
-    --input: 220 30% 20%;
-    --ring: 220 90% 60%;
-    --accent: 190 90% 50%; /* Cyan Accent */
-    --accent-foreground: 222 47% 8%;
+    --secondary: 222 47% 20%; /* Darker Blue-Slate */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 47% 20%;
+    --muted-foreground: 215 20% 75%; /* Lighter Slate for readability */
+    --border: 222 47% 25%; /* More visible blue border */
+    --input: 222 47% 25%;
+    --ring: 217 91% 60%;
+    --accent: 199 89% 48%; /* Sky Blue Accent */
+    --accent-foreground: 222 47% 12%;
 
     --line: #1e293b;
     --ink: #f8fafc;
@@ -63,7 +63,7 @@
 }
 
 .bento-card-dark {
-  @apply bg-slate-950/90 backdrop-blur-2xl border border-blue-900/30 rounded-[2.5rem] shadow-2xl shadow-blue-950/20 overflow-hidden;
+  @apply bg-blue-950/90 backdrop-blur-2xl border border-blue-900/30 rounded-[2.5rem] shadow-2xl shadow-blue-950/20 overflow-hidden;
 }
 
 .glass-panel {

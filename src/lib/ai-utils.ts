@@ -52,3 +52,47 @@ export const generateContentStreamWithRetry = async (params: any, retries = 3, d
   }
   throw new Error("Failed to generate content stream after multiple retries");
 };
+
+export const parseAIResponse = (text: string) => {
+  if (!text) return null;
+  
+  // Clean markdown code blocks if present
+  let cleanText = text.trim();
+  if (cleanText.startsWith('```')) {
+    const lines = cleanText.split('\n');
+    if (lines[0].startsWith('```')) {
+      lines.shift(); // Remove starting ```json or ```
+    }
+    if (lines[lines.length - 1].startsWith('```')) {
+      lines.pop(); // Remove ending ```
+    }
+    cleanText = lines.join('\n').trim();
+  }
+  
+  // If still contains markdown markers (sometimes AI puts them in the middle or multiple blocks)
+  // Try to find the first { and last }
+  const firstBrace = cleanText.indexOf('{');
+  const lastBrace = cleanText.lastIndexOf('}');
+  const firstBracket = cleanText.indexOf('[');
+  const lastBracket = cleanText.lastIndexOf(']');
+
+  let jsonCandidate = cleanText;
+  
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    // Check if it's an object or array and pick the outermost one
+    if (firstBracket !== -1 && firstBracket < firstBrace) {
+      jsonCandidate = cleanText.substring(firstBracket, lastBracket + 1);
+    } else {
+      jsonCandidate = cleanText.substring(firstBrace, lastBrace + 1);
+    }
+  } else if (firstBracket !== -1 && lastBracket !== -1) {
+    jsonCandidate = cleanText.substring(firstBracket, lastBracket + 1);
+  }
+
+  try {
+    return JSON.parse(jsonCandidate);
+  } catch (e) {
+    console.error("Failed to parse AI JSON response:", e, "Original text:", text);
+    throw new Error("Dữ liệu phản hồi từ AI không đúng định dạng JSON.");
+  }
+};

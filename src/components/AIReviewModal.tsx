@@ -19,8 +19,14 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
   items,
   existingKnowledge
 }) => {
-  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set(items.map((_, i) => i)));
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set((items || []).map((_, i) => i)));
   const [editingItem, setEditingItem] = useState<any | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen && items) {
+      setSelectedIndices(new Set(items.map((_, i) => i)));
+    }
+  }, [isOpen, items]);
 
   if (!isOpen) return null;
 
@@ -37,10 +43,14 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
   };
 
   const checkDuplicate = (item: any) => {
-    return existingKnowledge.find(k => 
-      k.title.toLowerCase().trim() === item.title.toLowerCase().trim() ||
-      k.content.toLowerCase().trim() === item.content.toLowerCase().trim()
-    );
+    return existingKnowledge.find(k => {
+      const kTitle = k?.title?.toLowerCase()?.trim() || '';
+      const iTitle = item?.title?.toLowerCase()?.trim() || '';
+      const kContent = k?.content?.toLowerCase()?.trim() || '';
+      const iContent = item?.content?.toLowerCase()?.trim() || '';
+      
+      return (kTitle !== '' && kTitle === iTitle) || (kContent !== '' && kContent === iContent);
+    });
   };
 
   return (
@@ -58,7 +68,7 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
             </div>
             <div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Kiểm soát Tri thức AI</h2>
-              <p className="text-sm text-muted-foreground mt-1">AI đã trích xuất {items.length} mục kiến thức. Vui lòng rà soát độ chính xác.</p>
+              <p className="text-sm text-muted-foreground mt-1">AI đã trích xuất {(items || []).length} mục kiến thức. Vui lòng rà soát độ chính xác.</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
@@ -69,7 +79,7 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
           <div className="grid grid-cols-1 gap-6">
-            {items.map((item, idx) => {
+            {(items || []).map((item, idx) => {
               const duplicate = checkDuplicate(item);
               const isSelected = selectedIndices.has(idx);
 
@@ -173,7 +183,7 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
         <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Info className="w-4 h-4" />
-            <p className="text-xs font-medium">Đã chọn {selectedIndices.size} / {items.length} mục kiến thức</p>
+            <p className="text-xs font-medium">Đã chọn {selectedIndices.size} / {(items || []).length} mục kiến thức</p>
           </div>
           <div className="flex gap-4">
             <Button variant="outline" onClick={onClose} className="rounded-2xl px-8 py-6">

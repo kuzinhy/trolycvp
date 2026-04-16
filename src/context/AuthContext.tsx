@@ -4,6 +4,7 @@ import { doc, onSnapshot, setDoc, getDoc, serverTimestamp } from 'firebase/fires
 import { auth, db } from '../lib/firebase';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
 import { useNotification } from './NotificationContext';
+import { UserInfo, UserRole } from '../types';
 
 interface UnitInfo {
   province: string;
@@ -18,10 +19,10 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isSuperAdmin: boolean;
-  role: string | null;
+  role: UserRole | null;
   unitId: string | null;
   unitInfo: UnitInfo | null;
-  userInfo: any | null;
+  userInfo: UserInfo | null;
   isEmailVerified: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
@@ -53,10 +54,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { showError } = useNotification();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
   const [unitId, setUnitId] = useState<string | null>(null);
   const [unitInfo, setUnitInfo] = useState<UnitInfo | null>(null);
-  const [userInfo, setUserInfo] = useState<any | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   useEffect(() => {
@@ -72,31 +73,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           if (userDoc.exists()) {
             const data = userDoc.data();
-            setRole(data.role || 'user');
-            setUnitId(data.unitId || null);
-            setUserInfo(data);
+            const mappedUserInfo: UserInfo = {
+              id: currentUser.uid,
+              displayName: data.displayName || currentUser.displayName || '',
+              photoURL: data.photoURL || currentUser.photoURL || undefined,
+              role: data.role || 'user',
+              departmentId: data.departmentId || data.unitId || '',
+              email: data.email || currentUser.email || undefined,
+              unitId: data.unitId || data.departmentId,
+              uid: currentUser.uid,
+              createdAt: data.createdAt,
+              lastLogin: data.lastLogin
+            };
+            setRole(mappedUserInfo.role);
+            setUnitId(mappedUserInfo.departmentId || null);
+            setUserInfo(mappedUserInfo);
             
-            if (data.unitId) {
-              const unitDoc = await getDoc(doc(db, 'units', data.unitId));
+            const targetUnitId = mappedUserInfo.departmentId || mappedUserInfo.unitId;
+            if (targetUnitId) {
+              const unitDoc = await getDoc(doc(db, 'units', targetUnitId));
               if (unitDoc.exists()) {
                 setUnitInfo(unitDoc.data() as UnitInfo);
               }
             }
           } else {
             // Create initial user profile if it doesn't exist
-            const initialRole = currentUser.email === 'nguyenhuy.thudaumot@gmail.com' ? 'super_admin' : 'user';
+            const initialRole: UserRole = currentUser.email === 'nguyenhuy.thudaumot@gmail.com' ? 'super_admin' : 'user';
             const initialData = {
               uid: currentUser.uid,
+              id: currentUser.uid,
               email: currentUser.email,
               displayName: currentUser.displayName,
               photoURL: currentUser.photoURL,
               role: initialRole,
+              departmentId: '',
+              unitId: '',
               createdAt: serverTimestamp(),
               lastLogin: serverTimestamp()
             };
             await setDoc(userDocRef, initialData);
             setRole(initialRole);
-            setUserInfo(initialData);
+            setUserInfo(initialData as UserInfo);
           }
         } catch (error) {
           console.error("Error fetching user data:", error);

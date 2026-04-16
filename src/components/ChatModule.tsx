@@ -23,6 +23,7 @@ import {
   Zap,
   Users,
   MicOff,
+  BrainCircuit,
   Paperclip as PaperclipIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -32,6 +33,7 @@ import { Message, TASK_TYPES } from '../constants';
 import { cn } from '../lib/utils';
 import { UserList } from './UserList';
 import { useSpeechToText } from '../hooks/useSpeechToText';
+import axios from 'axios';
 
 // Lazy load heavy components
 const ReactMarkdown = lazy(() => import('react-markdown'));
@@ -51,7 +53,7 @@ interface ChatModuleProps {
   saveToKnowledge: (content: string, tags: string[], index: number) => void;
   isSaving: number | null;
   aiKnowledge: any[];
-  smartLearnFromText: (text: string, isManual: boolean) => void;
+  smartLearnFromText: (text: string, tagsHint?: string[], isManual?: boolean) => Promise<void>;
   isLearning: boolean;
   onClearChat: () => void;
   chatHistory: any[];
@@ -136,20 +138,25 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
 
     setIsUploading(true);
     try {
-      let content = '';
-      if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-        content = await file.text();
-      } else {
-        if (showToast) showToast("Định dạng file không hỗ trợ (Chỉ hỗ trợ .txt, .md)", "warning");
-        setIsUploading(false);
-        return;
-      }
+      const formData = new FormData();
+      formData.append('file', file);
 
-      setAttachedFile({ name: file.name, content });
-      if (showToast) showToast(`Đã đính kèm: ${file.name}`, "success");
-    } catch (error) {
+      const response = await axios.post('/api/parse-document', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data && response.data.text) {
+        setAttachedFile({ name: file.name, content: response.data.text });
+        if (showToast) showToast(`Đã đính kèm và xử lý: ${file.name}`, "success");
+      } else {
+        throw new Error("Không thể trích xuất nội dung từ tệp");
+      }
+    } catch (error: any) {
       console.error('File upload error:', error);
-      if (showToast) showToast("Lỗi khi đọc file", "error");
+      const errorMessage = error.response?.data?.error || "Lỗi khi xử lý tệp";
+      if (showToast) showToast(errorMessage, "error");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -279,14 +286,14 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
       {/* Header */}
       <div className="px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[hsl(var(--accent))] flex items-center justify-center shadow-lg shadow-[hsl(var(--accent)/0.2)]">
-            <Sparkles className="text-[hsl(var(--accent-foreground))]" size={20} />
+          <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center shadow-lg shadow-slate-900/20">
+            <BrainCircuit className="text-emerald-500" size={20} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-[hsl(var(--foreground))] tracking-tight">Trợ lý Tham mưu AI</h2>
+            <h2 className="text-sm font-bold text-[hsl(var(--foreground))] tracking-tight">Trợ lý Chỉ huy Elite v6.0</h2>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--accent))] animate-pulse"></div>
-              <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Hệ thống sẵn sàng</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Strategic Context: Active</span>
             </div>
           </div>
         </div>
@@ -470,12 +477,12 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
           >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto">
-            <div className="w-20 h-20 rounded-3xl bg-white shadow-xl shadow-slate-200/50 flex items-center justify-center mb-6 animate-bounce-slow">
-              <Bot size={40} className="text-emerald-500" />
+            <div className="w-20 h-20 rounded-3xl bg-slate-900 shadow-xl shadow-slate-900/20 flex items-center justify-center mb-6 animate-bounce-slow border border-emerald-500/30">
+              <BrainCircuit size={40} className="text-emerald-500" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Xin chào Đồng chí!</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">Trung tâm Chỉ huy Elite v6.0</h3>
             <p className="text-sm text-slate-500 leading-relaxed font-medium max-w-md">
-              Tôi là trợ lý AI chuyên sâu về công tác tham mưu. Hãy đặt câu hỏi hoặc chọn một tác vụ gợi ý bên dưới.
+              Hệ thống đã sẵn sàng cho các tác vụ tham mưu và chỉ huy chiến lược. Hãy nhập yêu cầu hoặc chọn một module nghiệp vụ bên dưới.
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 w-full">
@@ -849,7 +856,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                         ref={fileInputRef}
                         onChange={handleFileUpload}
                         className="hidden"
-                        accept=".docx,.txt,.md"
+                        accept=".docx,.pdf,.txt,.md,image/*"
                       />
                       <button 
                         onClick={() => fileInputRef.current?.click()}
@@ -858,7 +865,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                           "p-2 rounded-xl transition-all",
                           isUploading ? "text-slate-300" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-50"
                         )}
-                        title="Đính kèm tệp (.docx, .txt, .md)"
+                        title="Đính kèm tệp (.docx, .pdf, .txt, .md, ảnh)"
                       >
                         {isUploading ? <Loader2 size={18} className="animate-spin" /> : <PaperclipIcon size={18} />}
                       </button>
@@ -890,7 +897,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
               <div className="flex items-center justify-between mt-3 px-2">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => smartLearnFromText(input, true)}
+                    onClick={() => smartLearnFromText(input, [], true)}
                     disabled={!input.trim() || isLearning}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border",

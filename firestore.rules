@@ -36,6 +36,9 @@ service cloud.firestore {
     // Fields:
     //   - content: string (required)
     //   - authorUid: string (required)
+    //   - priority: string (optional, enum: ["low", "medium", "high"])
+    //   - status: string (optional, enum: ["Pending", "In Progress", "Completed"])
+    //   - deadline: string (optional)
     //
     // Collection: pending_knowledge
     // Fields:
@@ -127,10 +130,13 @@ service cloud.firestore {
 
     function isValidKnowledge(data) {
       return hasRequiredFields(['content', 'authorUid']) &&
-             hasOnlyAllowedFields(['content', 'tags', 'authorUid', 'createdAt', 'unitId', 'title', 'type', 'category', 'fileUrl', 'id', 'updatedAt']) &&
+             hasOnlyAllowedFields(['content', 'tags', 'authorUid', 'createdAt', 'unitId', 'title', 'type', 'category', 'fileUrl', 'id', 'updatedAt', 'summary', 'embedding', 'authorName', 'isImportant', 'isPublic', 'order', 'version', 'reviewStatus', 'priority', 'deadline', 'status']) &&
              data.content is string && data.content.size() < 100000 &&
              data.authorUid == request.auth.uid &&
-             (data.title == null || (data.title is string && data.title.size() < 500));
+             (data.title == null || (data.title is string && data.title.size() < 500)) &&
+             (data.priority == null || data.priority in ['low', 'medium', 'high']) &&
+             (data.status == null || data.status in ['Pending', 'In Progress', 'Completed']) &&
+             (data.deadline == null || data.deadline is string);
     }
 
     function isValidNotification(data) {

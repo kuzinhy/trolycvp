@@ -4,11 +4,12 @@ import { Newspaper, RefreshCw, ShieldAlert, Sparkles, MessageSquare } from 'luci
 import { cn } from '../lib/utils';
 import { NewsScannerModule } from './NewsScannerModule';
 import { ToxicInfoDetection } from './ToxicInfoDetection';
-import { GenZDecoder } from './GenZDecoder';
 import { PublicOpinionModule } from './PublicOpinionModule';
+import { EarlyWarningSystem } from './EarlyWarningSystem';
+import { AlertTriangle } from 'lucide-react';
 
 export const NewsAndOpinionView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'news' | 'opinion' | 'toxic' | 'genz'>('news');
+  const [activeTab, setActiveTab] = useState<'news' | 'opinion' | 'toxic' | 'warning'>('news');
 
   return (
     <motion.div 
@@ -66,14 +67,14 @@ export const NewsAndOpinionView: React.FC = () => {
               Xấu độc
             </button>
             <button
-              onClick={() => setActiveTab('genz')}
+              onClick={() => setActiveTab('warning')}
               className={cn(
                 "px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-wider",
-                activeTab === 'genz' ? "bg-white text-purple-600 shadow-xl" : "text-emerald-100/60 hover:text-white hover:bg-white/5"
+                activeTab === 'warning' ? "bg-white text-amber-600 shadow-xl" : "text-emerald-100/60 hover:text-white hover:bg-white/5"
               )}
             >
-              <Sparkles size={14} />
-              Gen Z
+              <AlertTriangle size={14} />
+              Cảnh báo sớm
             </button>
           </div>
         </div>
@@ -109,12 +110,12 @@ export const NewsAndOpinionView: React.FC = () => {
           </motion.div>
         ) : (
           <motion.div
-            key="genz"
+            key="warning"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
           >
-            <GenZDecoder />
+            <EarlyWarningSystem />
           </motion.div>
         )}
       </AnimatePresence>

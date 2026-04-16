@@ -2,7 +2,7 @@ import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import { collection, getDocs, query, doc, updateDoc, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
-import { Shield, Users, Loader2, Search, Bell, Send, Building, RefreshCw, Clock, ExternalLink, UserCheck, UserMinus, Filter, Download, MoreVertical, Mail, Calendar as CalendarIcon, Activity, X, Eye, AlertCircle } from 'lucide-react';
+import { Shield, Users, Loader2, Search, Bell, Send, Building, RefreshCw, Clock, ExternalLink, UserCheck, UserMinus, Filter, Download, MoreVertical, Mail, Calendar as CalendarIcon, Activity, X, Eye, AlertCircle, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ToastType } from './ui/Toast';
 import { Notification } from '../constants';
@@ -686,8 +686,25 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
                 ))}
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={isSuperAdmin ? 6 : 5} className="px-6 py-12 text-center text-slate-500">
-                      Không tìm thấy người dùng nào.
+                    <td colSpan={isSuperAdmin ? 7 : 6} className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                          <Users size={32} className="text-slate-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">Chưa có người dùng nào</h3>
+                        <p className="text-slate-500 text-sm mb-6">
+                          {searchTerm || roleFilter !== 'all' || statusFilter !== 'all' || unitFilter !== 'all' 
+                            ? "Không tìm thấy người dùng nào phù hợp với điều kiện lọc hiện tại. Hãy thử thay đổi bộ lọc."
+                            : "Hệ thống hiện chưa có người dùng nào. Hãy thêm người dùng mới để bắt đầu quản lý."}
+                        </p>
+                        <button 
+                          onClick={() => showToast("Tính năng thêm người dùng đang được phát triển", "info")}
+                          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-bold text-sm shadow-lg shadow-blue-600/20"
+                        >
+                          <UserPlus size={18} />
+                          Thêm người dùng mới
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )}

@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Loader2,
   X,
+  Plus,
   FileText,
   Check,
   Download,
@@ -29,8 +30,9 @@ import { KnowledgeForm } from './KnowledgeForm';
 import { KnowledgeItem } from './KnowledgeItem';
 import { PendingKnowledgeList } from './PendingKnowledgeList';
 import { AIReviewModal } from './AIReviewModal';
+import { KnowledgeDetailModal } from './KnowledgeDetailModal';
 
-interface KnowledgeModuleProps {
+export interface KnowledgeModuleProps {
   aiKnowledge: any[];
   pendingKnowledge: any[];
   isMemoryLoading: boolean;
@@ -61,11 +63,17 @@ interface KnowledgeModuleProps {
   setManualReviewStatus: (val: string) => void;
   manualReviewNotes: string;
   setManualReviewNotes: (val: string) => void;
+  manualPriority: 'low' | 'medium' | 'high';
+  setManualPriority: (val: 'low' | 'medium' | 'high') => void;
+  manualDeadline: string;
+  setManualDeadline: (val: string) => void;
+  manualStatus: 'Pending' | 'In Progress' | 'Completed';
+  setManualStatus: (val: 'Pending' | 'In Progress' | 'Completed') => void;
   isManualPublic: boolean;
   setIsManualPublic: (val: boolean) => void;
   isManualImportant: boolean;
   setIsManualImportant: (val: boolean) => void;
-  addManualKnowledge: (category: string, pendingId?: string) => void;
+  addManualKnowledge: (category: string, title: string, content: string, tags: string[], pendingId?: string) => Promise<void>;
   isUpdating: boolean;
   editingIndex: number | null;
   setEditingIndex: (idx: number | null) => void;
@@ -99,11 +107,17 @@ interface KnowledgeModuleProps {
   setEditReviewStatus: (val: string) => void;
   editReviewNotes: string;
   setEditReviewNotes: (val: string) => void;
+  editPriority: 'low' | 'medium' | 'high';
+  setEditPriority: (val: 'low' | 'medium' | 'high') => void;
+  editDeadline: string;
+  setEditDeadline: (val: string) => void;
+  editStatus: 'Pending' | 'In Progress' | 'Completed';
+  setEditStatus: (val: 'Pending' | 'In Progress' | 'Completed') => void;
   updateKnowledge: (id: string, data: any) => void;
   deleteKnowledge: (id: string) => void;
   isDeleting: string | null;
   onReorderKnowledge?: (newOrder: any[]) => void;
-  smartLearnFromText: (text: string, isManual: boolean) => void;
+  smartLearnFromText: (text: string, tagsHint?: string[], isManual?: boolean) => Promise<void>;
   learnFromFile?: (file: File) => void;
   isLearning: boolean;
   isSuggestingTags?: boolean;
@@ -117,14 +131,16 @@ interface KnowledgeModuleProps {
   isAuditing?: boolean;
   deleteAllKnowledge?: () => void;
   isDeletingAll?: boolean;
-  isSyncingSecondBrain?: boolean;
-  syncSecondBrain?: () => void;
+  isSyncingRemote?: boolean;
+  syncRemoteKnowledge?: () => void;
   isSyncingOneNote?: boolean;
   syncOneNote?: () => void;
   smartSummarizeKnowledge: (category: string) => void;
   isSummarizing: boolean;
   summarizedContent: string | null;
   setSummarizedContent: (val: string | null) => void;
+  syncUnifiedStrategicKnowledge: () => Promise<void>;
+  isSyncingUnified?: boolean;
   showToast: (message: string, type?: any) => void;
   pendingAIItems: any[];
   isReviewingAI: boolean;
@@ -219,8 +235,8 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
     isRemovingDuplicates,
     deleteAllKnowledge,
     isDeletingAll,
-    isSyncingSecondBrain,
-    syncSecondBrain,
+    isSyncingRemote,
+    syncRemoteKnowledge,
     isSyncingOneNote,
     syncOneNote,
     auditAndOptimizeKnowledge,
@@ -229,6 +245,8 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
     isSummarizing,
     summarizedContent,
     setSummarizedContent,
+    syncUnifiedStrategicKnowledge,
+    isSyncingUnified,
     showToast,
     pendingAIItems,
     isReviewingAI,
@@ -242,8 +260,10 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'list' | 'history'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [selectedKnowledge, setSelectedKnowledge] = useState<any | null>(null);
 
   const fetchLogs = useCallback(async () => {
     setIsLoadingLogs(true);
@@ -271,7 +291,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
       result = result.filter(item => 
         item.title?.toLowerCase().includes(query) ||
         item.content?.toLowerCase().includes(query) ||
-        item.tags?.some((tag: string) => tag.toLowerCase().includes(query))
+        item.tags?.some((tag: string) => (tag || '').toLowerCase().includes(query))
       );
     }
 
@@ -334,10 +354,12 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
   }, [learnFromFile]);
 
   const handleManualAdd = useCallback(async (item: any) => {
-    props.setManualTitle(item.title);
-    props.setManualValue(item.content);
-    props.setManualTags(item.tags.join(', '));
-    addManualKnowledge(item.category);
+    const tags = item.tags || [];
+    if (props.setManualPriority) props.setManualPriority(item.priority || 'medium');
+    if (props.setManualDeadline) props.setManualDeadline(item.deadline || '');
+    if (props.setManualStatus) props.setManualStatus(item.status || 'Pending');
+    
+    addManualKnowledge(item.category, item.title, item.content, tags);
     
     logActivity({
       userId: auth.currentUser?.uid || 'anonymous',
@@ -347,7 +369,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
       type: 'success',
       module: 'knowledge'
     });
-  }, [props, addManualKnowledge]);
+  }, [addManualKnowledge]);
 
   const handleSaveEdit = useCallback(async (updatedItem: any) => {
     if (updatedItem.id) {
@@ -371,129 +393,224 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
         onFilterChange={setFilterCategory}
         onSummarize={() => smartSummarizeKnowledge(filterCategory)}
         onDeleteAll={deleteAllKnowledge || (() => {})}
-        onSyncSecondBrain={syncSecondBrain || (() => {})}
+        onSyncUnified={syncUnifiedStrategicKnowledge}
         onAudit={auditAndOptimizeKnowledge || (() => Promise.resolve())}
         isSummarizing={isSummarizing}
         isDeletingAll={isDeletingAll || false}
-        isSyncingSecondBrain={isSyncingSecondBrain || false}
+        isSyncingUnified={isSyncingUnified || false}
         isAuditing={isAuditing || false}
         totalItems={aiKnowledge.length}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
-      <div className="flex items-center gap-4 mb-6">
-        <button 
-          onClick={() => setActiveView('list')}
-          className={cn(
-            "px-6 py-2 rounded-xl font-bold text-sm transition-all",
-            activeView === 'list' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white text-muted-foreground hover:bg-slate-50"
-          )}
-        >
-          Danh mục tài liệu
-        </button>
-        <button 
-          onClick={() => setActiveView('history')}
-          className={cn(
-            "px-6 py-2 rounded-xl font-bold text-sm transition-all",
-            activeView === 'history' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white text-muted-foreground hover:bg-slate-50"
-          )}
-        >
-          Nhật ký hoạt động
-        </button>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setActiveView('list')}
+            className={cn(
+              "px-6 py-2 rounded-xl font-bold text-sm transition-all",
+              activeView === 'list' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white text-muted-foreground hover:bg-slate-50"
+            )}
+          >
+            Danh mục tài liệu
+          </button>
+          <button 
+            onClick={() => setActiveView('history')}
+            className={cn(
+              "px-6 py-2 rounded-xl font-bold text-sm transition-all",
+              activeView === 'history' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white text-muted-foreground hover:bg-slate-50"
+            )}
+          >
+            Nhật ký hoạt động
+          </button>
+        </div>
+
+        {activeView === 'list' && (
+          <Button 
+            onClick={() => setIsAddingManual(true)}
+            className="rounded-xl px-6 font-bold shadow-lg shadow-primary/20"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Thêm kiến thức
+          </Button>
+        )}
       </div>
 
       {activeView === 'list' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Forms & List */}
-          <div className="lg:col-span-8 space-y-6">
-            <KnowledgeForm 
-              onFileUpload={handleFileUpload}
-              onManualAdd={handleManualAdd}
-              isAddingManual={isAddingManual}
-              setIsAddingManual={setIsAddingManual}
-              isLearning={isLearning}
-              existingKnowledge={aiKnowledge}
-            />
-
-          <PendingKnowledgeList 
-            items={pendingKnowledge}
-            onApprove={async (item) => {
-              props.setManualTitle(item.title || item.name || "Kiến thức mới");
-              props.setManualValue(item.content || item.name || "");
-              addManualKnowledge(item.category || "Chung", item.id);
-            }}
-            onReject={async (id) => {
-              try {
-                await deletePendingKnowledge(id);
-                showToast("Đã bỏ qua kiến thức chờ duyệt.", "success");
-              } catch (error) {
-                showToast("Lỗi khi bỏ qua kiến thức.", "error");
-              }
-            }}
-            isApproving={null}
-            isRejecting={null}
-          />
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
-                  <FileText className="w-5 h-5 text-slate-600" />
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+          {/* Left Column: List */}
+          <div className="xl:col-span-8 space-y-8">
+            {/* KnowledgeForm Modal */}
+            <AnimatePresence>
+              {isAddingManual && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    className="bg-white w-full max-w-5xl max-h-[90vh] rounded-[32px] shadow-2xl overflow-hidden flex flex-col"
+                  >
+                    <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Plus className="w-5 h-5 text-primary" />
+                        </div>
+                        <h3 className="font-bold text-xl text-foreground">Thêm kiến thức mới</h3>
+                      </div>
+                      <button onClick={() => setIsAddingManual(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                        <X className="w-5 h-5 text-muted-foreground" />
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                      <KnowledgeForm 
+                        onFileUpload={handleFileUpload}
+                        onManualAdd={handleManualAdd}
+                        isAddingManual={isAddingManual}
+                        setIsAddingManual={setIsAddingManual}
+                        isLearning={isLearning}
+                        existingKnowledge={aiKnowledge}
+                      />
+                    </div>
+                  </motion.div>
                 </div>
-                <h3 className="font-bold text-lg text-foreground">Danh mục tài liệu</h3>
-              </div>
-              {searchQuery && (
-                <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                  {filteredKnowledge.length} kết quả
-                </span>
               )}
-            </div>
+            </AnimatePresence>
 
-            {isMemoryLoading ? (
-              <div className="bento-card flex flex-col items-center justify-center py-24 space-y-4 bg-white">
-                <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Đang truy xuất kho tri thức...</p>
-              </div>
-            ) : filteredKnowledge.length > 0 ? (
-              <Reorder.Group 
-                axis="y" 
-                values={filteredKnowledge} 
-                onReorder={(newItems) => onReorderKnowledge?.(newItems)}
-                className="space-y-3"
-              >
-                {filteredKnowledge.map((item, index) => (
-                  <KnowledgeItem 
-                    key={item.id || index}
-                    item={item}
-                    isEditing={editingIndex === index}
-                    onEdit={() => setEditingIndex(index)}
-                    onDelete={() => deleteKnowledge(item.id)}
-                    onSave={handleSaveEdit}
-                    onCancel={() => setEditingIndex(null)}
-                    isDeleting={isDeleting === item.id}
-                  />
-                ))}
-              </Reorder.Group>
-            ) : (
-              <div className="bento-card flex flex-col items-center justify-center py-24 bg-white space-y-5">
-                <div className="p-5 bg-slate-50 rounded-full">
-                  <AlertCircle className="w-10 h-10 text-slate-300" />
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="font-bold text-lg text-foreground">Không tìm thấy tài liệu</p>
-                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">Hãy thử thay đổi từ khóa hoặc bộ lọc danh mục.</p>
-                </div>
-                {searchQuery && (
-                  <Button variant="outline" onClick={() => setSearchQuery('')} className="rounded-xl px-6">
-                    Xóa tìm kiếm
-                  </Button>
-                )}
+            {pendingKnowledge.length > 0 && (
+              <div className="bg-amber-50/50 rounded-2xl p-6 border border-amber-200/50">
+                <PendingKnowledgeList 
+                  items={pendingKnowledge}
+                  onApprove={async (item) => {
+                    props.setManualTitle(item.title || item.name || "Kiến thức mới");
+                    props.setManualValue(item.content || item.name || "");
+                    addManualKnowledge(item.category || "Chung", item.title || item.name || "Kiến thức mới", item.content || item.name || "", item.tags || [], item.id);
+                  }}
+                  onReject={async (id) => {
+                    try {
+                      await deletePendingKnowledge(id);
+                      showToast("Đã bỏ qua kiến thức chờ duyệt.", "success");
+                    } catch (error) {
+                      showToast("Lỗi khi bỏ qua kiến thức.", "error");
+                    }
+                  }}
+                  isApproving={null}
+                  isRejecting={null}
+                />
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Right Column: AI Insights & Strategic Analysis */}
-        <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900">Danh mục tài liệu</h3>
+                    <p className="text-sm text-slate-500">Quản lý và tra cứu kho tri thức</p>
+                  </div>
+                </div>
+                {searchQuery && (
+                  <span className="text-xs font-bold text-indigo-600 bg-indigo-100 px-3 py-1.5 rounded-full">
+                    {filteredKnowledge.length} kết quả
+                  </span>
+                )}
+              </div>
+
+              <div className="p-6">
+                {isMemoryLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Đang truy xuất kho tri thức...</p>
+                  </div>
+                ) : filteredKnowledge.length > 0 ? (
+                  viewMode === 'list' ? (
+                    <Reorder.Group 
+                      axis="y" 
+                      values={filteredKnowledge} 
+                      onReorder={(newItems) => onReorderKnowledge?.(newItems)}
+                      className="space-y-4"
+                    >
+                      {filteredKnowledge.map((item, index) => (
+                        <KnowledgeItem 
+                          key={item.id || index}
+                          item={item}
+                          isEditing={editingIndex === index}
+                          onEdit={() => setSelectedKnowledge(item)}
+                          onDelete={() => deleteKnowledge(item.id)}
+                          onSave={handleSaveEdit}
+                          onCancel={() => setEditingIndex(null)}
+                          isDeleting={isDeleting === item.id}
+                        />
+                      ))}
+                    </Reorder.Group>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredKnowledge.map((item, index) => (
+                        <motion.div
+                          key={item.id || index}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                          onClick={() => setSelectedKnowledge(item)}
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 rounded-xl">
+                                <FileText size={20} />
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 text-[9px] font-black uppercase tracking-wider">
+                                  {item.category}
+                                </span>
+                                {item.isImportant && (
+                                  <span className="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 text-[9px] font-black uppercase tracking-wider">
+                                    Quan trọng
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors line-clamp-2">
+                              {item.title}
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
+                              {item.content}
+                            </p>
+                          </div>
+                          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                              <Clock size={12} />
+                              {item.createdAt ? new Date(item.createdAt.toMillis?.() || item.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                            </div>
+                            <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-5">
+                    <div className="p-6 bg-slate-50 rounded-full">
+                      <AlertCircle className="w-12 h-12 text-slate-300" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <p className="font-bold text-xl text-slate-900">Không tìm thấy tài liệu</p>
+                      <p className="text-sm text-slate-500 max-w-xs mx-auto">Hãy thử thay đổi từ khóa hoặc bộ lọc danh mục.</p>
+                    </div>
+                    {searchQuery && (
+                      <Button variant="outline" onClick={() => setSearchQuery('')} className="rounded-xl px-6 mt-4">
+                        Xóa tìm kiếm
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: AI Insights & Strategic Analysis */}
+          <div className="xl:col-span-4 space-y-8">
           {/* Strategic Analysis Card */}
           <div className="bento-card p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
@@ -551,13 +668,13 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
         </div>
       </div>
     ) : (
-      <div className="bento-card p-8 bg-white min-h-[600px]">
+      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200/60 min-h-[600px]">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-100 rounded-lg">
-                <Clock className="w-5 h-5 text-slate-600" />
+              <div className="p-2.5 bg-slate-50 text-slate-600 rounded-xl">
+                <Clock className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-xl text-foreground">Nhật ký hoạt động Tri thức</h3>
+              <h3 className="font-bold text-xl text-slate-900">Nhật ký hoạt động Tri thức</h3>
             </div>
             <Button variant="outline" onClick={fetchLogs} disabled={isLoadingLogs} className="rounded-xl">
               {isLoadingLogs ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
@@ -567,8 +684,8 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
 
           {isLoadingLogs ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Đang tải nhật ký...</p>
+              <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+              <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Đang tải nhật ký...</p>
             </div>
           ) : logs.length > 0 ? (
             <div className="space-y-4">
@@ -608,13 +725,20 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
         </div>
       )}
 
-      {/* AI Review Modal */}
-      <AIReviewModal 
-        isOpen={isReviewingAI}
-        onClose={discardAIItems}
-        onConfirm={confirmAIItems}
-        items={pendingAIItems}
-        existingKnowledge={aiKnowledge}
+      {/* Knowledge Detail Modal */}
+      <KnowledgeDetailModal 
+        item={selectedKnowledge}
+        isOpen={!!selectedKnowledge}
+        onClose={() => setSelectedKnowledge(null)}
+        onEdit={() => {
+          const index = aiKnowledge.findIndex(k => k.id === selectedKnowledge.id);
+          setEditingIndex(index);
+          setSelectedKnowledge(null);
+        }}
+        onDelete={() => {
+          deleteKnowledge(selectedKnowledge.id);
+          setSelectedKnowledge(null);
+        }}
       />
 
       {/* AI Analysis Result Modal */}

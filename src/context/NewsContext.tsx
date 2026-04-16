@@ -111,33 +111,9 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [lastRefresh]);
 
   const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationError("Trình duyệt không hỗ trợ định vị.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-        setLocationError(null);
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
-        let msg = "Không thể lấy vị trí hiện tại.";
-        if (error.code === error.PERMISSION_DENIED) {
-          msg = "Quyền truy cập vị trí bị từ chối. Vui lòng nhập thủ công.";
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          msg = "Thông tin vị trí không khả dụng.";
-        } else if (error.code === error.TIMEOUT) {
-          msg = "Hết thời gian yêu cầu vị trí.";
-        }
-        setLocationError(msg);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+    // Disable automatic geolocation to avoid policy violations
+    console.log("Tính năng định vị tự động đã bị tắt để đảm bảo tính ổn định.");
+    setLocationError("Tính năng định vị tự động đã bị tắt.");
   }, []);
 
   useEffect(() => {

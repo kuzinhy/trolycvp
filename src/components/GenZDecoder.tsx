@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, RefreshCw, Search, BookOpen, Quote, Plus, X, Save, Trash2, Brain, Database, TrendingUp, Zap, Bookmark, Check } from 'lucide-react';
 import { Type } from '@google/genai';
 import { generateContentWithRetry } from '../lib/ai-utils';
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, Timestamp, orderBy, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, Timestamp, orderBy, updateDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { useKnowledge } from '../hooks/useKnowledge';
@@ -140,7 +140,7 @@ export const GenZDecoder: React.FC = () => {
             ...item,
             unitId: unitId || '',
             authorId: 'system',
-            createdAt: Timestamp.now()
+            createdAt: serverTimestamp()
           });
         }
         await batch.commit();
@@ -167,7 +167,7 @@ export const GenZDecoder: React.FC = () => {
         source: 'Gen Z Decoder - Trending',
         status: 'pending',
         priority: 'medium',
-        createdAt: Timestamp.now(),
+        createdAt: serverTimestamp(),
         unitId: unitId || '',
         authorId: user.uid
       });
@@ -203,7 +203,7 @@ export const GenZDecoder: React.FC = () => {
         term: newTerm.term.trim(),
         unitId: unitId || '',
         authorId: user.uid,
-        createdAt: Timestamp.now()
+        createdAt: serverTimestamp()
       });
       
       setNewTerm({ term: '', meaning: '', origin: '', example: '' });
@@ -273,7 +273,7 @@ export const GenZDecoder: React.FC = () => {
             ...item,
             unitId: unitId || '',
             authorId: user?.uid,
-            createdAt: Timestamp.now()
+            createdAt: serverTimestamp()
           });
         }
         fetchTerms();
@@ -304,9 +304,9 @@ export const GenZDecoder: React.FC = () => {
           tags: ["GenZ", "Slang", "Ngôn ngữ"],
           isPublic: true,
           isImportant: false,
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now(),
-          authorId: user.uid,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          authorUid: user.uid,
           unitId: unitId || '',
           type: 'document'
         });

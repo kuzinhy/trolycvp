@@ -167,10 +167,37 @@ export const SmartErrorCorrectionCenter: React.FC = () => {
       });
     }
 
-    // Step 4: Connection Scan
+    // Step 4: Connection & API Scan
     setScanProgress(70);
     setScanStatus('Đang kiểm tra kết nối mạng và API...');
     await new Promise(r => setTimeout(r, 800));
+    
+    // Check Second Brain API
+    try {
+      const sbRes = await fetch('/api/second-brain/sync');
+      if (!sbRes.ok) {
+        detectedErrors.push({
+          name: 'Lỗi kết nối Kho tri thức (Apps Script)',
+          severity: 'high',
+          type: 'connection',
+          location: 'API: /api/second-brain/sync',
+          cause: 'Máy chủ Apps Script không phản hồi hoặc URL cấu hình sai',
+          impact: 'Không thể đồng bộ dữ liệu từ xa vào bộ não AI',
+          status: 'pending'
+        });
+      }
+    } catch (e) {
+      detectedErrors.push({
+        name: 'Lỗi mạng khi kết nối API Chiến lược',
+        severity: 'critical',
+        type: 'connection',
+        location: 'Network Layer',
+        cause: 'Yêu cầu bị chặn hoặc mất kết nối máy chủ',
+        impact: 'Toàn bộ tính năng đồng bộ tri thức bị tê liệt',
+        status: 'pending'
+      });
+    }
+
     if (!navigator.onLine) {
       detectedErrors.push({
         name: 'Mất kết nối mạng Internet',

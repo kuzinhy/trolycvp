@@ -2,7 +2,6 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Brain, MessageSquare, Database, TrendingUp, Calendar as CalendarIcon, Sparkles, Clock } from 'lucide-react';
-import { WeatherWidget } from './WeatherWidget';
 import { generateContentWithRetry } from '../lib/ai-utils';
 
 interface DashboardProps {
@@ -161,9 +160,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ knowledge, chatHistory, on
         <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
           <div className="h-full min-h-[120px]">
             <DateTimeWidget />
-          </div>
-          <div className="h-full min-h-[120px]">
-            <WeatherWidget variant="card" />
           </div>
         </div>
       </div>

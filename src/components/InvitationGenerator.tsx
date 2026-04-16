@@ -228,11 +228,25 @@ export const InvitationGenerator: React.FC = () => {
       });
 
       const text = response.text || '';
-      const parts = text.split('PHẦN 2: THƯ MỜI HOÀN CHỈNH');
-      setResult({
-        normalized: parts[0].replace('PHẦN 1: DỮ LIỆU CHUẨN HÓA', '').trim(),
-        letter: parts[1] ? parts[1].trim() : ''
-      });
+      
+      if (text.includes('PHẦN 2: THƯ MỜI HOÀN CHỈNH')) {
+        const parts = text.split('PHẦN 2: THƯ MỜI HOÀN CHỈNH');
+        setResult({
+          normalized: parts[0].replace('PHẦN 1: DỮ LIỆU CHUẨN HÓA', '').trim(),
+          letter: parts[1] ? parts[1].trim() : ''
+        });
+      } else if (text.includes('PHẦN 2:')) {
+        const parts = text.split('PHẦN 2:');
+        setResult({
+          normalized: parts[0].replace('PHẦN 1:', '').trim(),
+          letter: parts[1] ? parts[1].trim() : ''
+        });
+      } else {
+        setResult({
+          normalized: 'Đã trích xuất thông tin thành công.',
+          letter: text
+        });
+      }
     } catch (error) {
       console.error(error);
     } finally {

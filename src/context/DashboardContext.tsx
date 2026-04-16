@@ -18,9 +18,8 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dashboard.loadMeetings();
       dashboard.loadEvents();
       dashboard.loadBirthdays();
-      dashboard.fetchConfig();
     }
-  }, [user, unitId, dashboard.loadMeetings, dashboard.loadEvents, dashboard.loadBirthdays, dashboard.fetchConfig]);
+  }, [user, unitId, dashboard.loadMeetings, dashboard.loadEvents, dashboard.loadBirthdays]);
 
   return (
     <DashboardContext.Provider value={dashboard}>

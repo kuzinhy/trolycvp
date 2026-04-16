@@ -28,7 +28,7 @@ interface AdvisoryResult {
 }
 
 export const PartyAdvisory: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'meeting' | 'briefing'>('meeting');
+  const [activeTab, setActiveTab] = useState<'meeting' | 'briefing' | 'strategic'>('meeting');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AdvisoryResult | null>(null);
   const [query, setQuery] = useState('');
@@ -37,21 +37,33 @@ export const PartyAdvisory: React.FC = () => {
     setIsAnalyzing(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = activeTab === 'meeting' 
-        ? `Hãy gợi ý nội dung sinh hoạt chi bộ cho tháng hiện tại (Tháng 3/2026). 
+      let prompt = '';
+      
+      if (activeTab === 'meeting') {
+        prompt = `Hãy gợi ý nội dung sinh hoạt chi bộ cho tháng hiện tại (Tháng 3/2026). 
            Dựa trên các nhiệm vụ chính trị trọng tâm của Đảng hiện nay.
            Hãy gợi ý:
            1. Chủ đề sinh hoạt chuyên đề sát thực tế.
            2. Nội dung trọng tâm cần thảo luận.
            3. Các giải pháp thực hiện cụ thể cho chi bộ.
-           4. Các văn bản cần quán triệt.`
-        : `Tham mưu nhanh cho Bí thư về nội dung chỉ đạo trong tuần này (Tuần 14/2026).
+           4. Các văn bản cần quán triệt.`;
+      } else if (activeTab === 'briefing') {
+        prompt = `Tham mưu nhanh cho Bí thư về nội dung chỉ đạo trong tuần này (Tuần 14/2026).
            Câu hỏi/Yêu cầu: "${query || 'Tuần này nên tập trung chỉ đạo gì?'}"
            Hãy phân tích tình hình thời sự, các chỉ đạo cấp trên và dữ liệu địa phương (giả định) để gợi ý:
            1. Các nhiệm vụ trọng tâm cần chỉ đạo ngay.
            2. Nội dung phát biểu/chỉ đạo gợi ý.
            3. Các rủi ro cần lưu ý.
            4. Các đơn vị cần đôn đốc.`;
+      } else if (activeTab === 'strategic') {
+        prompt = `Bạn là Trợ lý Tham mưu Chiến lược cho Bí thư Đảng ủy. 
+           Nhiệm vụ: Đề xuất các giải pháp tham mưu cho Bí thư Đảng ủy để thực hiện hiệu quả nhiệm vụ: '${query || '[MÔ TẢ NHIỆM VỤ CỤ THỂ]'}'
+           Yêu cầu:
+           1. Nội dung đề xuất cần ngắn gọn, có trọng tâm và mang tính thực tiễn cao.
+           2. Phân tích các bước thực hiện then chốt.
+           3. Đề xuất các giải pháp đột phá hoặc giải quyết nút thắt.
+           4. Dự báo các khó khăn và cách khắc phục.`;
+      }
 
       const model = ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -114,7 +126,17 @@ export const PartyAdvisory: React.FC = () => {
           )}
         >
           <Zap size={14} />
-          Tham mưu nhanh cho Bí thư
+          Tham mưu nhanh
+        </button>
+        <button
+          onClick={() => { setActiveTab('strategic'); setResult(null); }}
+          className={cn(
+            "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
+            activeTab === 'strategic' ? "bg-white text-amber-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+          )}
+        >
+          <Target size={14} />
+          Tham mưu Nhiệm vụ
         </button>
       </div>
 
@@ -124,7 +146,7 @@ export const PartyAdvisory: React.FC = () => {
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             <div className="space-y-4">
               <h3 className="font-black text-slate-900 uppercase tracking-wider text-sm">
-                {activeTab === 'meeting' ? 'Cấu hình Gợi ý' : 'Nội dung yêu cầu'}
+                {activeTab === 'meeting' ? 'Cấu hình Gợi ý' : activeTab === 'briefing' ? 'Nội dung yêu cầu' : 'Mô tả nhiệm vụ cụ thể'}
               </h3>
               
               {activeTab === 'meeting' ? (
@@ -143,7 +165,7 @@ export const PartyAdvisory: React.FC = () => {
                   <textarea
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Ví dụ: Tuần này nên tập trung chỉ đạo gì về công tác cán bộ?"
+                    placeholder={activeTab === 'briefing' ? "Ví dụ: Tuần này nên tập trung chỉ đạo gì về công tác cán bộ?" : "Mô tả nhiệm vụ cụ thể cần tham mưu giải pháp..."}
                     className="w-full h-32 p-4 bg-slate-50 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-sm font-medium"
                   />
                 </div>
@@ -168,7 +190,7 @@ export const PartyAdvisory: React.FC = () => {
               ) : (
                 <>
                   <Sparkles size={18} />
-                  {activeTab === 'meeting' ? 'Gợi ý chuyên đề' : 'Tham mưu nhanh'}
+                  {activeTab === 'meeting' ? 'Gợi ý chuyên đề' : activeTab === 'briefing' ? 'Tham mưu nhanh' : 'Đề xuất giải pháp'}
                 </>
               )}
             </button>

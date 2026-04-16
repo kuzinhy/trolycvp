@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BarChart3, Download, FileText, RefreshCw, PieChart as PieChartIcon, TrendingUp, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { BarChart3, Download, FileText, RefreshCw, PieChart as PieChartIcon, TrendingUp, CheckCircle2, Clock, AlertCircle, X, Search, Calendar, Tag, ChevronRight, Layers, Brain } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { generateContentWithRetry } from '../lib/ai-utils';
 import { cn } from '../lib/utils';
@@ -17,6 +17,15 @@ export const ReportingModule: React.FC<ReportingModuleProps> = ({ tasks = [], kn
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState('');
   const [generationMode, setGenerationMode] = useState<'auto' | 'custom'>('auto');
+  
+  // Modal State
+  const [selectedTasks, setSelectedTasks] = useState<any[] | null>(null);
+  const [modalTitle, setModalTitle] = useState('');
+
+  const openTaskModal = (filteredTasks: any[], title: string) => {
+    setSelectedTasks(filteredTasks);
+    setModalTitle(title);
+  };
   
   // Custom report fields
   const [metrics, setMetrics] = useState('');
@@ -61,7 +70,7 @@ export const ReportingModule: React.FC<ReportingModuleProps> = ({ tasks = [], kn
     setIsGenerating(true);
     try {
       let prompt = '';
-      let model = 'gemini-3.1-flash-preview';
+      let model = 'gemini-3-flash-preview';
       
       if (generationMode === 'auto') {
         prompt = `
@@ -127,11 +136,14 @@ Yêu cầu:
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+        <div 
+          onClick={() => openTaskModal(tasks, 'Tất cả nhiệm vụ')}
+          className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4 cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all group"
+        >
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:scale-110 transition-transform">
             <FileText size={24} />
           </div>
           <div>
@@ -139,8 +151,11 @@ Yêu cầu:
             <p className="text-2xl font-black text-slate-800">{taskStats.total}</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+        <div 
+          onClick={() => openTaskModal(tasks.filter(t => t.status === 'Completed'), 'Nhiệm vụ đã hoàn thành')}
+          className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4 cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all group"
+        >
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-110 transition-transform">
             <CheckCircle2 size={24} />
           </div>
           <div>
@@ -148,8 +163,11 @@ Yêu cầu:
             <p className="text-2xl font-black text-slate-800">{taskStats.completed}</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+        <div 
+          onClick={() => openTaskModal(tasks.filter(t => t.status === 'In Progress'), 'Nhiệm vụ đang thực hiện')}
+          className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4 cursor-pointer hover:border-amber-500 hover:shadow-md transition-all group"
+        >
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:scale-110 transition-transform">
             <Clock size={24} />
           </div>
           <div>
@@ -157,8 +175,14 @@ Yêu cầu:
             <p className="text-2xl font-black text-slate-800">{taskStats.inProgress}</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+        <div 
+          onClick={() => openTaskModal(tasks.filter(t => {
+            if (t.status === 'Completed' || !t.deadline) return false;
+            return new Date(t.deadline) < new Date();
+          }), 'Nhiệm vụ quá hạn')}
+          className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4 cursor-pointer hover:border-rose-500 hover:shadow-md transition-all group"
+        >
+          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl group-hover:scale-110 transition-transform">
             <AlertCircle size={24} />
           </div>
           <div>
@@ -190,6 +214,16 @@ Yêu cầu:
                     outerRadius={100} 
                     paddingAngle={5}
                     stroke="none"
+                    onClick={(data) => {
+                      const statusMap: Record<string, string> = {
+                        'Đã hoàn thành': 'Completed',
+                        'Đang thực hiện': 'In Progress',
+                        'Chờ xử lý': 'Pending'
+                      };
+                      const filtered = tasks.filter(t => t.status === statusMap[data.name]);
+                      openTaskModal(filtered, `Nhiệm vụ: ${data.name}`);
+                    }}
+                    className="cursor-pointer"
                   >
                     {taskStatusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -225,7 +259,22 @@ Yêu cầu:
                   cursor={{ fill: '#f1f5f9' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
-                <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={40}>
+                <Bar 
+                  dataKey="count" 
+                  fill="#6366f1" 
+                  radius={[6, 6, 0, 0]} 
+                  barSize={40}
+                  onClick={(data) => {
+                    const priorityMap: Record<string, string> = {
+                      'Cao': 'High',
+                      'Trung bình': 'Medium',
+                      'Thấp': 'Low'
+                    };
+                    const filtered = tasks.filter(t => t.priority === priorityMap[data.name]);
+                    openTaskModal(filtered, `Nhiệm vụ ưu tiên: ${data.name}`);
+                  }}
+                  className="cursor-pointer"
+                >
                   {taskPriorityData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={
                       entry.name === 'Cao' ? '#ef4444' : 
@@ -321,6 +370,128 @@ Yêu cầu:
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Task Detail Modal */}
+      <AnimatePresence>
+        {selectedTasks && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[85vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800"
+            >
+              {/* Modal Header */}
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{modalTitle}</h3>
+                  <p className="text-sm text-slate-500 mt-1">Danh sách chi tiết các công việc trong mục này</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedTasks(null)}
+                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all hover:rotate-90"
+                >
+                  <X size={24} className="text-slate-400" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 dark:bg-slate-900/30">
+                <div className="grid grid-cols-1 gap-4">
+                  {selectedTasks.length > 0 ? (
+                    selectedTasks.map((task, index) => (
+                      <motion.div 
+                        key={task.id || index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 hover:border-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/5 transition-all group relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        
+                        <div className="flex items-start justify-between gap-6">
+                          <div className="space-y-4 flex-1">
+                            <div className="flex items-center gap-3">
+                              <h4 className="text-xl font-black text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors tracking-tight">
+                                {task.title}
+                              </h4>
+                              <div className={cn(
+                                "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm",
+                                task.status === 'Completed' ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
+                                task.status === 'In Progress' ? "bg-blue-100 text-blue-700 border border-blue-200" : "bg-slate-200 text-slate-700 border border-slate-300"
+                              )}>
+                                {task.status === 'Completed' ? 'Hoàn thành' : task.status === 'In Progress' ? 'Đang làm' : 'Chờ xử lý'}
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-6">
+                              <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                                <Calendar size={14} className="text-indigo-500" />
+                                <span className="text-slate-400 mr-1">Hạn chót:</span>
+                                <span className="text-slate-700 dark:text-slate-300">{task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Không có hạn'}</span>
+                              </div>
+                              <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                                <Tag size={14} className={cn(
+                                  task.priority === 'High' ? "text-rose-500" : 
+                                  task.priority === 'Medium' ? "text-amber-500" : "text-emerald-500"
+                                )} />
+                                <span className="text-slate-400 mr-1">Ưu tiên:</span>
+                                <span className={cn(
+                                  task.priority === 'High' ? "text-rose-600" : 
+                                  task.priority === 'Medium' ? "text-amber-600" : "text-emerald-600"
+                                )}>
+                                  {task.priority === 'High' ? 'Khẩn cấp' : task.priority === 'Medium' ? 'Trung bình' : 'Thấp'}
+                                </span>
+                              </div>
+                              {task.category && (
+                                <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                                  <Layers size={14} className="text-blue-500" />
+                                  <span className="text-slate-400 mr-1">Danh mục:</span>
+                                  <span className="text-slate-700 dark:text-slate-300">{task.category}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {task.description && (
+                              <div className="p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                                  "{task.description}"
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="w-20 h-20 bg-slate-50 dark:bg-slate-700 rounded-[2rem] flex items-center justify-center shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 transition-all duration-500 group-hover:rotate-6 shadow-inner">
+                            <FileText size={32} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-24">
+                      <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Search size={40} className="text-slate-300" />
+                      </div>
+                      <h4 className="text-xl font-black text-slate-900 dark:text-white">Không có dữ liệu</h4>
+                      <p className="text-slate-400 mt-2">Không tìm thấy công việc nào trong danh mục này</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-8 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button 
+                  onClick={() => setSelectedTasks(null)}
+                  className="px-12 py-4 bg-indigo-600 text-white rounded-2xl text-sm font-black shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95"
+                >
+                  Đóng cửa sổ
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

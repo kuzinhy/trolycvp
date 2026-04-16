@@ -182,7 +182,7 @@ export const ProgressTracking: React.FC<ProgressTrackingProps> = memo(({ items, 
                             {item.status === 'completed' && <CheckCircle2 size={12} />}
                             {item.status === 'in_progress' && <Clock size={12} />}
                             {item.status === 'pending' && <AlertCircle size={12} />}
-                            {item.result}
+                            {item.status === 'completed' ? 'Hoàn thành' : item.status === 'in_progress' ? 'Đang thực hiện' : 'Chờ xử lý'}
                           </span>
                         </td>
                         <td className="p-5 text-right" style={getStatusStyle(item.status)}>

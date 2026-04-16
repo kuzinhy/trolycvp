@@ -25,15 +25,20 @@ const SmartErrorCorrectionCenter = lazy(() => import('./SmartErrorCorrectionCent
 const AssignmentTracking = lazy(() => import('./AssignmentTracking').then(m => ({ default: m.AssignmentTracking })));
 const NewsAndOpinionView = lazy(() => import('./NewsAndOpinionView').then(m => ({ default: m.NewsAndOpinionView })));
 const EvaluationModule = lazy(() => import('./EvaluationModule').then(m => ({ default: m.EvaluationModule })));
+const RoadmapModule = lazy(() => import('./RoadmapModule').then(m => ({ default: m.RoadmapModule })));
 const GenZDecoder = lazy(() => import('./GenZDecoder').then(m => ({ default: m.GenZDecoder })));
 const PartyDocumentChecker = lazy(() => import('./PartyDocumentChecker').then(m => ({ default: m.PartyDocumentChecker })));
 const ResolutionTracker = lazy(() => import('./ResolutionTracker').then(m => ({ default: m.ResolutionTracker })));
 const PartyAdvisory = lazy(() => import('./PartyAdvisory').then(m => ({ default: m.PartyAdvisory })));
 const WorkScheduleCreator = lazy(() => import('./WorkScheduleCreator').then(m => ({ default: m.WorkScheduleCreator })));
 const DocumentAssignment = lazy(() => import('./DocumentAssignment').then(m => ({ default: m.DocumentAssignment })));
+const StrategicIntelligenceModule = lazy(() => import('./StrategicIntelligenceModule').then(m => ({ default: m.StrategicIntelligenceModule })));
+const TodoAssistant = lazy(() => import('./TodoAssistant').then(m => ({ default: m.TodoAssistant })));
+const NotesModule = lazy(() => import('./NotesModule').then(m => ({ default: m.NotesModule })));
 
 interface TabContentProps {
   currentTab: string;
+  navigationParams?: any;
   isAdmin: boolean;
   aiKnowledge: any[];
   pendingKnowledge: any[];
@@ -64,11 +69,17 @@ interface TabContentProps {
   setManualReviewStatus: (val: 'draft' | 'in_review' | 'approved' | 'published') => void;
   manualReviewNotes: string;
   setManualReviewNotes: (val: string) => void;
+  manualPriority: 'low' | 'medium' | 'high';
+  setManualPriority: (val: 'low' | 'medium' | 'high') => void;
+  manualDeadline: string;
+  setManualDeadline: (val: string) => void;
+  manualStatus: 'Pending' | 'In Progress' | 'Completed';
+  setManualStatus: (val: 'Pending' | 'In Progress' | 'Completed') => void;
   isManualPublic: boolean;
   setIsManualPublic: (val: boolean) => void;
   isManualImportant: boolean;
   setIsManualImportant: (val: boolean) => void;
-  addManualKnowledge: (category: string, pendingId?: string) => void;
+  addManualKnowledge: (category: string, title: string, content: string, tags: string[], pendingId?: string) => Promise<void>;
   isUpdating: boolean;
   updateProgress?: string;
   editingIndex: number | null;
@@ -103,11 +114,17 @@ interface TabContentProps {
   setEditReviewStatus: (val: 'draft' | 'in_review' | 'approved' | 'published') => void;
   editReviewNotes: string;
   setEditReviewNotes: (val: string) => void;
+  editPriority: 'low' | 'medium' | 'high';
+  setEditPriority: (val: 'low' | 'medium' | 'high') => void;
+  editDeadline: string;
+  setEditDeadline: (val: string) => void;
+  editStatus: 'Pending' | 'In Progress' | 'Completed';
+  setEditStatus: (val: 'Pending' | 'In Progress' | 'Completed') => void;
   updateKnowledge: (id: string, data: any) => void;
   deleteKnowledge: (id: string) => void;
   isDeleting: string | null;
   handleReorderKnowledge: (newOrder: any[]) => void;
-  smartLearnFromText: (text: string, isManual: boolean) => void;
+  smartLearnFromText: (text: string, tagsHint?: string[], isManual?: boolean) => Promise<void>;
   learnFromFile: (file: File) => void;
   isKnowledgeLearning: boolean;
   isSuggestingTags: boolean | undefined;
@@ -121,17 +138,20 @@ interface TabContentProps {
   isAuditing: boolean | undefined;
   deleteAllKnowledge: (() => void) | undefined;
   isDeletingAll: boolean | undefined;
-  isSyncingSecondBrain: boolean | undefined;
-  syncSecondBrain: (() => void) | undefined;
+  isSyncingRemote: boolean | undefined;
+  syncRemoteKnowledge: (() => void) | undefined;
   smartSummarizeKnowledge: (category?: string, limit?: number) => void;
   isSummarizing: boolean;
   summarizedContent: string | null;
   setSummarizedContent: (content: string | null) => void;
+  syncUnifiedStrategicKnowledge: () => Promise<void>;
+  isSyncingUnified?: boolean;
   pendingAIItems: any[];
   isReviewingAI: boolean;
   setIsReviewingAI: (val: boolean) => void;
   confirmAIItems: (selectedItems: any[]) => void;
   discardAIItems: () => void;
+  onStartFocus: (task: Task) => void;
   tasks: Task[];
   updateTasks: (updater: Task[] | ((prev: Task[]) => Task[])) => Promise<void>;
   messages: any[];
@@ -165,12 +185,14 @@ interface TabContentProps {
   isParsingCalendar: boolean;
   parseCalendarFile: (file: File) => void;
   uploadAndParseCalendar: (file: File) => void;
-  syncGoogleDrive: (folderId: string) => Promise<void>;
-  isSyncingDrive: boolean;
   birthdays: Birthday[];
+  updateBirthdays: (updater: Birthday[] | ((prev: Birthday[]) => Birthday[])) => Promise<void>;
   smartBriefing: string | null;
   isGeneratingBriefing: boolean;
   generateSmartBriefing: (tasks: Task[], meetings: Meeting[], events: Event[], birthdays: Birthday[]) => Promise<void>;
+  memberCount: number;
+  onlineCount: number;
+  visitCount: number;
   draftingRules: any[];
   addDraftingRule: (content: string) => void;
   toggleDraftingRule: (id: string) => void;
@@ -185,6 +207,7 @@ interface TabContentProps {
 
 export const TabContent = memo(({
   currentTab,
+  navigationParams,
   isAdmin,
   aiKnowledge,
   pendingKnowledge,
@@ -215,6 +238,12 @@ export const TabContent = memo(({
   setManualReviewStatus,
   manualReviewNotes,
   setManualReviewNotes,
+  manualPriority,
+  setManualPriority,
+  manualDeadline,
+  setManualDeadline,
+  manualStatus,
+  setManualStatus,
   isManualPublic,
   setIsManualPublic,
   isManualImportant,
@@ -254,6 +283,12 @@ export const TabContent = memo(({
   setEditReviewStatus,
   editReviewNotes,
   setEditReviewNotes,
+  editPriority,
+  setEditPriority,
+  editDeadline,
+  setEditDeadline,
+  editStatus,
+  setEditStatus,
   updateKnowledge,
   deleteKnowledge,
   isDeleting,
@@ -272,12 +307,14 @@ export const TabContent = memo(({
   isAuditing,
   deleteAllKnowledge,
   isDeletingAll,
-  isSyncingSecondBrain,
-  syncSecondBrain,
+  isSyncingRemote,
+  syncRemoteKnowledge,
   smartSummarizeKnowledge,
   isSummarizing,
   summarizedContent,
   setSummarizedContent,
+  syncUnifiedStrategicKnowledge,
+  isSyncingUnified,
   tasks,
   updateTasks,
   messages,
@@ -311,12 +348,14 @@ export const TabContent = memo(({
   isParsingCalendar,
   parseCalendarFile,
   uploadAndParseCalendar,
-  syncGoogleDrive,
-  isSyncingDrive,
   birthdays,
+  updateBirthdays,
   smartBriefing,
   isGeneratingBriefing,
   generateSmartBriefing,
+  memberCount,
+  onlineCount,
+  visitCount,
   draftingRules,
   addDraftingRule,
   toggleDraftingRule,
@@ -331,8 +370,29 @@ export const TabContent = memo(({
   setIsReviewingAI,
   confirmAIItems,
   discardAIItems,
+  onStartFocus,
   isCompactMode
 }: TabContentProps) => {
+  if (currentTab === 'todo-assistant') {
+    return (
+      <TodoAssistant 
+        tasks={tasks}
+        updateTasks={updateTasks}
+        showToast={showToast}
+        onStartFocus={onStartFocus}
+      />
+    );
+  }
+
+  if (currentTab === 'notes') {
+    return (
+      <NotesModule 
+        onNavigate={navigateTo}
+        showToast={showToast}
+      />
+    );
+  }
+
   if (currentTab === 'dashboard') {
     return (
       <DashboardModule
@@ -383,8 +443,8 @@ export const TabContent = memo(({
         isAuditing={isAuditing}
         deleteAllKnowledge={deleteAllKnowledge}
         isDeletingAll={isDeletingAll}
-        isSyncingSecondBrain={isSyncingSecondBrain}
-        syncSecondBrain={syncSecondBrain}
+        isSyncingRemote={isSyncingRemote}
+        syncRemoteKnowledge={syncRemoteKnowledge}
         chatHistory={chatHistory}
         onClearAllChatHistory={clearAllChatHistory}
         tasks={tasks}
@@ -403,9 +463,15 @@ export const TabContent = memo(({
         onViewTasks={() => navigateTo('tasks')}
         onNavigate={navigateTo}
         birthdays={birthdays}
+        updateBirthdays={updateBirthdays}
         smartBriefing={smartBriefing}
         isGeneratingBriefing={isGeneratingBriefing}
         generateSmartBriefing={generateSmartBriefing}
+        memberCount={memberCount}
+        onlineCount={onlineCount}
+        visitCount={visitCount}
+        syncUnifiedStrategicKnowledge={syncUnifiedStrategicKnowledge}
+        isSyncingUnified={isSyncingUnified}
       />
     );
   }
@@ -443,6 +509,12 @@ export const TabContent = memo(({
         setManualReviewStatus={setManualReviewStatus}
         manualReviewNotes={manualReviewNotes}
         setManualReviewNotes={setManualReviewNotes}
+        manualPriority={manualPriority}
+        setManualPriority={setManualPriority}
+        manualDeadline={manualDeadline}
+        setManualDeadline={setManualDeadline}
+        manualStatus={manualStatus}
+        setManualStatus={setManualStatus}
         isManualPublic={isManualPublic}
         setIsManualPublic={setIsManualPublic}
         isManualImportant={isManualImportant}
@@ -481,6 +553,12 @@ export const TabContent = memo(({
         setEditReviewStatus={setEditReviewStatus}
         editReviewNotes={editReviewNotes}
         setEditReviewNotes={setEditReviewNotes}
+        editPriority={editPriority}
+        setEditPriority={setEditPriority}
+        editDeadline={editDeadline}
+        setEditDeadline={setEditDeadline}
+        editStatus={editStatus}
+        setEditStatus={setEditStatus}
         updateKnowledge={updateKnowledge}
         deleteKnowledge={deleteKnowledge}
         isDeleting={isDeleting}
@@ -499,12 +577,14 @@ export const TabContent = memo(({
         isAuditing={isAuditing}
         deleteAllKnowledge={deleteAllKnowledge}
         isDeletingAll={isDeletingAll}
-        isSyncingSecondBrain={isSyncingSecondBrain}
-        syncSecondBrain={syncSecondBrain}
+        isSyncingRemote={isSyncingRemote}
+        syncRemoteKnowledge={syncRemoteKnowledge}
         smartSummarizeKnowledge={smartSummarizeKnowledge}
         isSummarizing={isSummarizing}
         summarizedContent={summarizedContent}
         setSummarizedContent={setSummarizedContent}
+        syncUnifiedStrategicKnowledge={syncUnifiedStrategicKnowledge}
+        isSyncingUnified={isSyncingUnified}
         showToast={showToast}
         pendingAIItems={pendingAIItems}
         isReviewingAI={isReviewingAI}
@@ -555,16 +635,18 @@ export const TabContent = memo(({
         isUploading={isParsingCalendar}
         onUploadCalendar={parseCalendarFile}
         onUploadCalendarFile={uploadAndParseCalendar}
-        onSyncGoogleDrive={syncGoogleDrive}
-        isSyncingDrive={isSyncingDrive}
         setHasUnsavedChanges={setHasUnsavedChanges}
         aiKnowledge={aiKnowledge}
+        onNavigate={navigateTo}
+        smartLearnFromText={smartLearnFromText}
+        isLearning={isKnowledgeLearning}
+        showToast={showToast}
       />
     );
   }
 
   if (currentTab === 'kanban') {
-    return <KanbanView tasks={tasks} />;
+    return <KanbanView tasks={tasks} updateTasks={updateTasks} />;
   }
 
   if (currentTab === 'forecasting') {
@@ -607,8 +689,16 @@ export const TabContent = memo(({
     return <EvaluationModule aiKnowledge={aiKnowledge} />;
   }
 
+  if (currentTab === 'roadmap') {
+    return <RoadmapModule />;
+  }
+
   if (currentTab === 'document-assignment') {
     return <DocumentAssignment />;
+  }
+
+  if (currentTab === 'strategic') {
+    return <StrategicIntelligenceModule aiKnowledge={aiKnowledge} showToast={showToast} />;
   }
 
   if (currentTab === 'reporting') {
@@ -618,24 +708,25 @@ export const TabContent = memo(({
         hideTabs={true}
         tasks={tasks}
         knowledge={aiKnowledge}
+        navigationParams={navigationParams}
       />
     );
   }
 
-  if (currentTab === 'utilities' || currentTab === 'drafting-pro' || currentTab === 'invitation' || currentTab === 'review' || currentTab === 'email-assistant' || currentTab === 'drafting-pro-review' || currentTab === 'drafting-pro-speech') {
+  if (currentTab === 'utilities' || currentTab === 'drafting-pro' || currentTab === 'invitation' || currentTab === 'review' || currentTab === 'drafting-pro-review' || currentTab === 'drafting-pro-speech') {
     return (
       <UtilitiesModule 
-        initialTab={(currentTab === 'drafting-pro' || currentTab === 'invitation' || currentTab === 'review' || currentTab === 'email-assistant' || currentTab === 'drafting-pro-review' || currentTab === 'drafting-pro-speech') ? 'drafting' : 'reporting'}
+        initialTab={(currentTab === 'drafting-pro' || currentTab === 'invitation' || currentTab === 'review' || currentTab === 'drafting-pro-review' || currentTab === 'drafting-pro-speech') ? 'drafting' : 'reporting'}
         initialMainTab={
           currentTab === 'drafting-pro' ? 'compose' : 
           currentTab === 'invitation' ? 'invitation' : 
           currentTab === 'review' ? 'review' : 
-          currentTab === 'email-assistant' ? 'email' : 
           currentTab === 'drafting-pro-review' ? 'party-docs' : 
           currentTab === 'drafting-pro-speech' ? 'speech' :
           undefined
         }
         hideTabs={currentTab !== 'utilities'}
+        navigationParams={navigationParams}
         draftingProps={{
           rules: draftingRules,
           addRule: addDraftingRule,

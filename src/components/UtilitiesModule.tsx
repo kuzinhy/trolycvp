@@ -12,10 +12,12 @@ const BulkReview = lazy(() => import('./BulkReview').then(m => ({ default: m.Bul
 const SmartDataExtractor = lazy(() => import('./SmartDataExtractor').then(m => ({ default: m.SmartDataExtractor })));
 const SmartTranslator = lazy(() => import('./SmartTranslator').then(m => ({ default: m.SmartTranslator })));
 const DocumentReaderModule = lazy(() => import('./DocumentReaderModule').then(m => ({ default: m.DocumentReaderModule })));
+const SpeechAssistant = lazy(() => import('./SpeechAssistant').then(m => ({ default: m.SpeechAssistant })));
 
 interface UtilitiesModuleProps {
   initialTab?: TabId;
-  initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'email' | 'speech' | 'party-docs';
+  initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'party-docs' | 'email' | 'speech';
+  navigationParams?: any;
   hideTabs?: boolean;
   draftingProps?: {
     rules: any[];
@@ -25,7 +27,7 @@ interface UtilitiesModuleProps {
     updateRule: (id: string, content: string) => void;
     showToast: (message: string, type?: any) => void;
     aiKnowledge: any[];
-    initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'email' | 'speech' | 'party-docs';
+    initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'party-docs' | 'email' | 'speech';
   };
   speechProps?: {
     aiKnowledge: any[];
@@ -44,6 +46,7 @@ interface TabItem {
 
 const INITIAL_TABS: TabItem[] = [
   { id: 'drafting', label: 'Soạn thảo văn bản', color: 'text-blue-600' },
+  { id: 'speech', label: 'Soạn bài phát biểu', color: 'text-purple-600' },
   { id: 'bulk-review', label: 'Kiểm tra văn bản', color: 'text-rose-600' },
   { id: 'reporting', label: 'Phân tích và tạo báo cáo', color: 'text-emerald-600' },
   { id: 'meeting', label: 'Trợ lý họp thông minh', color: 'text-indigo-600' },
@@ -51,7 +54,7 @@ const INITIAL_TABS: TabItem[] = [
   { id: 'pdf-reader', label: 'Đọc tài liệu', color: 'text-rose-600' },
 ];
 
-export const UtilitiesModule: React.FC<UtilitiesModuleProps> = ({ initialTab, initialMainTab, hideTabs, draftingProps, speechProps, tasks = [], knowledge = [] }) => {
+export const UtilitiesModule: React.FC<UtilitiesModuleProps> = ({ initialTab, initialMainTab, navigationParams, hideTabs, draftingProps, speechProps, tasks = [], knowledge = [] }) => {
   const [tabs, setTabs] = useState<TabItem[]>(() => {
     const saved = localStorage.getItem('utilities_tabs_order');
     if (saved) {
@@ -169,7 +172,7 @@ export const UtilitiesModule: React.FC<UtilitiesModuleProps> = ({ initialTab, in
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
           >
-            <DraftingModule {...draftingProps} speechProps={speechProps} initialMainTab={initialMainTab} />
+            <DraftingModule {...draftingProps} initialMainTab={initialMainTab} navigationParams={navigationParams} />
           </motion.div>
         )}
         {activeTab === 'translator' && (
@@ -200,6 +203,16 @@ export const UtilitiesModule: React.FC<UtilitiesModuleProps> = ({ initialTab, in
             exit={{ opacity: 0, x: -20 }}
           >
             <DocumentReaderModule />
+          </motion.div>
+        )}
+        {activeTab === 'speech' && (
+          <motion.div
+            key="speech"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <SpeechAssistant aiKnowledge={knowledge} />
           </motion.div>
         )}
         </Suspense>

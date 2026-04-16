@@ -26,14 +26,23 @@ export const logActivity = async (log: Omit<ActivityLog, 'id' | 'timestamp'>) =>
 
 export const getLogs = async (module?: string, limitCount: number = 50) => {
   try {
-    let q = query(collection(db, 'activity_logs'), orderBy('timestamp', 'desc'), limit(limitCount));
+    let q = query(collection(db, 'activity_logs'), limit(limitCount * 2));
     
     if (module) {
-      q = query(collection(db, 'activity_logs'), where('module', '==', module), orderBy('timestamp', 'desc'), limit(limitCount));
+      q = query(collection(db, 'activity_logs'), where('module', '==', module), limit(limitCount * 2));
     }
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ActivityLog[];
+    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ActivityLog[];
+    
+    // Sort client-side
+    logs.sort((a, b) => {
+      const timeA = a.timestamp?.toMillis?.() || 0;
+      const timeB = b.timestamp?.toMillis?.() || 0;
+      return timeB - timeA;
+    });
+    
+    return logs.slice(0, limitCount);
   } catch (error) {
     console.error('Error fetching logs:', error);
     return [];

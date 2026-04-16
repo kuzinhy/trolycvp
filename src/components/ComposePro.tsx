@@ -29,6 +29,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
 import { DocumentScanner } from './DocumentScanner';
+import Markdown from 'react-markdown';
 
 interface DraftingDocument {
   id: string;
@@ -57,6 +58,8 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
   const [showHistory, setShowHistory] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [aiSidebarOpen, setAiSidebarOpen] = useState(true);
+  const [activeRailTab, setActiveRailTab] = useState<'docs' | 'ai' | 'templates' | 'history'>('ai');
+  const [draftingMode, setDraftingMode] = useState<'general' | 'resolution' | 'report' | 'proposal'>('general');
   const [layout, setLayout] = useState<'single' | 'split'>('single');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastSavedContent = useRef<string>('');
@@ -293,12 +296,12 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
       let prompt = '';
       
       switch(action) {
-        case 'rewrite': prompt = `Hãy viết lại đoạn văn bản sau theo phong cách hành chính chuyên nghiệp, trang trọng hơn:\n\n${selectedText}`; break;
+        case 'rewrite': prompt = `Hãy viết lại đoạn văn bản sau theo phong cách hành chính chuyên nghiệp, trang trọng hơn. Chế độ soạn thảo: ${draftingMode === 'general' ? 'Chung' : draftingMode === 'resolution' ? 'Nghị quyết' : draftingMode === 'report' ? 'Báo cáo' : 'Tờ trình'}:\n\n${selectedText}`; break;
         case 'shorten': prompt = `Hãy tóm tắt và rút gọn đoạn văn bản sau mà vẫn giữ đủ ý chính:\n\n${selectedText}`; break;
-        case 'expand': prompt = `Hãy mở rộng và diễn đạt chi tiết hơn đoạn văn bản sau theo văn phong Đảng và Nhà nước:\n\n${selectedText}`; break;
+        case 'expand': prompt = `Hãy mở rộng và diễn đạt chi tiết hơn đoạn văn bản sau theo văn phong Đảng và Nhà nước. Chế độ soạn thảo: ${draftingMode === 'general' ? 'Chung' : draftingMode === 'resolution' ? 'Nghị quyết' : draftingMode === 'report' ? 'Báo cáo' : 'Tờ trình'}:\n\n${selectedText}`; break;
         case 'spellcheck': prompt = `Hãy kiểm tra lỗi chính tả, ngữ pháp và chuẩn hóa các thuật ngữ hành chính trong đoạn văn bản sau. Trả về bản đã sửa:\n\n${selectedText}`; break;
-        case 'standardize': prompt = `Hãy chuẩn hóa đoạn văn bản sau theo đúng thể thức văn bản hành chính (Nghị định 30/2020/NĐ-CP):\n\n${selectedText}`; break;
-        default: prompt = `${action}:\n\n${selectedText}`;
+        case 'standardize': prompt = `Hãy chuẩn hóa đoạn văn bản sau theo đúng thể thức văn bản hành chính (Nghị định 30/2020/NĐ-CP). Chế độ soạn thảo: ${draftingMode === 'general' ? 'Chung' : draftingMode === 'resolution' ? 'Nghị quyết' : draftingMode === 'report' ? 'Báo cáo' : 'Tờ trình'}:\n\n${selectedText}`; break;
+        default: prompt = `Với vai trò là trợ lý soạn thảo văn bản chuyên nghiệp, hãy thực hiện yêu cầu sau: ${action}. Chế độ soạn thảo: ${draftingMode}. Nội dung văn bản:\n\n${selectedText}`;
       }
 
       const response = await generateContentWithRetry({
@@ -333,142 +336,309 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
   if (!editor) return null;
 
   return (
-    <div className="flex h-[calc(100vh-180px)] bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden shadow-2xl">
-      {/* Left Sidebar - Document List */}
+    <div className="flex h-[calc(100vh-180px)] bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden shadow-2xl relative">
+      {/* Left Rail - Navigation */}
+      <div className="w-16 bg-slate-900 flex flex-col items-center py-6 gap-6 shrink-0 z-20">
+        <button 
+          onClick={() => { setActiveRailTab('docs'); setSidebarOpen(true); }}
+          className={cn(
+            "p-3 rounded-2xl transition-all",
+            activeRailTab === 'docs' && sidebarOpen ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "text-slate-400 hover:text-white hover:bg-white/10"
+          )}
+          title="Văn bản"
+        >
+          <FileText size={20} />
+        </button>
+        <button 
+          onClick={() => { setActiveRailTab('ai'); setSidebarOpen(true); }}
+          className={cn(
+            "p-3 rounded-2xl transition-all",
+            activeRailTab === 'ai' && sidebarOpen ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "text-slate-400 hover:text-white hover:bg-white/10"
+          )}
+          title="Trợ lý AI"
+        >
+          <Sparkles size={20} />
+        </button>
+        <button 
+          onClick={() => { setActiveRailTab('templates'); setSidebarOpen(true); }}
+          className={cn(
+            "p-3 rounded-2xl transition-all",
+            activeRailTab === 'templates' && sidebarOpen ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "text-slate-400 hover:text-white hover:bg-white/10"
+          )}
+          title="Mẫu văn bản"
+        >
+          <FileType size={20} />
+        </button>
+        <button 
+          onClick={() => { setActiveRailTab('history'); setSidebarOpen(true); }}
+          className={cn(
+            "p-3 rounded-2xl transition-all",
+            activeRailTab === 'history' && sidebarOpen ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "text-slate-400 hover:text-white hover:bg-white/10"
+          )}
+          title="Lịch sử"
+        >
+          <History size={20} />
+        </button>
+        
+        <div className="mt-auto flex flex-col gap-4">
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-3 text-slate-400 hover:text-white transition-colors"
+          >
+            {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Left Sidebar - Contextual Panel */}
       <motion.div 
         initial={false}
-        animate={{ width: sidebarOpen ? 320 : 0 }}
-        className="bg-white border-r border-slate-200 flex flex-col overflow-hidden relative"
+        animate={{ width: sidebarOpen ? 340 : 0 }}
+        className="bg-white border-r border-slate-200 flex flex-col overflow-hidden relative z-10"
       >
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-          <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Văn bản của tôi</h3>
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={() => setShowHistory(!showHistory)}
-              className={cn(
-                "p-2 rounded-xl transition-all shadow-sm",
-                showHistory ? "bg-indigo-600 text-white" : "bg-slate-50 text-slate-400 hover:text-indigo-600"
-              )}
-              title="Lịch sử phiên bản"
-            >
-              <History size={18} />
-            </button>
-            <button 
-              onClick={handleCreateNew}
-              className="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all shadow-sm"
-              title="Tạo mới"
-            >
-              <Plus size={18} />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-4 shrink-0">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text"
-              placeholder="Tìm kiếm văn bản..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-            />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-          {showHistory ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-2">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lịch sử phiên bản</h4>
+        <div className="flex-1 flex flex-col min-w-[340px]">
+          {activeRailTab === 'docs' && (
+            <>
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Quản lý văn bản</h3>
                 <button 
-                  onClick={() => setShowHistory(false)}
-                  className="text-[10px] text-indigo-600 hover:underline font-bold"
+                  onClick={handleCreateNew}
+                  className="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all shadow-sm"
+                  title="Tạo mới"
                 >
-                  Quay lại
+                  <Plus size={18} />
                 </button>
               </div>
-              {!currentDoc?.versionHistory || currentDoc.versionHistory.length === 0 ? (
-                <div className="text-center py-12 opacity-30">
-                  <Clock size={32} className="mx-auto mb-2" />
-                  <p className="text-[10px] font-medium italic">Chưa có lịch sử phiên bản</p>
+
+              <div className="p-4 shrink-0">
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="text"
+                    placeholder="Tìm kiếm văn bản..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  />
                 </div>
-              ) : (
-                currentDoc.versionHistory.map((v, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      editor?.commands.setContent(v.content);
-                      showToast('Đã khôi phục phiên bản!', 'success');
-                    }}
-                    className="w-full text-left p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all cursor-pointer group"
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                {filteredDocs.map((doc) => (
+                  <div 
+                    key={doc.id}
+                    onClick={() => setCurrentDoc(doc)}
+                    className={cn(
+                      "group p-3 rounded-2xl cursor-pointer transition-all flex items-center gap-3 border",
+                      currentDoc?.id === doc.id 
+                        ? "bg-indigo-50 border-indigo-100 shadow-sm" 
+                        : "bg-transparent border-transparent hover:bg-slate-50"
+                    )}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-slate-700">Phiên bản {currentDoc.versionHistory.length - idx}</span>
-                      <span className="text-[10px] text-slate-400">{new Date(v.timestamp).toLocaleString('vi-VN')}</span>
-                    </div>
-                    <p className="text-[10px] text-slate-500 line-clamp-2 italic">
-                      {v.content.replace(/<[^>]*>/g, '').substring(0, 50)}...
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          ) : (
-            <>
-              {filteredDocs.map((doc) => (
-                <div 
-                  key={doc.id}
-                  onClick={() => setCurrentDoc(doc)}
-                  className={cn(
-                    "group p-3 rounded-2xl cursor-pointer transition-all flex items-center gap-3 border",
-                    currentDoc?.id === doc.id 
-                      ? "bg-indigo-50 border-indigo-100 shadow-sm" 
-                      : "bg-transparent border-transparent hover:bg-slate-50"
-                  )}
-                >
-                  <div className={cn(
-                    "p-2 rounded-xl shrink-0",
-                    currentDoc?.id === doc.id ? "bg-white text-indigo-600" : "bg-slate-100 text-slate-400"
-                  )}>
-                    <FileText size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm font-bold truncate",
-                      currentDoc?.id === doc.id ? "text-indigo-900" : "text-slate-700"
+                    <div className={cn(
+                      "p-2 rounded-xl shrink-0",
+                      currentDoc?.id === doc.id ? "bg-white text-indigo-600" : "bg-slate-100 text-slate-400"
                     )}>
-                      {doc.title}
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
-                      <Clock size={10} />
-                      {doc.lastModified?.toDate ? doc.lastModified.toDate().toLocaleString('vi-VN') : 'Vừa xong'}
-                    </p>
+                      <FileText size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-sm font-bold truncate",
+                        currentDoc?.id === doc.id ? "text-indigo-900" : "text-slate-700"
+                      )}>
+                        {doc.title}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                        <Clock size={10} />
+                        {doc.lastModified?.toDate ? doc.lastModified.toDate().toLocaleString('vi-VN') : 'Vừa xong'}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={(e) => handleDeleteDoc(doc.id, e)}
+                      className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                  <button 
-                    onClick={(e) => handleDeleteDoc(doc.id, e)}
-                    className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-              {filteredDocs.length === 0 && (
-                <div className="text-center py-12 opacity-40">
-                  <FileText size={48} className="mx-auto mb-3" />
-                  <p className="text-xs font-medium">Chưa có văn bản nào</p>
-                </div>
-              )}
+                ))}
+              </div>
             </>
           )}
-        </div>
 
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 shadow-sm z-10"
-        >
-          {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-        </button>
+          {activeRailTab === 'ai' && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={18} className="text-indigo-600" />
+                  <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Trợ lý Soạn thảo AI</h3>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Chế độ soạn thảo</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: 'general', label: 'Chung' },
+                      { id: 'resolution', label: 'Nghị quyết' },
+                      { id: 'report', label: 'Báo cáo' },
+                      { id: 'proposal', label: 'Tờ trình' },
+                    ].map(mode => (
+                      <button 
+                        key={mode.id}
+                        onClick={() => setDraftingMode(mode.id as any)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border",
+                          draftingMode === mode.id 
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/20" 
+                            : "bg-white border-slate-200 text-slate-500 hover:border-indigo-300"
+                        )}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Yêu cầu soạn thảo</p>
+                  <div className="relative">
+                    <textarea 
+                      value={aiInput}
+                      onChange={(e) => setAiInput(e.target.value)}
+                      placeholder="Nhập yêu cầu cho AI (VD: Viết báo cáo tổng kết quý...)"
+                      rows={4}
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                    />
+                    <button 
+                      onClick={() => handleAIAction(aiInput)}
+                      disabled={isAIProcessing || !aiInput.trim()}
+                      className="absolute bottom-3 right-3 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+                    >
+                      {isAIProcessing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Công cụ hiệu đính</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'rewrite', label: 'Viết lại', icon: <Wand2 size={18} /> },
+                      { id: 'shorten', label: 'Rút gọn', icon: <ChevronLeft size={18} /> },
+                      { id: 'expand', label: 'Mở rộng', icon: <ChevronRight size={18} /> },
+                      { id: 'spellcheck', label: 'Chính tả', icon: <CheckCircle2 size={18} /> },
+                    ].map(action => (
+                      <button 
+                        key={action.id}
+                        onClick={() => handleAIAction(action.id)}
+                        className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-100 rounded-2xl hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-600 transition-all group shadow-sm"
+                      >
+                        <div className="text-slate-400 group-hover:text-indigo-500">{action.icon}</div>
+                        <span className="text-[11px] font-bold">{action.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button 
+                    onClick={() => handleAIAction('standardize')}
+                    className="w-full py-3 bg-slate-900 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
+                  >
+                    <Languages size={16} /> Chuẩn hóa hành chính
+                  </button>
+                </div>
+
+                <AnimatePresence>
+                  {aiFeedback && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-4"
+                    >
+                      <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-3xl relative">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Kết quả AI</p>
+                          <button onClick={() => setAiFeedback('')} className="text-slate-400 hover:text-rose-500"><Eraser size={14} /></button>
+                        </div>
+                        <div className="text-sm text-indigo-900 leading-relaxed max-h-[300px] overflow-y-auto custom-scrollbar prose prose-sm prose-indigo">
+                          <Markdown>{aiFeedback}</Markdown>
+                        </div>
+                        <button 
+                          onClick={applyAIResult}
+                          className="w-full mt-4 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-md shadow-indigo-600/20"
+                        >
+                          Áp dụng vào văn bản
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          )}
+
+          {activeRailTab === 'templates' && (
+            <div className="flex-1 flex flex-col">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Thư viện Mẫu</h3>
+              </div>
+              <div className="p-4 space-y-3">
+                {[
+                  { id: 'nghi_quyet', label: 'Nghị quyết', desc: 'Mẫu nghị quyết Đảng ủy' },
+                  { id: 'chi_thi', label: 'Chỉ thị', desc: 'Mẫu chỉ thị công tác' },
+                  { id: 'to_trinh', label: 'Tờ trình', desc: 'Mẫu tờ trình phê duyệt' },
+                  { id: 'bao_cao', label: 'Báo cáo', desc: 'Mẫu báo cáo tổng kết' },
+                ].map(t => (
+                  <button 
+                    key={t.id}
+                    onClick={() => {
+                      editor?.commands.setContent(`<h1>${t.label.toUpperCase()}</h1><p>Nội dung mẫu...</p>`);
+                      showToast(`Đã áp dụng mẫu ${t.label}`, 'success');
+                    }}
+                    className="w-full text-left p-4 bg-white border border-slate-100 rounded-2xl hover:border-indigo-300 hover:shadow-md transition-all group"
+                  >
+                    <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-600">{t.label}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">{t.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeRailTab === 'history' && (
+            <div className="flex-1 flex flex-col">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Lịch sử phiên bản</h3>
+              </div>
+              <div className="p-4 overflow-y-auto custom-scrollbar">
+                {!currentDoc?.versionHistory || currentDoc.versionHistory.length === 0 ? (
+                  <div className="text-center py-12 opacity-30">
+                    <Clock size={32} className="mx-auto mb-2" />
+                    <p className="text-[10px] font-medium italic">Chưa có lịch sử phiên bản</p>
+                  </div>
+                ) : (
+                  currentDoc.versionHistory.map((v, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        editor?.commands.setContent(v.content);
+                        showToast('Đã khôi phục phiên bản!', 'success');
+                      }}
+                      className="w-full text-left p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all cursor-pointer group mb-2"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-slate-700">Phiên bản {currentDoc.versionHistory.length - idx}</span>
+                        <span className="text-[10px] text-slate-400">{new Date(v.timestamp).toLocaleString('vi-VN')}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 line-clamp-2 italic">
+                        {v.content.replace(/<[^>]*>/g, '').substring(0, 50)}...
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Main Editor Area */}
@@ -613,13 +783,6 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
               >
                 <FileOutput size={16} />
               </button>
-              <button 
-                onClick={handleExportPDF}
-                className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-all"
-                title="Xuất file PDF"
-              >
-                <FileType size={16} />
-              </button>
             </div>
             <div className="flex items-center gap-1">
               <button 
@@ -649,7 +812,7 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
 
         {/* Editor Content */}
         <div className={cn("flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 p-8 flex gap-4", layout === 'split' ? "flex-row" : "justify-center")}>
-          <div className={cn("bg-white shadow-xl border border-slate-200 min-h-[1056px] p-[2.5cm] tiptap-editor-container relative group", layout === 'split' ? "w-1/2" : "w-full max-w-[800px]")}>
+          <div className={cn("bg-white shadow-xl border border-slate-200 min-h-[1056px] p-[2.5cm] tiptap-editor-container relative group transition-all duration-500", layout === 'split' ? "w-1/2" : "w-full max-w-[850px]")}>
             {currentDoc ? (
               <>
                 <input 
@@ -660,7 +823,7 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
                     setCurrentDoc({ ...currentDoc, title: newTitle });
                     await updateDoc(doc(db, 'drafting_documents', currentDoc.id), { title: newTitle });
                   }}
-                  className="w-full mb-8 text-2xl font-black text-slate-900 border-none focus:ring-0 p-0 placeholder:text-slate-200"
+                  className="w-full mb-8 text-3xl font-black text-slate-900 border-none focus:ring-0 p-0 placeholder:text-slate-200 text-center uppercase tracking-tight"
                   placeholder="Tiêu đề văn bản..."
                 />
                 <EditorContent editor={editor} className="prose prose-slate max-w-none min-h-[800px] focus:outline-none" />
@@ -696,127 +859,7 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
         </div>
       </div>
 
-      {/* Right Sidebar - AI Assistant */}
-      <motion.div 
-        initial={false}
-        animate={{ width: aiSidebarOpen ? 360 : 0 }}
-        className="bg-white border-l border-slate-200 flex flex-col overflow-hidden relative"
-      >
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-indigo-600" />
-            <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Trợ lý AI Pro</h3>
-          </div>
-          <button 
-            onClick={() => setAiSidebarOpen(!aiSidebarOpen)}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
-          <div className="space-y-3">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Công cụ nhanh</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                onClick={() => handleAIAction('rewrite')}
-                className="flex flex-col items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-600 transition-all group"
-              >
-                <Wand2 size={20} className="text-slate-400 group-hover:text-indigo-500" />
-                <span className="text-[11px] font-bold">Viết lại</span>
-              </button>
-              <button 
-                onClick={() => handleAIAction('shorten')}
-                className="flex flex-col items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-600 transition-all group"
-              >
-                <ChevronLeft size={20} className="text-slate-400 group-hover:text-indigo-500" />
-                <span className="text-[11px] font-bold">Rút gọn</span>
-              </button>
-              <button 
-                onClick={() => handleAIAction('expand')}
-                className="flex flex-col items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-600 transition-all group"
-              >
-                <ChevronRight size={20} className="text-slate-400 group-hover:text-indigo-500" />
-                <span className="text-[11px] font-bold">Mở rộng</span>
-              </button>
-              <button 
-                onClick={() => handleAIAction('spellcheck')}
-                className="flex flex-col items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-600 transition-all group"
-              >
-                <CheckCircle2 size={20} className="text-slate-400 group-hover:text-indigo-500" />
-                <span className="text-[11px] font-bold">Chính tả</span>
-              </button>
-            </div>
-            <button 
-              onClick={() => handleAIAction('standardize')}
-              className="w-full py-3 bg-slate-900 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
-            >
-              <Languages size={16} /> Chuẩn hóa hành chính
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Yêu cầu tùy chỉnh</p>
-            <div className="relative">
-              <textarea 
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-                placeholder="Nhập yêu cầu cho AI (VD: Viết thêm phần căn cứ pháp lý...)"
-                rows={3}
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
-              />
-              <button 
-                onClick={() => handleAIAction(aiInput)}
-                disabled={isAIProcessing || !aiInput.trim()}
-                className="absolute bottom-3 right-3 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20"
-              >
-                {isAIProcessing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-              </button>
-            </div>
-          </div>
-
-          <AnimatePresence>
-            {aiFeedback && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-4"
-              >
-                <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-3xl relative">
-                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Kết quả AI</p>
-                  <div className="text-sm text-indigo-900 leading-relaxed max-h-[300px] overflow-y-auto custom-scrollbar prose prose-sm prose-indigo">
-                    {aiFeedback}
-                  </div>
-                  <div className="flex items-center gap-2 mt-4">
-                    <button 
-                      onClick={applyAIResult}
-                      className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-md shadow-indigo-600/20"
-                    >
-                      Áp dụng vào văn bản
-                    </button>
-                    <button 
-                      onClick={() => setAiFeedback('')}
-                      className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                    >
-                      <Eraser size={16} />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {!aiSidebarOpen && (
-          <button 
-            onClick={() => setAiSidebarOpen(true)}
-            className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 shadow-sm z-10"
-          >
-            <ChevronLeft size={14} />
-          </button>
-        )}
-      </motion.div>
+      {/* Right Sidebar - AI Assistant (Removed as it's now on the left) */}
 
       {/* Global CSS for Tiptap */}
       <style>{`

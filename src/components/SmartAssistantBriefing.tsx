@@ -4,6 +4,8 @@ import { Sparkles, Calendar, CheckCircle2, AlertCircle, ArrowRight, RefreshCw, C
 import { Task, Meeting, Event, Birthday } from '../constants';
 import { cn } from '../lib/utils';
 
+import Markdown from 'react-markdown';
+
 interface SmartAssistantBriefingProps {
   tasks: Task[];
   meetings: Meeting[];
@@ -86,10 +88,10 @@ export const SmartAssistantBriefing: React.FC<SmartAssistantBriefingProps> = ({
           </div>
           
           {smartBriefing ? (
-            <div className="space-y-3">
-              <p className="text-lg font-medium leading-relaxed italic text-blue-50">
-                "{smartBriefing}"
-              </p>
+            <div className="space-y-3 prose prose-invert prose-sm max-w-none">
+              <div className="text-lg font-medium leading-relaxed italic text-blue-50">
+                <Markdown>{smartBriefing}</Markdown>
+              </div>
             </div>
           ) : (
             <>

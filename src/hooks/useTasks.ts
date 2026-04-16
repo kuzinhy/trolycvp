@@ -2,10 +2,10 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { Task, APP_VERSION } from '../constants';
 import { ToastType } from '../components/ui/Toast';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, Timestamp, query, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc, Timestamp, query, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
-import { generateContentWithRetry } from '../lib/ai-utils';
+import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
 
 const MOCK_TASKS: Task[] = [];
 
@@ -25,6 +25,7 @@ export function useTasks(showToast: (message: string, type?: ToastType) => void)
     
     const systemTasks = [
       {
+        id: 'sys-task-1',
         title: "Nhắc làm lịch trực khi Nhà nước thông báo nghỉ lễ tết",
         description: "Căn cứ vào chủ trương từ trung ương, địa phương để lập lịch trực phù hợp.",
         priority: "high" as const,
@@ -35,6 +36,7 @@ export function useTasks(showToast: (message: string, type?: ToastType) => void)
         isSystem: true
       },
       {
+        id: 'sys-task-2',
         title: "Gửi lịch làm việc, dặn hoa, xem sinh nhật tuần sau",
         description: "Hằng tuần, nhắc trước 18h ngày chủ nhật phải gửi lịch làm việc, dặn hoa, xem sinh nhật tuần sau, chuẩn bị tài liệu,...",
         priority: "medium" as const,
@@ -52,7 +54,8 @@ export function useTasks(showToast: (message: string, type?: ToastType) => void)
       console.log("Adding missing system tasks:", missingTasks.length);
       for (const st of missingTasks) {
         try {
-          await addDoc(collection(db, "users", user.uid, "tasks"), st);
+          const docRef = doc(db, "users", user.uid, "tasks", st.id);
+          await setDoc(docRef, st);
         } catch (e) {
           console.error("Error adding system task:", e);
         }
@@ -86,18 +89,17 @@ export function useTasks(showToast: (message: string, type?: ToastType) => void)
     }
   }, [user, showToast, ensureSystemTasks]);
 
+  useEffect(() => {
+    if (user) {
+      loadTasks();
+    }
+  }, [user, loadTasks]);
+
   const saveTaskToFirebase = useCallback(async (task: Task) => {
     if (!user) return;
     try {
-      if (task.id && !task.id.startsWith('t-sync-')) {
-        // Update existing
-        const docRef = doc(db, "users", user.uid, "tasks", task.id);
-        await updateDoc(docRef, { ...task });
-      } else {
-        // Add new
-        const { id, ...taskData } = task;
-        await addDoc(collection(db, "users", user.uid, "tasks"), taskData);
-      }
+      const docRef = doc(db, "users", user.uid, "tasks", task.id);
+      await setDoc(docRef, { ...task }, { merge: true });
     } catch (e) {
       console.error("Failed to save task to Firebase:", e);
       showToast("Lỗi lưu nhiệm vụ", "error");
@@ -109,14 +111,12 @@ export function useTasks(showToast: (message: string, type?: ToastType) => void)
     try {
       await addDoc(collection(db, "party_documents"), {
         content: `Nhiệm vụ: ${task.title}\nMô tả: ${task.description || 'Không có mô tả'}\nDanh mục: ${task.category || 'Chung'}\nKết quả/Trạng thái: ${task.status}`,
-        summary: `Tri thức từ nhiệm vụ: ${task.title}`,
+        title: `Tri thức từ nhiệm vụ: ${task.title}`,
         category: "Nhiệm vụ",
         tags: ["task-saved", task.category || "Chung", task.priority],
-        isImportant: task.priority === 'high',
-        isPublic: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        authorId: user.uid,
+        authorUid: user.uid,
         unitId: unitId || 'default_unit',
         type: 'document'
       });
@@ -226,9 +226,10 @@ export function useTasks(showToast: (message: string, type?: ToastType) => void)
         config: { responseMimeType: "application/json" }
       });
 
-      const analysisResults = JSON.parse(response.text);
+      const analysisResults = parseAIResponse(response.text);
       
-      const updatedTasks = tasks.map(t => {
+      if (analysisResults && Array.isArray(analysisResults)) {
+        const updatedTasks = tasks.map(t => {
         const result = analysisResults.find((r: any) => r.id === t.id);
         if (result) {
           const updated = { 
@@ -256,7 +257,8 @@ export function useTasks(showToast: (message: string, type?: ToastType) => void)
 
       setTasks(updatedTasks);
       showToast("Đã hoàn tất phân tích nhiệm vụ thông minh", "success");
-    } catch (e: any) {
+    }
+  } catch (e: any) {
       console.error("Smart analysis error:", e);
       showToast(`Lỗi phân tích thông minh: ${e.message}`, "error");
     } finally {

@@ -11,7 +11,9 @@ import {
   orderBy, 
   limit, 
   Timestamp,
-  onSnapshot
+  serverTimestamp,
+  onSnapshot,
+  writeBatch
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -46,7 +48,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import * as pdfjsLib from 'pdfjs-dist';
-import { generateContentWithRetry } from '../lib/ai-utils';
+import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
@@ -496,29 +498,28 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
         }
       });
 
-      const jsonStr = response.text.trim();
-      const officersList = JSON.parse(jsonStr);
+      const officersList = parseAIResponse(response.text);
 
-      const { writeBatch } = await import('firebase/firestore');
-      const batch = writeBatch(db);
+      if (officersList && Array.isArray(officersList)) {
+        const batch = writeBatch(db);
 
-      for (const officer of officersList) {
-        const newOfficerRef = doc(collection(db, 'officers'));
-        batch.set(newOfficerRef, {
-          name: officer.name || '',
-          gender: officer.gender || '',
-          dob: officer.dob || '',
-          cccd: officer.cccd || '',
-          position: officer.position || '',
-          unitId: unitId || 'VP',
-          authorUid: user.uid,
-          createdAt: Timestamp.now()
-        });
+        for (const officer of officersList) {
+          const newOfficerRef = doc(collection(db, 'officers'));
+          batch.set(newOfficerRef, {
+            name: officer.name || '',
+            gender: officer.gender || '',
+            dob: officer.dob || '',
+            cccd: officer.cccd || '',
+            position: officer.position || '',
+            unitId: unitId || 'VP',
+            authorUid: user.uid,
+            createdAt: serverTimestamp()
+          });
+        }
+        
+        await batch.commit();
+        alert('Đã nạp danh sách cán bộ thành công!');
       }
-      
-      await batch.commit();
-      
-      alert('Đã nạp danh sách cán bộ thành công!');
     } catch (error) {
       console.error('Error parsing PDF:', error);
       alert('Có lỗi xảy ra khi nạp file PDF.');
@@ -534,13 +535,13 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
       if (editingOfficer) {
         await updateDoc(doc(db, 'officers', editingOfficer.id), {
           ...data,
-          updatedAt: Timestamp.now()
+          updatedAt: serverTimestamp()
         });
       } else {
         await addDoc(collection(db, 'officers'), {
           ...data,
           authorUid: user.uid,
-          createdAt: Timestamp.now()
+          createdAt: serverTimestamp()
         });
       }
       setIsFormOpen(false);
@@ -590,7 +591,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
         await updateDoc(doc(db, 'evaluations', existingEval.id), {
           score: currentScore,
           feedback: currentFeedback,
-          updatedAt: Timestamp.now()
+          updatedAt: serverTimestamp()
         });
       } else {
         await addDoc(collection(db, 'evaluations'), {
@@ -600,7 +601,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
           score: currentScore,
           feedback: currentFeedback,
           authorUid: user.uid,
-          createdAt: Timestamp.now()
+          createdAt: serverTimestamp()
         });
       }
       setIsEditing(false);

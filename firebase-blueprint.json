@@ -1,5 +1,33 @@
 {
   "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "vice_chief", "staff", "user"] },
+        "departmentId": { "type": "string", "description": "Reference to Department" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Department or unit within the organization",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "managerId": { "type": "string", "description": "User ID of the department manager" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
     "Event": {
       "title": "Event",
       "description": "A calendar event",
@@ -16,16 +44,23 @@
     },
     "ViceChiefTask": {
       "title": "Vice Chief Task",
-      "description": "A task assigned to a vice chief",
+      "description": "A task assigned to a vice chief or staff",
       "type": "object",
       "properties": {
         "title": { "type": "string" },
+        "description": { "type": "string" },
         "importance": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
-        "progress": { "type": "integer" },
-        "viceChiefId": { "type": "integer" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "status": { "type": "string", "enum": ["pending", "in_progress", "completed", "cancelled"] },
+        "progress": { "type": "integer", "description": "Percentage of completion (0-100)" },
+        "category": { "type": "string", "description": "Task category for filtering" },
+        "assigneeId": { "type": "string", "description": "User ID of the person assigned to this task" },
+        "departmentId": { "type": "string", "description": "Department this task belongs to" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string", "description": "User ID of the creator" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "importance", "progress", "viceChiefId"]
+      "required": ["title", "importance", "status", "progress", "assigneeId", "createdBy"]
     },
     "ViceChiefAssignment": {
       "title": "Vice Chief Assignment",
@@ -37,9 +72,42 @@
         "photoURL": { "type": "string" }
       },
       "required": ["userId", "displayName"]
+    },
+    "KnowledgeItem": {
+      "title": "Knowledge Item",
+      "description": "A document or piece of knowledge in the system",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "summary": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "unitId": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "authorName": { "type": "string" },
+        "isImportant": { "type": "boolean" },
+        "isPublic": { "type": "boolean" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "deadline": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed"] },
+        "version": { "type": "string" },
+        "reviewStatus": { "type": "string", "enum": ["draft", "in_review", "approved", "published"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "unitId", "authorUid"]
     }
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "Collection of users"
+    },
+    "/departments/{departmentId}": {
+      "schema": { "$ref": "Department" },
+      "description": "Collection of departments"
+    },
     "/events/{eventId}": {
       "schema": { "$ref": "Event" },
       "description": "Collection of calendar events"
@@ -51,6 +119,10 @@
     "/vice_chief_assignments/{assignmentId}": {
       "schema": { "$ref": "ViceChiefAssignment" },
       "description": "Assignments of vice chiefs to columns"
+    },
+    "/party_documents/{docId}": {
+      "schema": { "$ref": "KnowledgeItem" },
+      "description": "Collection of knowledge documents"
     }
   }
 }

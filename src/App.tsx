@@ -33,9 +33,8 @@ const ConfirmationModal = lazy(() => import('./components/ui/ConfirmationModal')
 
 // Lazy load modules
 const ChatModule = lazy(() => import('./components/ChatModule').then(m => ({ default: m.ChatModule })));
-const CalendarModule = lazy(() => import('./components/CalendarModule').then(m => ({ default: m.CalendarModule })));
 const DashboardModule = lazy(() => import('./components/DashboardModule').then(m => ({ default: m.DashboardModule })));
-const KnowledgeModule = lazy(() => import('@/src/components/KnowledgeModule').then(m => ({ default: m.KnowledgeModule })));
+const KnowledgeModule = lazy(() => import('./components/KnowledgeModule').then(m => ({ default: m.KnowledgeModule })));
 const ChatHistoryModule = lazy(() => import('./components/ChatHistoryModule').then(m => ({ default: m.ChatHistoryModule })));
 const ProgressTracking = lazy(() => import('./components/ProgressTracking').then(m => ({ default: m.ProgressTracking })));
 const DraftingModule = lazy(() => import('./components/DraftingModule').then(m => ({ default: m.DraftingModule })));
@@ -43,6 +42,7 @@ const SpeechAssistant = lazy(() => import('./components/SpeechAssistant').then(m
 const UserManagementModule = lazy(() => import('./components/UserManagementModule').then(m => ({ default: m.UserManagementModule })));
 const TeamChatModule = lazy(() => import('./components/TeamChatModule').then(m => ({ default: m.TeamChatModule })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const AIReviewModal = lazy(() => import('./components/AIReviewModal').then(m => ({ default: m.AIReviewModal })));
 const UtilitiesModule = lazy(() => import('./components/UtilitiesModule').then(m => ({ default: m.UtilitiesModule })));
 const NotificationPopup = lazy(() => import('./components/NotificationPopup').then(m => ({ default: m.NotificationPopup })));
 const StrategicForecastingView = lazy(() => import('./components/StrategicForecastingView').then(m => ({ default: m.StrategicForecastingView })));
@@ -53,6 +53,8 @@ const DocumentManagementModule = lazy(() => import('./components/DocumentManagem
 const SmartErrorCorrectionCenter = lazy(() => import('./components/SmartErrorCorrectionCenter').then(m => ({ default: m.SmartErrorCorrectionCenter })));
 const NewsAndOpinionView = lazy(() => import('./components/NewsAndOpinionView').then(m => ({ default: m.NewsAndOpinionView })));
 const EvaluationModule = lazy(() => import('./components/EvaluationModule').then(m => ({ default: m.EvaluationModule })));
+const MorningBriefing = lazy(() => import('./components/MorningBriefing').then(m => ({ default: m.MorningBriefing })));
+const CommandFocusMode = lazy(() => import('./components/CommandFocusMode').then(m => ({ default: m.CommandFocusMode })));
 
 // Static-ish components
 const MemoizedSidebar = Sidebar;
@@ -82,6 +84,13 @@ import { UserPreferencesProvider } from './context/UserPreferencesContext';
 export default function App() {
   useEffect(() => {
     seedEvaluationData().catch(console.error);
+    
+    // Clean up URL parameters
+    if (window.location.search.includes('origin=')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('origin');
+      window.history.replaceState({}, document.title, url.toString());
+    }
   }, []);
   
   return (
@@ -103,8 +112,8 @@ function AppContent() {
   
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+      <div className="h-screen w-screen flex items-center justify-center bg-blue-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
       </div>
     );
   }
@@ -112,8 +121,8 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <Suspense fallback={
-        <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        <div className="h-screen w-screen flex items-center justify-center bg-blue-950">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
         </div>
       }>
         {!user ? (
@@ -139,7 +148,7 @@ function AuthenticatedApp() {
   const { user, signOutUser, isAdmin } = useAuth();
   const { preferences } = useUserPreferences();
   const { memberCount, onlineCount, visitCount } = useAppStats();
-  const { isSidebarOpen, setIsSidebarOpen, currentTab, navigateTo, hasUnsavedChanges, setHasUnsavedChanges, pendingTab, confirmNavigation, cancelNavigation } = useAppNavigation();
+  const { isSidebarOpen, setIsSidebarOpen, currentTab, navigationParams, navigateTo, hasUnsavedChanges, setHasUnsavedChanges, pendingTab, confirmNavigation, cancelNavigation } = useAppNavigation();
   const { showToast, toast, hideToast } = useToast();
   const { 
     aiKnowledge, 
@@ -171,6 +180,12 @@ function AuthenticatedApp() {
     setManualReviewStatus,
     manualReviewNotes,
     setManualReviewNotes,
+    manualPriority,
+    setManualPriority,
+    manualDeadline,
+    setManualDeadline,
+    manualStatus,
+    setManualStatus,
     isManualPublic, 
     setIsManualPublic, 
     isManualImportant, 
@@ -210,6 +225,12 @@ function AuthenticatedApp() {
     setEditReviewStatus,
     editReviewNotes,
     setEditReviewNotes,
+    editPriority,
+    setEditPriority,
+    editDeadline,
+    setEditDeadline,
+    editStatus,
+    setEditStatus,
     updateKnowledge, 
     deleteKnowledge, 
     isDeleting, 
@@ -226,8 +247,8 @@ function AuthenticatedApp() {
     isRemovingDuplicates, 
     deleteAllKnowledge, 
     isDeletingAll, 
-    isSyncingSecondBrain, 
-    syncSecondBrain, 
+    isSyncingRemote, 
+    syncRemoteKnowledge, 
     auditAndOptimizeKnowledge,
     isAuditing,
     smartSummarizeKnowledge, 
@@ -238,17 +259,33 @@ function AuthenticatedApp() {
     isReviewingAI,
     setIsReviewingAI,
     confirmAIItems,
-    discardAIItems
+    discardAIItems,
+    syncUnifiedStrategicKnowledge,
+    isSyncingUnified
   } = useKnowledge(showToast, setHasUnsavedChanges);
   const { tasks, updateTasks } = useTasks(showToast);
-  const { messages, setMessages, input, setInput, isLoading, handleSend, messagesEndRef, inputRef, copyToClipboard, copiedId, saveToKnowledge, isSaving, isLearning: isChatLearning, chatHistory, loadChatHistory, deleteChatHistory, clearAllChatHistory, isHistoryLoading, isSearchEnabled, setIsSearchEnabled, isSimpleMode, setIsSimpleMode } = useChat(aiKnowledge, showToast, loadKnowledge);
+  const { config, birthdays, updateBirthdays, meetings, updateMeetings, isSavingMeetings, loadMeetings, events, updateEvents, isParsingCalendar, parseCalendarFile, uploadAndParseCalendar, isBirthdaysLoading, smartBriefing, isGeneratingBriefing, generateSmartBriefing } = useDashboard(showToast, updateTasks);
+  const { messages, setMessages, input, setInput, isLoading, handleSend, messagesEndRef, inputRef, copyToClipboard, copiedId, saveToKnowledge, isSaving, isLearning: isChatLearning, chatHistory, loadChatHistory, deleteChatHistory, clearAllChatHistory, isHistoryLoading, isSearchEnabled, setIsSearchEnabled, isSimpleMode, setIsSimpleMode } = useChat(aiKnowledge, showToast, loadKnowledge, meetings, tasks, events, birthdays);
   const { notifications, showNotifications, setShowNotifications, markAsRead, settings: notificationSettings, setSettings: setNotificationSettings, ambientNotification, setAmbientNotification, latestNotification, setLatestNotification, markAllAsRead, addNotification } = useNotifications();
-  const { config, birthdays, updateBirthdays, meetings, updateMeetings, isSavingMeetings, loadMeetings, events, updateEvents, isParsingCalendar, parseCalendarFile, uploadAndParseCalendar, syncGoogleDrive, isSyncingDrive, isBirthdaysLoading, syncBirthdaysFromKnowledge, smartBriefing, isGeneratingBriefing, generateSmartBriefing } = useDashboard();
   useReminders(meetings, events, birthdays, tasks);
   const { rules: draftingRules, addRule: addDraftingRule, toggleRule: toggleDraftingRule, deleteRule: deleteDraftingRule, updateRule: updateDraftingRule } = useDraftingRules(showToast);
   const { logAction } = useHistory();
   const [isTeamChatOpen, setIsTeamChatOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showMorningBriefing, setShowMorningBriefing] = useState(false);
+  const [focusTask, setFocusTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    const hasSeenBriefing = sessionStorage.getItem('hasSeenMorningBriefing');
+    if (!hasSeenBriefing && user) {
+      const timer = setTimeout(() => {
+        setShowMorningBriefing(true);
+        sessionStorage.setItem('hasSeenMorningBriefing', 'true');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
   const isAnyLearning = isKnowledgeLearning || isChatLearning;
   const MOCK_TRACKING_DATA: any[] = [];
 
@@ -299,12 +336,12 @@ function AuthenticatedApp() {
 
   return (
     <Suspense fallback={
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+      <div className="h-screen w-screen flex items-center justify-center bg-blue-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
       </div>
     }>
       <div className={cn(
-        "flex h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500",
+        "flex h-screen bg-blue-50 dark:bg-blue-950 transition-colors duration-500",
         preferences.sidebarPosition === 'right' && "flex-row-reverse"
       )}>
       {/* Confirmation Modal for Unsaved Changes */}
@@ -375,6 +412,7 @@ function AuthenticatedApp() {
                 <ErrorBoundary>
                   <TabContent 
                   currentTab={currentTab}
+                  navigationParams={navigationParams}
                   isAdmin={isAdmin}
                   aiKnowledge={aiKnowledge}
                   pendingKnowledge={pendingKnowledge}
@@ -405,6 +443,12 @@ function AuthenticatedApp() {
                   setManualReviewStatus={setManualReviewStatus}
                   manualReviewNotes={manualReviewNotes}
                   setManualReviewNotes={setManualReviewNotes}
+                  manualPriority={manualPriority}
+                  setManualPriority={setManualPriority}
+                  manualDeadline={manualDeadline}
+                  setManualDeadline={setManualDeadline}
+                  manualStatus={manualStatus}
+                  setManualStatus={setManualStatus}
                   isManualPublic={isManualPublic}
                   setIsManualPublic={setIsManualPublic}
                   isManualImportant={isManualImportant}
@@ -444,6 +488,12 @@ function AuthenticatedApp() {
                   setEditReviewStatus={setEditReviewStatus}
                   editReviewNotes={editReviewNotes}
                   setEditReviewNotes={setEditReviewNotes}
+                  editPriority={editPriority}
+                  setEditPriority={setEditPriority}
+                  editDeadline={editDeadline}
+                  setEditDeadline={setEditDeadline}
+                  editStatus={editStatus}
+                  setEditStatus={setEditStatus}
                   updateKnowledge={updateKnowledge}
                   deleteKnowledge={deleteKnowledge}
                   isDeleting={isDeleting}
@@ -462,8 +512,10 @@ function AuthenticatedApp() {
                   isAuditing={isAuditing}
                   deleteAllKnowledge={deleteAllKnowledge}
                   isDeletingAll={isDeletingAll}
-                  isSyncingSecondBrain={isSyncingSecondBrain}
-                  syncSecondBrain={syncSecondBrain}
+                  isSyncingRemote={isSyncingRemote}
+                  syncRemoteKnowledge={syncRemoteKnowledge}
+                  syncUnifiedStrategicKnowledge={syncUnifiedStrategicKnowledge}
+                  isSyncingUnified={isSyncingUnified}
                   smartSummarizeKnowledge={smartSummarizeKnowledge}
                   isSummarizing={isSummarizing}
                   summarizedContent={summarizedContent}
@@ -501,12 +553,14 @@ function AuthenticatedApp() {
                   isParsingCalendar={isParsingCalendar}
                   parseCalendarFile={parseCalendarFile}
                   uploadAndParseCalendar={uploadAndParseCalendar}
-                  syncGoogleDrive={syncGoogleDrive}
-                  isSyncingDrive={isSyncingDrive}
                   birthdays={birthdays}
+                  updateBirthdays={updateBirthdays}
                   smartBriefing={smartBriefing}
                   isGeneratingBriefing={isGeneratingBriefing}
                   generateSmartBriefing={generateSmartBriefing}
+                  memberCount={memberCount}
+                  onlineCount={onlineCount}
+                  visitCount={visitCount}
                   draftingRules={draftingRules}
                   addDraftingRule={addDraftingRule}
                   toggleDraftingRule={toggleDraftingRule}
@@ -522,6 +576,7 @@ function AuthenticatedApp() {
                   setIsReviewingAI={setIsReviewingAI}
                   confirmAIItems={confirmAIItems}
                   discardAIItems={discardAIItems}
+                  onStartFocus={(task: Task) => setFocusTask(task)}
                 />
               </ErrorBoundary>
               </motion.div>
@@ -532,7 +587,7 @@ function AuthenticatedApp() {
 
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-blue-950/40 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -570,6 +625,35 @@ function AuthenticatedApp() {
         notification={ambientNotification} 
         onClose={() => setAmbientNotification(null)} 
       />
+
+      <AIReviewModal 
+        isOpen={isReviewingAI}
+        onClose={discardAIItems}
+        onConfirm={confirmAIItems}
+        items={pendingAIItems}
+        existingKnowledge={aiKnowledge}
+      />
+
+      <AnimatePresence>
+        {showMorningBriefing && (
+          <MorningBriefing 
+            tasks={tasks}
+            meetings={meetings}
+            events={events}
+            onClose={() => setShowMorningBriefing(false)}
+          />
+        )}
+        {focusTask && (
+          <CommandFocusMode 
+            task={focusTask}
+            onClose={() => setFocusTask(null)}
+            onComplete={(id) => {
+              updateTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'Completed', progress: 100, completedAt: Date.now() } : t));
+              showToast("Nhiệm vụ đã hoàn thành!", "success");
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       <AdminLoginNotifier />
 

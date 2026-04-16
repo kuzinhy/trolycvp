@@ -7,8 +7,11 @@ import axios from "axios";
 import dotenv from "dotenv";
 import multer from "multer";
 import session from "express-session";
-import { google } from "googleapis";
 import admin from "firebase-admin";
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
+import mammoth from 'mammoth';
+import Tesseract from 'tesseract.js';
 
 dotenv.config();
 
@@ -271,7 +274,19 @@ app.post("/api/parse-document", (req, res, next) => {
   }
 
   try {
-    const text = req.file.buffer.toString("utf-8");
+    let text = "";
+    if (req.file.mimetype === 'application/pdf') {
+      const data = await pdfParse(req.file.buffer);
+      text = data.text;
+    } else if (req.file.mimetype?.includes('word') || req.file.mimetype?.includes('document')) {
+      const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+      text = result.value;
+    } else if (req.file.mimetype?.startsWith('image/')) {
+      const result = await Tesseract.recognize(req.file.buffer, 'vie+eng');
+      text = result.data.text;
+    } else {
+      text = req.file.buffer.toString("utf-8");
+    }
 
     if (!text || text.trim().length === 0) {
       console.warn("Extracted text is empty");
@@ -902,19 +917,35 @@ import { SECOND_BRAIN_URL } from "./src/constants.ts";
 // Proxy endpoint for Second Brain (Google Apps Script) to bypass CORS
 app.get("/api/second-brain/sync", async (req, res) => {
   try {
-    console.log("Syncing Second Brain from Apps Script...");
+    if (!SECOND_BRAIN_URL || SECOND_BRAIN_URL.trim() === "") {
+      console.warn("SECOND_BRAIN_URL is not configured in constants.ts");
+      return res.status(400).json({ 
+        error: "Kho kiến thức thứ 2 chưa được cấu hình URL kết nối", 
+        details: "Vui lòng cấu hình SECOND_BRAIN_URL trong file src/constants.ts để sử dụng tính năng này." 
+      });
+    }
+
+    console.log(`Syncing Second Brain from Apps Script: ${SECOND_BRAIN_URL.substring(0, 50)}...`);
     const response = await axios.get(SECOND_BRAIN_URL, {
-      timeout: 30000,
-      maxRedirects: 5
+      timeout: 90000, // Increase to 90s for large drive folders
+      maxRedirects: 10,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Strategic-Command-Elite-v6.0)'
+      }
     });
     
-    // Apps Script usually returns JSON if configured correctly
+    console.log("Apps Script response status:", response.status);
     res.json(response.data);
   } catch (error: any) {
-    console.error("Second Brain sync error:", error.message);
+    const errorMessage = error.response ? 
+      `Google Apps Script returned ${error.response.status}: ${JSON.stringify(error.response.data)}` : 
+      error.message;
+    
+    console.error("Second Brain sync error:", errorMessage);
     res.status(500).json({ 
-      error: "Không thể kết nối với Kho kiến thức thứ 2", 
-      details: error.message 
+      error: "Không thể kết nối với Kho kiến thức thứ 2 (Apps Script)", 
+      details: errorMessage,
+      code: error.code || 'UNKNOWN'
     });
   }
 });
@@ -939,330 +970,6 @@ app.post("/api/github/save-birthdays", async (req, res) => {
   } catch (error: any) {
     console.error("GitHub API error:", error.message);
     res.status(500).json({ error: "Lỗi khi lưu vào GitHub", details: error.message });
-  }
-});
-
-// GitHub API endpoint to get birthdays
-app.get("/api/github/birthdays", async (req, res) => {
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-  const GITHUB_OWNER = process.env.GITHUB_OWNER || "kuzinhy";
-  const GITHUB_REPO = process.env.GITHUB_REPO || "TroLyBiThu";
-  const GITHUB_BRANCH = process.env.GITHUB_BRANCH || "src";
-  const GITHUB_FILE_PATH = "data/birthdays.json";
-
-  try {
-    const data = await fetchGitHubJsonFile(GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH, GITHUB_FILE_PATH, GITHUB_TOKEN);
-    res.json(data || { birthdays: [] });
-  } catch (error: any) {
-    console.error("GitHub API error:", error.message);
-    res.status(500).json({ error: "Lỗi khi tải ngày sinh nhật từ GitHub" });
-  }
-});
-
-// --- Google Drive Integration ---
-
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  `${process.env.APP_URL || 'http://localhost:3000'}/api/auth/google/callback`
-);
-
-app.get("/api/auth/google/url", (req, res) => {
-  const url = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: ['https://www.googleapis.com/auth/drive.readonly'],
-    prompt: 'consent'
-  });
-  res.json({ url });
-});
-
-app.get("/api/auth/google/callback", async (req: any, res) => {
-  const { code } = req.query;
-  try {
-    const { tokens } = await oauth2Client.getToken(code as string);
-    req.session.tokens = tokens;
-    
-    res.send(`
-      <html>
-        <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc;">
-          <div style="text-align: center; padding: 2rem; background: white; border-radius: 1rem; shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-            <h2 style="color: #059669;">Kết nối thành công!</h2>
-            <p style="color: #64748b;">Cửa sổ này sẽ tự đóng sau giây lát...</p>
-            <script>
-              if (window.opener) {
-                window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS' }, '*');
-                setTimeout(() => window.close(), 2000);
-              } else {
-                window.location.href = '/';
-              }
-            </script>
-          </div>
-        </body>
-      </html>
-    `);
-  } catch (error: any) {
-    console.error("Google Auth Error:", error);
-    res.status(500).send("Authentication failed");
-  }
-});
-
-app.get("/api/drive/status", (req: any, res) => {
-  res.json({ connected: !!req.session.tokens });
-});
-
-app.post("/api/drive/sync", async (req: any, res) => {
-  if (!req.session.tokens) {
-    return res.status(401).json({ error: "Chưa kết nối Google Drive" });
-  }
-
-  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID || req.body.folderId;
-  if (!folderId) {
-    return res.status(400).json({ error: "Thiếu Folder ID" });
-  }
-
-  try {
-    oauth2Client.setCredentials(req.session.tokens);
-    const drive = google.drive({ version: 'v3', auth: oauth2Client });
-
-    // List files in folder with modifiedTime
-    const response = await drive.files.list({
-      q: `'${folderId}' in parents and trashed = false`,
-      fields: 'files(id, name, mimeType, modifiedTime, version)',
-    });
-
-    const files = response.data.files || [];
-    const results = [];
-
-    // Get sync history from Firestore if available
-    let syncHistory: Record<string, string> = {};
-    if (dbAdmin) {
-      const historySnap = await dbAdmin.collection('drive_sync_history').get();
-      historySnap.forEach(doc => {
-        syncHistory[doc.id] = doc.data().modifiedTime;
-      });
-    }
-
-    for (const file of files) {
-      if (!file.id) continue;
-
-      // Skip if file hasn't changed
-      if (syncHistory[file.id] === file.modifiedTime) {
-        console.log(`File ${file.name} already synced and unchanged.`);
-        continue;
-      }
-
-      try {
-        let content = "";
-        if (file.mimeType === 'application/vnd.google-apps.document') {
-          // Export Google Doc as text
-          const exportRes = await drive.files.export({
-            fileId: file.id!,
-            mimeType: 'text/plain',
-          });
-          content = exportRes.data as string;
-        } else if (file.mimeType === 'text/plain' || file.mimeType === 'application/pdf' || file.mimeType?.includes('word')) {
-          // Download binary file
-          const downloadRes = await drive.files.get({
-            fileId: file.id!,
-            alt: 'media',
-          }, { responseType: 'arraybuffer' });
-          
-          const buffer = Buffer.from(downloadRes.data as ArrayBuffer);
-          
-          content = buffer.toString('utf-8');
-        }
-
-        if (content.trim()) {
-          results.push({
-            title: file.name,
-            content: content.trim(),
-            source: 'Google Drive',
-            fileId: file.id,
-            modifiedTime: file.modifiedTime
-          });
-
-          // Update sync history in Firestore
-          if (dbAdmin) {
-            await dbAdmin.collection('drive_sync_history').doc(file.id).set({
-              name: file.name,
-              modifiedTime: file.modifiedTime,
-              syncedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-          }
-        }
-      } catch (fileError) {
-        console.error(`Error processing file ${file.name}:`, fileError);
-      }
-    }
-
-    res.json({ success: true, filesSynced: results.length, data: results });
-  } catch (error: any) {
-    console.error("Drive Sync Error:", error);
-    res.status(500).json({ error: "Lỗi khi đồng bộ Drive", details: error.message });
-  }
-});
-
-app.get("/api/drive/search-sample-speech", async (req: any, res) => {
-  if (!req.session.tokens) {
-    return res.status(401).json({ error: "Chưa kết nối Google Drive" });
-  }
-
-  try {
-    oauth2Client.setCredentials(req.session.tokens);
-    const drive = google.drive({ version: 'v3', auth: oauth2Client });
-
-    // Search for file named "Bài phát biểu mẫu"
-    const response = await drive.files.list({
-      q: "name = 'Bài phát biểu mẫu' and trashed = false",
-      fields: 'files(id, name, mimeType)',
-    });
-
-    const files = response.data.files || [];
-    if (files.length === 0) {
-      return res.status(404).json({ error: "Không tìm thấy file 'Bài phát biểu mẫu' trên Drive" });
-    }
-
-    const file = files[0];
-    let content = "";
-
-    if (file.mimeType === 'application/vnd.google-apps.document') {
-      const exportRes = await drive.files.export({
-        fileId: file.id!,
-        mimeType: 'text/plain',
-      });
-      content = exportRes.data as string;
-    } else {
-      const downloadRes = await drive.files.get({
-        fileId: file.id!,
-        alt: 'media',
-      }, { responseType: 'arraybuffer' });
-      
-      const buffer = Buffer.from(downloadRes.data as ArrayBuffer);
-      
-      content = buffer.toString('utf-8');
-    }
-
-    res.json({ title: file.name, content: content.trim() });
-  } catch (error: any) {
-    console.error("Drive Search Error:", error);
-    res.status(500).json({ error: "Lỗi khi tìm kiếm trên Drive", details: error.message });
-  }
-});
-
-// --- Microsoft OneNote Integration ---
-
-const MS_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
-const MS_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
-const MS_REDIRECT_URI = `${process.env.APP_URL || 'http://localhost:3000'}/api/auth/onenote/callback`;
-
-app.get("/api/auth/onenote/url", (req, res) => {
-  const params = new URLSearchParams({
-    client_id: MS_CLIENT_ID || '',
-    response_type: 'code',
-    redirect_uri: MS_REDIRECT_URI,
-    response_mode: 'query',
-    scope: 'offline_access User.Read Notes.Read Notes.Read.All',
-    prompt: 'consent'
-  });
-  const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params.toString()}`;
-  res.json({ url });
-});
-
-app.get("/api/auth/onenote/callback", async (req: any, res) => {
-  const { code } = req.query;
-  try {
-    const response = await axios.post('https://login.microsoftonline.com/common/oauth2/v2.0/token', 
-      new URLSearchParams({
-        client_id: MS_CLIENT_ID || '',
-        client_secret: MS_CLIENT_SECRET || '',
-        code: code as string,
-        redirect_uri: MS_REDIRECT_URI,
-        grant_type: 'authorization_code'
-      }).toString(),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
-
-    req.session.msTokens = response.data;
-    
-    res.send(`
-      <html>
-        <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f9ff;">
-          <div style="text-align: center; padding: 2rem; background: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-            <h2 style="color: #2563eb;">Kết nối OneNote thành công!</h2>
-            <p style="color: #64748b;">Cửa sổ này sẽ tự đóng sau giây lát...</p>
-            <script>
-              if (window.opener) {
-                window.opener.postMessage({ type: 'ONENOTE_AUTH_SUCCESS' }, '*');
-                setTimeout(() => window.close(), 2000);
-              } else {
-                window.location.href = '/';
-              }
-            </script>
-          </div>
-        </body>
-      </html>
-    `);
-  } catch (error: any) {
-    console.error("OneNote Auth Error:", error.response?.data || error.message);
-    res.status(500).send("Authentication failed");
-  }
-});
-
-app.get("/api/onenote/status", (req: any, res) => {
-  res.json({ connected: !!req.session.msTokens });
-});
-
-app.post("/api/onenote/sync", async (req: any, res) => {
-  if (!req.session.msTokens) {
-    return res.status(401).json({ error: "Chưa kết nối Microsoft OneNote" });
-  }
-
-  try {
-    const accessToken = req.session.msTokens.access_token;
-    
-    // Fetch OneNote pages
-    // https://learn.microsoft.com/en-us/graph/api/onenote-list-pages
-    const pagesRes = await axios.get('https://graph.microsoft.com/v1.0/me/onenote/pages', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      params: {
-        $select: 'id,title,lastModifiedDateTime,contentUrl',
-        $top: 20,
-        $orderby: 'lastModifiedDateTime desc'
-      }
-    });
-
-    const pages = pagesRes.data.value || [];
-    const results = [];
-
-    for (const page of pages) {
-      try {
-        // Fetch page content (HTML format)
-        const contentRes = await axios.get(`https://graph.microsoft.com/v1.0/me/onenote/pages/${page.id}/content`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-        
-        // Basic HTML to text conversion (OneNote content is HTML)
-        const html = contentRes.data;
-        const textContent = html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
-
-        if (textContent) {
-          results.push({
-            title: page.title,
-            content: textContent,
-            source: 'OneNote',
-            pageId: page.id,
-            modifiedTime: page.lastModifiedDateTime
-          });
-        }
-      } catch (pageErr) {
-        console.error(`Error fetching OneNote page ${page.id}:`, pageErr);
-      }
-    }
-
-    res.json({ success: true, pagesSynced: results.length, data: results });
-  } catch (error: any) {
-    console.error("OneNote Sync Error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Lỗi khi đồng bộ OneNote", details: error.message });
   }
 });
 

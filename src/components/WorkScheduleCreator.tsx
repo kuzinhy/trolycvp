@@ -31,13 +31,18 @@ import {
   Mic,
   BarChart3,
   TrendingUp,
-  Briefcase
+  Briefcase,
+  Info,
+  Zap,
+  FileSearch
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { DocumentScanner } from './DocumentScanner';
 import { cn } from '../lib/utils';
 import { logActivity } from '../lib/logService';
 import { auth } from '../lib/firebase';
 import { STAFF_LIST } from '../constants';
+import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
 import { 
   format, 
   startOfWeek, 
@@ -304,7 +309,7 @@ const DraggableItem = React.memo(({ item, onEdit, onDelete, conflicts = [] }: Dr
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative p-3 rounded-xl border bg-white shadow-sm hover:shadow-md transition-all cursor-default",
+        "group relative p-2 rounded-xl border bg-white shadow-sm hover:shadow-md transition-all cursor-default",
         item.priority === 'high' ? "border-l-4 border-l-red-500 border-slate-200" :
         item.priority === 'medium' ? "border-l-4 border-l-amber-500 border-slate-200" :
         "border-l-4 border-l-slate-400 border-slate-200",
@@ -329,7 +334,7 @@ const DraggableItem = React.memo(({ item, onEdit, onDelete, conflicts = [] }: Dr
         </div>
       </div>
       
-      <div className="mt-2 flex flex-wrap gap-1">
+      <div className="mt-1 flex flex-wrap gap-1">
         <div className="flex items-center gap-1 text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
           <Users size={8} className="text-indigo-500" />
           {item.chairperson || 'Chưa rõ'}
@@ -353,7 +358,7 @@ const DraggableItem = React.memo(({ item, onEdit, onDelete, conflicts = [] }: Dr
       </div>
 
       {item.status && (
-        <div className="mt-2 flex items-center gap-1">
+        <div className="mt-1 flex items-center gap-1">
           <span className={cn(
             "text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm",
             item.status === 'published' ? "bg-emerald-100 text-emerald-700" :
@@ -366,7 +371,7 @@ const DraggableItem = React.memo(({ item, onEdit, onDelete, conflicts = [] }: Dr
       )}
 
       {conflicts.length > 0 && (
-        <div className="mt-2 bg-red-50 p-1.5 rounded-lg border border-red-100">
+        <div className="mt-1 bg-red-50 p-1.5 rounded-lg border border-red-100">
           <div className="flex items-center gap-1 text-red-600 mb-1">
             <AlertTriangle size={10} />
             <span className="text-[9px] font-black uppercase tracking-widest">Trùng lặp</span>
@@ -394,31 +399,308 @@ const DraggableItem = React.memo(({ item, onEdit, onDelete, conflicts = [] }: Dr
   );
 });
 
-export const WorkScheduleCreator: React.FC = () => {
+interface WorkScheduleCreatorProps {
+  updateMeetings?: (updater: any[] | ((prev: any[]) => any[])) => Promise<void>;
+  updateTasks?: (updater: any[] | ((prev: any[]) => any[])) => Promise<void>;
+  updateEvents?: (updater: any[] | ((prev: any[]) => any[])) => Promise<void>;
+  showToast?: (message: string, type?: any) => void;
+  initialItem?: any;
+  onClearInitialItem?: () => void;
+  items?: ScheduleItem[];
+  setItems?: React.Dispatch<React.SetStateAction<ScheduleItem[]>>;
+}
+
+export const WorkScheduleCreator: React.FC<WorkScheduleCreatorProps> = ({
+  updateMeetings,
+  updateTasks,
+  updateEvents,
+  showToast,
+  initialItem,
+  onClearInitialItem,
+  items: externalItems,
+  setItems: setExternalItems
+}) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [items, setItems] = useState<ScheduleItem[]>([]);
+  const [internalItems, setInternalItems] = useState<ScheduleItem[]>([]);
+  
+  const items = externalItems || internalItems;
+  const setItems = setExternalItems || setInternalItems;
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingWeekly, setIsGeneratingWeekly] = useState(false);
+  const [isResolvingConflicts, setIsResolvingConflicts] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+
+  const resolveConflictsWithAI = async () => {
+    if (items.length === 0) return;
+    setIsResolvingConflicts(true);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const prompt = `Bạn là Trợ lý Lịch công tác chuyên nghiệp. Hãy phát hiện và đề xuất giải quyết các xung đột trong lịch công tác sau.
+Xung đột bao gồm:
+1. Trùng thời gian (Overlap): Hai lịch có cùng khung giờ hoặc khung giờ giao nhau.
+2. Trùng địa điểm: Hai lịch tại cùng một địa điểm cùng lúc.
+3. Trùng chủ trì: Một người chủ trì hai việc cùng lúc.
+
+Dữ liệu:
+${JSON.stringify(items.map(i => ({ id: i.id, date: i.date, time: i.time, endTime: i.endTime, content: i.content, chairperson: i.chairperson, location: i.location })), null, 2)}
+
+HÃY TRẢ VỀ MỘT MẢNG JSON các ScheduleItem đã được điều chỉnh thời gian để hết xung đột. 
+Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
+
+      const model = ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [{ parts: [{ text: prompt }] }],
+        config: { responseMimeType: "application/json" }
+      });
+
+      const response = await model;
+      const text = response.text || '[]';
+      const data = parseAIResponse(text);
+      
+      if (data && Array.isArray(data)) {
+        const updatedItems = items.map(item => {
+          const aiItem = data.find((d: any) => d.id === item.id);
+          return aiItem ? { ...item, ...aiItem } : item;
+        });
+        setItems(updatedItems);
+        showToast("Đã tự động xử lý xung đột lịch", "success");
+        if (autoSync) syncItemsToSystem(updatedItems, true);
+      }
+    } catch (err) {
+      console.error("AI Conflict Resolution Error:", err);
+      showToast("Không thể xử lý xung đột", "error");
+    } finally {
+      setIsResolvingConflicts(false);
+    }
+  };
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [isQuickBuilderOpen, setIsQuickBuilderOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'time' | 'chairperson' | 'location' | 'participants' | 'type' | 'preparingUnit'>('time');
   const [autoGenerate, setAutoGenerate] = useState(true);
+  const [autoSync, setAutoSync] = useState(true);
   const [templates, setTemplates] = useState<{name: string, items: ScheduleItem[]}[]>([]);
+
+  useEffect(() => {
+    if (initialItem) {
+      // Map internal types to Vietnamese display types
+      let mappedType = initialItem.type;
+      if (mappedType === 'meeting') mappedType = 'Họp';
+      else if (mappedType === 'event') mappedType = 'Sự kiện';
+      else if (mappedType === 'task') mappedType = 'Nhiệm vụ';
+      else if (!mappedType) mappedType = initialItem.title ? 'Nhiệm vụ' : 'Họp';
+
+      const mappedItem: ScheduleItem = {
+        id: initialItem.id || Math.random().toString(36).substr(2, 9),
+        date: initialItem.date || initialItem.deadline || new Date().toISOString(),
+        time: initialItem.time || '08:00',
+        endTime: initialItem.endTime || '09:00',
+        duration: 60,
+        chairperson: initialItem.chairperson || initialItem.assignee || '',
+        type: mappedType,
+        content: initialItem.name || initialItem.title || '',
+        participants: Array.isArray(initialItem.participants) ? initialItem.participants : [],
+        location: initialItem.location || '',
+        preparingUnit: initialItem.preparingUnit || '',
+        priority: initialItem.priority || 'medium',
+        notes: initialItem.description || initialItem.notes || '',
+        status: initialItem.status || 'draft'
+      };
+      
+      setItems(prev => {
+        const exists = prev.some(i => i.id === mappedItem.id);
+        if (exists) {
+          return prev.map(i => i.id === mappedItem.id ? mappedItem : i);
+        }
+        return [...prev, mappedItem];
+      });
+      
+      setEditingItem(mappedItem);
+      if (onClearInitialItem) onClearInitialItem();
+    }
+  }, [initialItem, onClearInitialItem]);
 
   const saveAsTemplate = () => {
     const name = prompt("Nhập tên mẫu lịch:");
     if (name) {
       setTemplates([...templates, { name, items }]);
+      if (showToast) showToast('Đã lưu mẫu lịch thành công', 'success');
     }
   };
 
-  const loadTemplate = (template: {name: string, items: ScheduleItem[]}) => {
-    if (window.confirm(`Bạn có muốn tải mẫu "${template.name}"? (Sẽ ghi đè lịch hiện tại)`)) {
-      setItems(template.items);
+  const syncItemsToSystem = async (itemsToSync: ScheduleItem[], silent: boolean = false) => {
+    if (!updateMeetings || !updateTasks || !updateEvents) return;
+    
+    try {
+      const meetingsToUpdate: any[] = [];
+      const tasksToUpdate: any[] = [];
+      const eventsToUpdate: any[] = [];
+
+      itemsToSync.forEach(item => {
+        const baseItem = {
+          id: item.id || (Date.now().toString() + Math.random().toString(36).substring(2, 9)),
+          title: item.content || '',
+          date: item.date || new Date().toISOString(),
+          time: item.time || '08:00',
+          endTime: item.endTime || '09:00',
+          location: item.location || '',
+          participants: item.participants || [],
+          description: item.notes || '',
+          status: item.status || 'pending'
+        };
+
+        const typeLower = (item.type || '').toLowerCase();
+        if (typeLower.includes('họp') || typeLower.includes('giao ban')) {
+          meetingsToUpdate.push({
+            ...baseItem,
+            type: 'internal',
+            chairperson: item.chairperson || '',
+            preparingUnit: item.preparingUnit || ''
+          });
+        } else if (typeLower.includes('công tác') || typeLower.includes('sự kiện')) {
+          eventsToUpdate.push({
+            ...baseItem,
+            type: 'other',
+            organizer: item.chairperson || ''
+          });
+        } else {
+          tasksToUpdate.push({
+            ...baseItem,
+            priority: item.priority || 'medium',
+            assignee: item.chairperson || (item.participants && item.participants[0]) || 'Chưa phân công',
+            deadline: item.date || new Date().toISOString()
+          });
+        }
+      });
+
+      const updateCollection = (prev: any[], newItems: any[]) => {
+        const updated = [...prev];
+        newItems.forEach(newItem => {
+          const index = updated.findIndex(i => i.id === newItem.id);
+          if (index !== -1) {
+            updated[index] = { ...updated[index], ...newItem };
+          } else {
+            updated.push(newItem);
+          }
+        });
+        return updated;
+      };
+
+      if (meetingsToUpdate.length > 0) await updateMeetings(prev => updateCollection(prev, meetingsToUpdate));
+      if (tasksToUpdate.length > 0) await updateTasks(prev => updateCollection(prev, tasksToUpdate));
+      if (eventsToUpdate.length > 0) await updateEvents(prev => updateCollection(prev, eventsToUpdate));
+
+      if (!silent && showToast) showToast(`Đã đồng bộ ${itemsToSync.length} mục vào hệ thống`, 'success');
+    } catch (error) {
+      console.error('Error syncing schedule:', error);
+      if (!silent && showToast) showToast('Có lỗi xảy ra khi đồng bộ lịch', 'error');
     }
   };
+
+  const saveToSystem = async () => {
+    if (items.length === 0) {
+      if (showToast) showToast('Không có lịch nào để lưu', 'error');
+      return;
+    }
+    await syncItemsToSystem(items);
+    setItems([]); // Clear after explicit save
+  };
+
+  const loadTemplate = (template: {name: string, items: ScheduleItem[]}) => {
+    setItems(template.items);
+  };
+  const [smartInput, setSmartInput] = useState('');
+  const [isSmartProcessing, setIsSmartProcessing] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
+  const handleSmartInput = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!smartInput.trim()) return;
+
+    setIsSmartProcessing(true);
+    try {
+      const prompt = `Bạn là Trợ lý Lịch công tác chuyên nghiệp. Hãy phân tích câu sau và chuyển thành thông tin lịch công tác chi tiết: "${smartInput}"
+      Ngày hiện tại là: ${format(new Date(), 'EEEE, dd/MM/yyyy', { locale: vi })}.
+      
+      HÃY TRẢ VỀ JSON: { 
+        date (YYYY-MM-DD), 
+        time (HH:mm), 
+        endTime (HH:mm),
+        content (nội dung ngắn gọn), 
+        chairperson (người chủ trì), 
+        location (địa điểm), 
+        participants (mảng tên người tham gia), 
+        type (Họp|Công tác|Sự kiện|Nhiệm vụ), 
+        priority (high|medium|low),
+        notes (ghi chú thêm nếu có)
+      }.
+      
+      Quy tắc:
+      - Nếu không có ngày cụ thể, hãy dùng ngày hiện tại hoặc ngày gần nhất phù hợp.
+      - Nếu ghi "Sáng" mặc định "08:00", "Chiều" mặc định "14:00".
+      - Nếu ghi "Cả ngày", set time "08:00" và endTime "17:00".
+      - Chỉ trả về JSON duy nhất.`;
+
+      const response = await generateContentWithRetry({
+        model: "gemini-3-flash-preview",
+        contents: [{ parts: [{ text: prompt }] }],
+        config: { responseMimeType: "application/json" }
+      });
+
+      const data = parseAIResponse(response.text || '{}');
+
+      if (data && data.content) {
+        const newItem: ScheduleItem = {
+          id: Math.random().toString(36).substr(2, 9),
+          date: data.date ? new Date(data.date).toISOString() : currentDate.toISOString(),
+          time: data.time || "08:00",
+          duration: 60,
+          chairperson: data.chairperson || '',
+          type: data.type || 'Họp',
+          content: data.content,
+          participants: data.participants || [],
+          location: data.location || '',
+          priority: data.priority || 'medium',
+          status: 'draft',
+        };
+        setItems(prev => [...prev, newItem]);
+        setSmartInput('');
+        if (showToast) showToast('Đã thêm lịch thông minh thành công', 'success');
+        if (autoSync) syncItemsToSystem([newItem], true);
+      }
+    } catch (err) {
+      console.error("Smart Input Error:", err);
+      if (showToast) showToast('Không thể xử lý thông tin. Vui lòng thử lại.', 'error');
+    } finally {
+      setIsSmartProcessing(false);
+    }
+  };
+
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      if (showToast) showToast('Trình duyệt không hỗ trợ nhận diện giọng nói', 'error');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'vi-VN';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setSmartInput(transcript);
+      // Automatically process after a short delay
+      setTimeout(() => handleSmartInput(), 500);
+    };
+
+    recognition.start();
+  };
+
   const [customChips, setCustomChips] = useState(CHIPS);
 
   const [draftState, setDraftState] = useState<DraftState>({
@@ -466,6 +748,7 @@ export const WorkScheduleCreator: React.FC = () => {
     };
     setItems(prev => [...prev, newItem]);
     setEditingItem(newItem);
+    if (autoSync) syncItemsToSystem([newItem], true);
     
     logActivity({
       userId: auth.currentUser?.uid || 'anonymous',
@@ -555,6 +838,7 @@ export const WorkScheduleCreator: React.FC = () => {
   const updateItem = useCallback((updatedItem: ScheduleItem) => {
     setItems(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
     setEditingItem(null);
+    if (autoSync) syncItemsToSystem([updatedItem], true);
     
     logActivity({
       userId: auth.currentUser?.uid || 'anonymous',
@@ -568,18 +852,25 @@ export const WorkScheduleCreator: React.FC = () => {
 
   const deleteItem = useCallback((id: string) => {
     const itemToDelete = items.find(i => i.id === id);
-    if (window.confirm('Bạn có chắc chắn muốn xóa lịch này?')) {
-      setItems(prev => prev.filter(item => item.id !== id));
-      
-      logActivity({
-        userId: auth.currentUser?.uid || 'anonymous',
-        userEmail: auth.currentUser?.email || 'anonymous',
-        action: 'Xóa lịch công tác',
-        details: `Xóa lịch: ${itemToDelete?.content.substring(0, 50)}...`,
-        type: 'warning',
-        module: 'schedule'
-      });
+    setItems(prev => prev.filter(item => item.id !== id));
+    
+    if (autoSync && itemToDelete) {
+      // For deletion, we need a special handling or just update with a 'cancelled' status
+      // But usually system deletion is handled by updateMeetings(prev => prev.filter(...))
+      // Let's implement a simple deletion sync
+      if (updateMeetings) updateMeetings(prev => prev.filter(i => i.id !== id));
+      if (updateTasks) updateTasks(prev => prev.filter(i => i.id !== id));
+      if (updateEvents) updateEvents(prev => prev.filter(i => i.id !== id));
     }
+
+    logActivity({
+      userId: auth.currentUser?.uid || 'anonymous',
+      userEmail: auth.currentUser?.email || 'anonymous',
+      action: 'Xóa lịch công tác',
+      details: `Xóa lịch: ${itemToDelete?.content.substring(0, 50)}...`,
+      type: 'warning',
+      module: 'schedule'
+    });
   }, [items]);
 
   const handleAddChip = useCallback((text: string) => {
@@ -656,10 +947,9 @@ Chỉ trả về JSON.`;
 
       const response = await model;
       const text = response.text || '{}';
-      const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
-      const data = JSON.parse(cleanedText);
+      const data = parseAIResponse(text);
       
-      if (data.content) {
+      if (data && data.content) {
         const newItem: ScheduleItem = {
           id: Math.random().toString(36).substr(2, 9),
           date: data.date ? new Date(data.date).toISOString() : currentDate.toISOString(),
@@ -678,6 +968,7 @@ Chỉ trả về JSON.`;
         setItems(prev => [...prev, newItem]);
         // Reset draft
         setDraftState({ time: [], chairperson: [], location: [], participants: [], type: [], preparingUnit: [], content: '' });
+        if (autoSync) syncItemsToSystem([newItem], true);
       }
     } catch (err) {
       console.error("AI Error:", err);
@@ -746,10 +1037,9 @@ Chỉ trả về JSON.`;
 
       const response = await model;
       const text = response.text || '[]';
-      const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
-      const data = JSON.parse(cleanedText);
+      const data = parseAIResponse(text);
       
-      if (Array.isArray(data)) {
+      if (data && Array.isArray(data)) {
         const updatedItems = items.map(item => {
           const aiItem = data.find((d: any) => d.id === item.id);
           if (aiItem) {
@@ -770,6 +1060,7 @@ Chỉ trả về JSON.`;
           return item;
         });
         setItems(updatedItems);
+        if (autoSync) syncItemsToSystem(updatedItems, true);
       }
     } catch (err) {
       console.error("AI Error:", err);
@@ -780,6 +1071,46 @@ Chỉ trả về JSON.`;
 
   return (
     <div className="max-w-[1600px] mx-auto p-6 space-y-6 min-h-screen bg-slate-50/50 print:bg-white print:p-0">
+      <AnimatePresence>
+        {showScanner && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
+                    <FileSearch size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-slate-900 tracking-tight">Quét văn bản sang Lịch</h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Doc-to-Schedule AI</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowScanner(false)}
+                  className="p-2 hover:bg-slate-200 rounded-xl transition-all text-slate-400 hover:text-slate-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                <DocumentScanner />
+                <div className="mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                  <p className="text-xs text-blue-700 font-bold flex items-center gap-2">
+                    <Sparkles size={14} />
+                    Sau khi quét xong, hãy copy nội dung văn bản và dán vào thanh lệnh thông minh để AI tự động trích xuất lịch.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="hidden print:block text-center mb-8">
         <h1 className="text-2xl font-black uppercase tracking-widest mb-2">Lịch Công Tác Tuần</h1>
         <p className="text-sm font-bold text-slate-600">
@@ -788,66 +1119,119 @@ Chỉ trả về JSON.`;
       </div>
 
       {/* Header & Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm print:hidden">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-            <CalendarIcon size={24} />
+      <div className="flex flex-col gap-6 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm print:hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+              <CalendarIcon size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Lịch Công Tác Tuần</h1>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hệ thống quản lý & Chuẩn hóa AI</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Lịch Công Tác Tuần</h1>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hệ thống quản lý & Chuẩn hóa AI</p>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button 
+                onClick={() => setViewMode('grid')}
+                className={cn("p-2 rounded-lg transition-all", viewMode === 'grid' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button 
+                onClick={() => setViewMode('list')}
+                className={cn("p-2 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
+              >
+                <ListIcon size={18} />
+              </button>
+            </div>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text"
+                placeholder="Tìm kiếm lịch..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none w-48 lg:w-64"
+              />
+            </div>
+
+            <div className="h-8 w-px bg-slate-200 mx-2 hidden lg:block" />
+
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCurrentDate(new Date())}
+                className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-600 text-xs font-black uppercase tracking-widest"
+              >
+                Hôm nay
+              </button>
+              <button 
+                onClick={() => setCurrentDate(addDays(currentDate, -7))}
+                className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-600"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-700 min-w-[200px] text-center">
+                {format(weekDays[0], 'dd/MM')} - {format(weekDays[6], 'dd/MM/yyyy')}
+              </div>
+              <button 
+                onClick={() => setCurrentDate(addDays(currentDate, 7))}
+                className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-600"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-            <button 
-              onClick={() => setViewMode('grid')}
-              className={cn("p-2 rounded-lg transition-all", viewMode === 'grid' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
-            >
-              <LayoutGrid size={18} />
-            </button>
-            <button 
-              onClick={() => setViewMode('list')}
-              className={cn("p-2 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
-            >
-              <ListIcon size={18} />
-            </button>
-          </div>
-
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+        {/* Smart Command Bar */}
+        <div className="relative group">
+          <form onSubmit={handleSmartInput} className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                isSmartProcessing ? "bg-blue-100 text-blue-600 animate-pulse" : "bg-blue-50 text-blue-600"
+              )}>
+                <Sparkles size={16} />
+              </div>
+            </div>
             <input 
               type="text"
-              placeholder="Tìm kiếm lịch..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none w-48 lg:w-64"
+              value={smartInput}
+              onChange={(e) => setSmartInput(e.target.value)}
+              placeholder="Nhập lịch bằng ngôn ngữ tự nhiên (VD: Họp giao ban sáng thứ 2 lúc 8h tại phòng họp 1)..."
+              className="w-full pl-16 pr-32 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all shadow-inner"
             />
-          </div>
-
-          <div className="h-8 w-px bg-slate-200 mx-2 hidden lg:block" />
-
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setCurrentDate(addDays(currentDate, -7))}
-              className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-600"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-700 min-w-[200px] text-center">
-              {format(weekDays[0], 'dd/MM')} - {format(weekDays[6], 'dd/MM/yyyy')}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <button 
+                type="button"
+                onClick={startListening}
+                className={cn(
+                  "p-2 rounded-xl transition-all",
+                  isListening ? "bg-red-100 text-red-600 animate-bounce" : "text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                )}
+                title="Nhập bằng giọng nói"
+              >
+                <Mic size={20} />
+              </button>
+              <button 
+                type="submit"
+                disabled={!smartInput.trim() || isSmartProcessing}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 shadow-lg shadow-blue-600/20 transition-all"
+              >
+                {isSmartProcessing ? <Loader2 size={14} className="animate-spin" /> : 'Thêm nhanh'}
+              </button>
             </div>
-            <button 
-              onClick={() => setCurrentDate(addDays(currentDate, 7))}
-              className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-600"
-            >
-              <ChevronRight size={20} />
-            </button>
+          </form>
+          <div className="absolute -bottom-6 left-4 flex items-center gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            <span className="flex items-center gap-1"><Info size={10} /> Mẹo: "Sáng mai họp chi bộ lúc 9h"</span>
+            <span className="flex items-center gap-1"><Info size={10} /> Mẹo: "Thứ 4 tuần sau đi cơ sở cả ngày"</span>
           </div>
+        </div>
 
-          <div className="h-8 w-px bg-slate-200 mx-2 hidden lg:block" />
-
+        <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-100">
           <div className="flex items-center gap-2">
             <button 
               onClick={saveAsTemplate}
@@ -856,6 +1240,29 @@ Chỉ trả về JSON.`;
               <Save size={16} />
               Lưu mẫu
             </button>
+            <button 
+              onClick={saveToSystem}
+              disabled={items.length === 0}
+              className="px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <CheckCircle2 size={16} />
+              {autoSync ? 'Đã đồng bộ' : 'Lưu vào Hệ thống'}
+            </button>
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tự động đồng bộ</span>
+              <button 
+                onClick={() => setAutoSync(!autoSync)}
+                className={cn(
+                  "w-10 h-5 rounded-full transition-all relative",
+                  autoSync ? "bg-emerald-500" : "bg-slate-300"
+                )}
+              >
+                <motion.div 
+                  animate={{ x: autoSync ? 20 : 0 }}
+                  className="absolute top-1 left-1 w-3 h-3 bg-white rounded-full shadow-sm"
+                />
+              </button>
+            </div>
             <div className="relative group">
               <button 
                 className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -873,11 +1280,26 @@ Chỉ trả về JSON.`;
               </div>
             </div>
             <button 
-              onClick={() => { /* TODO: Mở SpeechAssistant */ }}
+              onClick={startListening}
               className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
             >
               <Mic size={16} />
               Nhập giọng nói
+            </button>
+            <button 
+              onClick={resolveConflictsWithAI}
+              disabled={isResolvingConflicts}
+              className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+            >
+              {isResolvingConflicts ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+              Xử lý xung đột
+            </button>
+            <button 
+              onClick={() => setShowScanner(true)}
+              className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 bg-amber-50 text-amber-600 hover:bg-amber-100"
+            >
+              <FileSearch size={16} />
+              Quét văn bản
             </button>
           </div>
 
@@ -902,7 +1324,9 @@ Chỉ trả về JSON.`;
           <button 
             onClick={() => {
               if (window.confirm('Bạn có chắc chắn muốn ban hành lịch tuần này?')) {
-                setItems(items.map(item => ({ ...item, status: 'published' })));
+                const publishedItems = items.map(item => ({ ...item, status: 'published' as const }));
+                setItems(publishedItems);
+                if (autoSync) syncItemsToSystem(publishedItems, true);
               }
             }}
             disabled={items.length === 0 || items.every(i => i.status === 'published')}
@@ -1035,22 +1459,28 @@ Chỉ trả về JSON.`;
             onDragEnd={handleDragEnd}
           >
             {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-7 gap-4 print:grid-cols-7 print:gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-7 gap-2 print:grid-cols-7 print:gap-2">
                 {weekDays.map((day, dayIdx) => {
                   const dayItems = filteredItems.filter(item => isSameDay(new Date(item.date), day));
                   return (
-                    <div key={dayIdx} className="space-y-4 print:space-y-2">
-                      <div className={cn(
-                        "p-4 rounded-2xl border text-center transition-all print:p-2 print:rounded-lg",
-                        isSameDay(day, new Date()) ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20 print:bg-white print:text-black print:border-slate-300 print:shadow-none" : "bg-white border-slate-200 text-slate-900 print:border-slate-300"
-                      )}>
+                    <div key={dayIdx} className="space-y-2 print:space-y-2">
+                      <div 
+                        onClick={() => addItem(day)}
+                        className={cn(
+                          "p-3 rounded-2xl border text-center transition-all cursor-pointer hover:bg-blue-50 hover:border-blue-200 group print:p-2 print:rounded-lg",
+                          isSameDay(day, new Date()) ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20 print:bg-white print:text-black print:border-slate-300 print:shadow-none" : "bg-white border-slate-200 text-slate-900 print:border-slate-300"
+                        )}
+                      >
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-1 print:text-[8px]">
                           {format(day, 'EEEE', { locale: vi })}
                         </p>
-                        <p className="text-xl font-black print:text-sm">{format(day, 'dd')}</p>
+                        <p className="text-xl font-black print:text-sm flex items-center justify-center gap-2">
+                          {format(day, 'dd')}
+                          <Plus size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-600" />
+                        </p>
                       </div>
 
-                      <div className="min-h-[600px] bg-slate-100/50 rounded-3xl border border-dashed border-slate-200 p-2 space-y-3 print:min-h-0 print:border-none print:bg-transparent print:p-0 print:space-y-2">
+                      <div className="min-h-[600px] bg-slate-100/50 rounded-3xl border border-dashed border-slate-200 p-1.5 space-y-2 print:min-h-0 print:border-none print:bg-transparent print:p-0 print:space-y-2">
                         <SortableContext 
                           items={dayItems.map(i => i.id)}
                           strategy={verticalListSortingStrategy}

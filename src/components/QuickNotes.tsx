@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { StickyNote, Plus, Trash2, Edit2, Check } from 'lucide-react';
+import { StickyNote, Plus, Trash2, Edit2, Check, X, Save, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
 import { ToastType } from './ui/Toast';
+import { Button } from './ui/Button';
+import { cn } from '../lib/utils';
 
 interface Note {
   id: string;
@@ -15,6 +17,7 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
   const [newContent, setNewContent] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('ai_assistant_quick_notes');
@@ -65,94 +68,175 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
     showToast('Đã cập nhật ghi chú', 'success');
   };
 
+  const noteColors = [
+    { bg: '#fef9c3', border: '#fde047', line: '#facc15' }, // Yellow
+    { bg: '#dbeafe', border: '#bfdbfe', line: '#60a5fa' }, // Blue
+    { bg: '#dcfce7', border: '#bbf7d0', line: '#4ade80' }, // Green
+    { bg: '#fee2e2', border: '#fecaca', line: '#f87171' }, // Pink
+  ];
+
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md hover:border-amber-200 transition-all duration-300 group h-full flex flex-col"
+      layout
+      className={cn(
+        "bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-500 flex flex-col overflow-hidden",
+        isCollapsed ? "h-fit" : "h-full"
+      )}
     >
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <StickyNote size={16} className="text-amber-500" /> Sổ tay nhanh
-        </h3>
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="p-1.5 rounded-lg hover:bg-amber-50 transition-colors text-slate-400 hover:text-amber-600"
-        >
-          <Plus size={16} className={isAdding ? "rotate-45 transition-transform" : "transition-transform"} />
-        </button>
+      <div className={cn(
+        "flex items-center justify-between p-6",
+        !isCollapsed && "border-b border-slate-50"
+      )}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+            <StickyNote size={20} className="text-amber-500" />
+          </div>
+          <div>
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">Ghi chú nhanh</h3>
+            <p className="text-[10px] text-slate-400 font-bold">{notes.length} ghi chú</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {!isCollapsed && (
+            <button 
+              onClick={() => setIsAdding(true)}
+              className="p-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition-all active:scale-95"
+              title="Thêm ghi chú"
+            >
+              <Plus size={18} />
+            </button>
+          )}
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
+          >
+            {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
-        {isAdding && (
+        {!isCollapsed && (
           <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-4 space-y-3 overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="flex-1 overflow-hidden flex flex-col"
           >
-            <textarea 
-              placeholder="Nhập ghi chú nhanh..." 
-              value={newContent}
-              onChange={e => setNewContent(e.target.value)}
-              rows={3}
-              className="w-full text-sm px-3 py-2 bg-amber-50/50 border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all resize-none"
-            />
-            <button 
-              onClick={handleAdd}
-              className="w-full py-2 bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-600 transition-colors"
-            >
-              Lưu ghi chú
-            </button>
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+              {notes.map((note, index) => {
+                const color = noteColors[index % noteColors.length];
+                return (
+                  <motion.div 
+                    key={note.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    style={{ 
+                      backgroundColor: color.bg,
+                      borderColor: color.border,
+                      backgroundImage: `linear-gradient(${color.line}20 1px, transparent 1px)`,
+                      backgroundSize: '100% 1.5rem'
+                    }}
+                    className="group/item relative p-6 pl-10 rounded-xl border shadow-sm hover:shadow-md transition-all overflow-hidden"
+                  >
+                    {/* Paper Margin Line */}
+                    <div 
+                      className="absolute left-7 top-0 bottom-0 w-[1px]" 
+                      style={{ backgroundColor: `${color.line}40` }}
+                    />
+
+                    {editingId === note.id ? (
+                      <div className="space-y-3">
+                        <textarea 
+                          value={editContent}
+                          onChange={e => setEditContent(e.target.value)}
+                          rows={3}
+                          className="w-full text-sm px-4 py-3 bg-white/80 backdrop-blur-sm border border-amber-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all resize-none font-medium"
+                          autoFocus
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => setEditingId(null)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                            <X size={16} />
+                          </button>
+                          <button onClick={() => handleSaveEdit(note.id)} className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm shadow-amber-200">
+                            <Check size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-slate-800 whitespace-pre-wrap leading-[1.5rem] font-medium relative z-10">{note.content}</p>
+                        <div className="mt-4 flex items-center justify-between relative z-10">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            {new Date(note.timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} • {new Date(note.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div className="opacity-0 group-hover/item:opacity-100 flex items-center gap-1 transition-all translate-x-2 group-hover/item:translate-x-0">
+                            <button onClick={() => handleEdit(note.id, note.content)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-white rounded-xl transition-all shadow-sm"><Edit2 size={12} /></button>
+                            <button onClick={() => handleDelete(note.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-white rounded-xl transition-all shadow-sm"><Trash2 size={12} /></button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                );
+              })}
+              {notes.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                    <StickyNote size={32} className="text-slate-200" />
+                  </div>
+                  <p className="text-sm text-slate-400 font-medium max-w-[180px]">Chưa có ghi chú nào. Hãy bắt đầu ghi lại ý tưởng của bạn!</p>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-        {notes.map((note, index) => (
-          <motion.div 
-            key={note.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.05 }}
-            className="group/item relative p-4 rounded-xl bg-amber-50/30 border border-amber-100 hover:border-amber-300 hover:shadow-sm transition-all"
-          >
-            {editingId === note.id ? (
-              <div className="space-y-2">
-                <textarea 
-                  value={editContent}
-                  onChange={e => setEditContent(e.target.value)}
-                  rows={3}
-                  className="w-full text-sm px-3 py-2 bg-white border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all resize-none"
-                />
-                <div className="flex justify-end gap-2">
-                  <button onClick={() => setEditingId(null)} className="text-xs text-slate-500 hover:text-slate-700 px-2 py-1">Hủy</button>
-                  <button onClick={() => handleSaveEdit(note.id)} className="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1 bg-amber-100 rounded-md">Lưu</button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                    {new Date(note.timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <div className="opacity-0 group-hover/item:opacity-100 flex items-center gap-1 transition-opacity">
-                    <button onClick={() => handleEdit(note.id, note.content)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-100 rounded-md transition-colors"><Edit2 size={12} /></button>
-                    <button onClick={() => handleDelete(note.id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"><Trash2 size={12} /></button>
+      <AnimatePresence>
+        {isAdding && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden flex flex-col border border-slate-100"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                    <Plus size={20} />
                   </div>
+                  <h3 className="font-bold text-lg text-slate-900">Thêm ghi chú mới</h3>
                 </div>
-              </>
-            )}
-          </motion.div>
-        ))}
-        {notes.length === 0 && (
-          <div className="text-center py-8">
-            <StickyNote size={32} className="mx-auto text-slate-200 mb-3" />
-            <p className="text-sm text-slate-500 italic">Sổ tay trống. Thêm ghi chú nhanh để không quên việc.</p>
+                <button onClick={() => setIsAdding(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                  <X size={20} className="text-slate-500" />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-6">
+                <textarea 
+                  placeholder="Nhập ghi chú nhanh của bạn tại đây..." 
+                  value={newContent}
+                  onChange={e => setNewContent(e.target.value)}
+                  rows={5}
+                  className="w-full text-base px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 outline-none transition-all resize-none font-medium"
+                  autoFocus
+                />
+                <Button 
+                  onClick={handleAdd}
+                  disabled={!newContent.trim()}
+                  className="w-full rounded-2xl py-6 font-bold shadow-lg shadow-amber-200 bg-amber-500 hover:bg-amber-600"
+                >
+                  <Save size={18} className="mr-2" /> Lưu vào sổ tay
+                </Button>
+              </div>
+            </motion.div>
           </div>
         )}
-      </div>
+      </AnimatePresence>
     </motion.div>
   );
 };

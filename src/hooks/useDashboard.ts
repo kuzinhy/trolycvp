@@ -3,13 +3,16 @@ import { startOfDay } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Birthday, Meeting, Event, Task } from '../constants';
 import { ToastType } from '../components/ui/Toast';
-import { generateContentWithRetry } from '../lib/ai-utils';
+import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
 import { db } from '../lib/firebase';
 import { collection, getDocs, doc, setDoc, query, deleteDoc } from 'firebase/firestore';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
 import { useAuth } from '../context/AuthContext';
 
-export function useDashboard(showToast?: (message: string, type?: ToastType) => void) {
+export function useDashboard(
+  showToast?: (message: string, type?: ToastType) => void,
+  updateTasks?: (updater: Task[] | ((prev: Task[]) => Task[])) => Promise<void>
+) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
@@ -41,7 +44,6 @@ export function useDashboard(showToast?: (message: string, type?: ToastType) => 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isParsingCalendar, setIsParsingCalendar] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
-  const [isSyncingDrive, setIsSyncingDrive] = useState(false);
   const [smartBriefing, setSmartBriefing] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
 
@@ -75,21 +77,22 @@ export function useDashboard(showToast?: (message: string, type?: ToastType) => 
         return diffDays >= 0 && diffDays <= 30;
       });
 
-      const prompt = `Bạn là Trợ lý Chánh Văn phòng Đảng ủy AI. Hãy tạo một bản tin công việc ngắn gọn (dưới 150 từ) cho ngày hôm nay (${today.toLocaleDateString('vi-VN')}).
-      Dựa trên dữ liệu sau:
-      - Nhiệm vụ đang chờ: ${JSON.stringify(tasks.filter(t => t.status !== 'Completed').map(t => ({ title: t.title, priority: t.priority, deadline: t.deadline })))}
-      - Cuộc họp hôm nay: ${JSON.stringify(meetings.filter(m => m.date === new Date().toISOString().split('T')[0]))}
-      - Sự kiện sắp tới: ${JSON.stringify(events.slice(0, 3))}
-      - Sinh nhật sắp tới trong tháng: ${JSON.stringify(upcomingBirthdays)}
+      const prompt = `Bạn là Trợ lý Chánh Văn phòng Đảng ủy AI cấp cao. Hãy tạo một bản tin công tác "Thông minh & Chiến lược" cho ngày hôm nay (${today.toLocaleDateString('vi-VN')}).
       
-      Yêu cầu:
-      1. Chào Anh Huy một cách thân thiện, chuyên nghiệp.
-      2. Tóm tắt các điểm quan trọng nhất cần lưu ý trong ngày.
-      3. Cảnh báo nếu có xung đột lịch trình hoặc nhiệm vụ quá hạn.
-      4. Đưa ra một lời khuyên chiến lược cho ngày làm việc.
-      5. Sử dụng văn phong trang trọng nhưng gần gũi của một trợ lý tin cậy.
+      Dữ liệu đầu vào:
+      - Nhiệm vụ trọng tâm: ${JSON.stringify(tasks.filter(t => t.status !== 'Completed').map(t => ({ title: t.title, priority: t.priority, deadline: t.deadline })))}
+      - Lịch họp/công tác: ${JSON.stringify(meetings.filter(m => m.date === new Date().toISOString().split('T')[0]))}
+      - Sự kiện & Kỷ niệm: ${JSON.stringify(events.slice(0, 3))}
+      - Chăm sóc nội bộ (Sinh nhật): ${JSON.stringify(upcomingBirthdays)}
       
-      Chỉ trả về nội dung bản tin, không thêm bất kỳ văn bản nào khác.`;
+      Yêu cầu bản tin (Dưới 180 từ):
+      1. Chào Anh Huy bằng văn phong chuyên nghiệp, tin cậy.
+      2. Điểm tin: Tóm tắt 3 việc quan trọng nhất cần giải quyết ngay.
+      3. Cảnh báo: Chỉ ra các rủi ro về tiến độ hoặc xung đột lịch (nếu có).
+      4. Tham mưu: Đưa ra 1 hành động mang tính chiến lược để tối ưu hóa hiệu quả làm việc trong ngày.
+      5. Kết luận: Một câu truyền cảm hứng ngắn gọn.
+      
+      Lưu ý: Sử dụng Markdown để trình bày (in đậm các mốc thời gian, tên nhiệm vụ). Chỉ trả về nội dung bản tin.`;
 
       const response = await generateContentWithRetry({
         model: "gemini-3-flash-preview",
@@ -109,99 +112,6 @@ export function useDashboard(showToast?: (message: string, type?: ToastType) => 
     return () => clearInterval(timer);
   }, []);
 
-  const fetchConfig = useCallback(async () => {
-    try {
-      const res = await fetch('/api/config');
-      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-      const data = await res.json();
-      setConfig(data);
-    } catch (e) {
-      console.error("Failed to fetch config", e);
-    }
-  }, []);
-
-  const saveBirthdaysToFirestore = useCallback(async (birthdaysToSave: Birthday[]) => {
-    if (!user) {
-      return;
-    }
-    setIsSavingBirthdays(true);
-    try {
-      // Save each birthday to Firestore
-      for (const b of birthdaysToSave) {
-        await setDoc(doc(db, 'users', user.uid, 'birthdays', b.id), { ...b }, { merge: true });
-      }
-      showToast?.("Đã lưu sinh nhật lên Firestore", "success");
-      queryClient.invalidateQueries({ queryKey: ['birthdays', user.uid] });
-    } catch (e) {
-      handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}/birthdays`);
-      showToast?.("Lỗi lưu sinh nhật lên Firestore", "error");
-    } finally {
-      setIsSavingBirthdays(false);
-    }
-  }, [user, showToast, queryClient]);
-
-  const updateBirthdays = useCallback(async (updater: (prev: Birthday[]) => Birthday[]) => {
-    const newBirthdays = updater(birthdays);
-    await saveBirthdaysToFirestore(newBirthdays);
-  }, [saveBirthdaysToFirestore, birthdays]);
-
-  const loadMeetings = useCallback(async () => {
-    if (!user) return;
-    setIsMeetingsLoading(true);
-    try {
-      const q = query(collection(db, 'users', user.uid, 'meetings'));
-      const querySnapshot = await getDocs(q);
-      const meetingsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Meeting));
-      setMeetings(meetingsData);
-    } catch (e) {
-      handleFirestoreError(e, OperationType.GET, `users/${user.uid}/meetings`);
-      showToast?.("Lỗi tải lịch công tác từ Firestore", "error");
-    } finally {
-      setIsMeetingsLoading(false);
-    }
-  }, [user, showToast]);
-
-  const saveMeetingsToFirestore = useCallback(async (meetingsToSave: Meeting[]) => {
-    if (!user) {
-      return;
-    }
-    setIsSavingMeetings(true);
-    try {
-      for (const m of meetingsToSave) {
-        await setDoc(doc(db, 'users', user.uid, 'meetings', m.id), { ...m }, { merge: true });
-      }
-      showToast?.("Đã lưu lịch công tác lên Firestore", "success");
-    } catch (e) {
-      handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}/meetings`);
-      showToast?.("Lỗi lưu lịch công tác lên Firestore", "error");
-    } finally {
-      setIsSavingMeetings(false);
-    }
-  }, [user, showToast]);
-
-  const updateMeetings = useCallback(async (updater: (prev: Meeting[]) => Meeting[]) => {
-    setMeetings(prev => {
-      const newMeetings = updater(prev);
-      
-      // Find deleted meetings
-      const deletedMeetings = prev.filter(p => !newMeetings.some(n => n.id === p.id));
-      deletedMeetings.forEach(async (m) => {
-        if (user && m.id) {
-          try {
-            await deleteDoc(doc(db, 'users', user.uid, 'meetings', m.id));
-          } catch (e) {
-            handleFirestoreError(e, OperationType.DELETE, `users/${user.uid}/meetings/${m.id}`);
-          }
-        }
-      });
-
-      setTimeout(() => {
-        saveMeetingsToFirestore(newMeetings);
-      }, 0);
-      return newMeetings;
-    });
-  }, [saveMeetingsToFirestore, user]);
-
   const loadEvents = useCallback(async () => {
     if (!user) return;
     setIsEventsLoading(true);
@@ -217,6 +127,29 @@ export function useDashboard(showToast?: (message: string, type?: ToastType) => 
       setIsEventsLoading(false);
     }
   }, [user, showToast]);
+
+  const loadMeetingsData = useCallback(async () => {
+    if (!user) return;
+    setIsMeetingsLoading(true);
+    try {
+      const q = query(collection(db, 'users', user.uid, 'meetings'));
+      const querySnapshot = await getDocs(q);
+      const meetingsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Meeting));
+      setMeetings(meetingsData);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.GET, `users/${user.uid}/meetings`);
+      showToast?.("Lỗi tải lịch công tác từ Firestore", "error");
+    } finally {
+      setIsMeetingsLoading(false);
+    }
+  }, [user, showToast]);
+
+  useEffect(() => {
+    if (user) {
+      loadMeetingsData();
+      loadEvents();
+    }
+  }, [user, loadMeetingsData, loadEvents]);
 
   const saveEventsToFirestore = useCallback(async (eventsToSave: Event[]) => {
     if (!user) {
@@ -259,85 +192,213 @@ export function useDashboard(showToast?: (message: string, type?: ToastType) => 
     });
   }, [saveEventsToFirestore, user]);
 
-  useEffect(() => {
-    if (user) {
-      loadMeetings();
-      loadEvents();
-      loadBirthdays();
+  const saveMeetingsToFirestore = useCallback(async (meetingsToSave: Meeting[]) => {
+    if (!user) return;
+    setIsSavingMeetings(true);
+    try {
+      for (const m of meetingsToSave) {
+        await setDoc(doc(db, 'users', user.uid, 'meetings', m.id), { ...m }, { merge: true });
+      }
+      showToast?.("Đã lưu lịch họp lên Firestore", "success");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}/meetings`);
+      showToast?.("Lỗi lưu lịch họp lên Firestore", "error");
+    } finally {
+      setIsSavingMeetings(false);
     }
-  }, [user, loadMeetings, loadEvents, loadBirthdays]);
+  }, [user, showToast]);
+
+  const updateMeetings = useCallback(async (updater: Meeting[] | ((prev: Meeting[]) => Meeting[])) => {
+    setMeetings(prev => {
+      const newMeetings = typeof updater === 'function' ? updater(prev) : updater;
+      
+      // Find deleted meetings
+      const deletedMeetings = prev.filter(p => !newMeetings.some(n => n.id === p.id));
+      deletedMeetings.forEach(async (m) => {
+        if (user && m.id) {
+          try {
+            await deleteDoc(doc(db, 'users', user.uid, 'meetings', m.id));
+          } catch (err) {
+            handleFirestoreError(err, OperationType.DELETE, `users/${user.uid}/meetings/${m.id}`);
+          }
+        }
+      });
+
+      setTimeout(() => {
+        saveMeetingsToFirestore(newMeetings);
+      }, 0);
+      return newMeetings;
+    });
+  }, [saveMeetingsToFirestore, user]);
+
+  const updateBirthdays = useCallback(async (updater: Birthday[] | ((prev: Birthday[]) => Birthday[])) => {
+    const prev = queryClient.getQueryData<Birthday[]>(['birthdays', user?.uid]) || [];
+    const newBirthdays = typeof updater === 'function' ? updater(prev) : updater;
+    
+    queryClient.setQueryData(['birthdays', user?.uid], newBirthdays);
+    
+    if (!user) return;
+    setIsSavingBirthdays(true);
+    try {
+      for (const b of newBirthdays) {
+        await setDoc(doc(db, 'users', user.uid, 'birthdays', b.id), { ...b }, { merge: true });
+      }
+      // Handle deletions if necessary
+      const deletedBirthdays = prev.filter(p => !newBirthdays.some(n => n.id === p.id));
+      for (const b of deletedBirthdays) {
+        if (b.id) {
+          await deleteDoc(doc(db, 'users', user.uid, 'birthdays', b.id));
+        }
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}/birthdays`);
+    } finally {
+      setIsSavingBirthdays(false);
+    }
+  }, [queryClient, user]);
 
   const parseCalendarContent = useCallback(async (fileContent: string) => {
     if (!fileContent.trim() || isParsingCalendar) return;
     setIsParsingCalendar(true);
     try {
-      const response = await generateContentWithRetry({
-        model: "gemini-3.1-pro-preview",
-        contents: [{
-          role: 'user',
-          parts: [{
-            text: `Bạn là chuyên gia phân tích dữ liệu hành chính. Hãy phân tích nội dung lịch làm việc sau và trích xuất danh sách các cuộc họp/sự kiện một cách chính xác nhất.
-            
-            Trả về kết quả dưới dạng mảng JSON các đối tượng có cấu trúc:
-            { "id": string, "name": string, "date": "YYYY-MM-DD", "time": "HH:mm", "location": string }
-            
-            Quy tắc phân tích:
-            1. Trích xuất chính xác tên cuộc họp, thời gian, địa điểm.
-            2. Chuyển đổi ngày tháng sang định dạng YYYY-MM-DD. Nếu lịch không ghi năm, hãy lấy năm hiện tại là ${new Date().getFullYear()}.
-            3. Nếu thời gian không rõ ràng, hãy để trống hoặc đoán dựa trên ngữ cảnh.
-            4. Nếu không có ngày cụ thể, hãy đoán dựa trên ngữ cảnh (ví dụ: "Thứ Hai tuần tới" so với ngày hiện tại là ${new Date().toLocaleDateString('vi-VN')}).
-            5. Nếu nội dung không phải là lịch làm việc, hãy trả về mảng rỗng [].
-            6. Chỉ trả về JSON, không giải thích gì thêm.
-            
-            Nội dung lịch:
-            ${fileContent}`
-          }]
-        }],
-        config: {
-          responseMimeType: "application/json"
+      // Cải thiện logic chia nhỏ nội dung: Nếu file quá lớn (> 10000 ký tự) mới chia nhỏ
+      // Nếu không thì xử lý toàn bộ để AI có cái nhìn tổng thể về tuần
+      let chunks = [];
+      if (fileContent.length > 10000) {
+        const days = fileContent.split(/(?=Thứ\s+\w+|Ngày\s+\d+\/\d+)/gi).filter(d => d.trim());
+        if (days.length > 1) {
+          for (let i = 0; i < days.length; i += 5) {
+            chunks.push(days.slice(i, i + 5).join('\n'));
+          }
+        } else {
+          for (let i = 0; i < fileContent.length; i += 8000) {
+            chunks.push(fileContent.substring(i, i + 8000));
+          }
         }
-      });
+      } else {
+        chunks = [fileContent];
+      }
+      
+      let allMeetings: Meeting[] = [];
+      let allTasks: Task[] = [];
+      let allEvents: Event[] = [];
+      
+      const currentYear = new Date().getFullYear();
 
-      let result = [];
-      try {
-        const text = response?.text || "[]";
-        // Remove markdown code blocks if present
-        const cleanJson = text.replace(/```json\n?|```/g, "").trim();
-        result = JSON.parse(cleanJson);
-      } catch (parseError) {
-        console.error("Gemini JSON parse error:", parseError);
-        showToast?.("Lỗi khi xử lý dữ liệu từ AI. Vui lòng thử lại.", "error");
-        return;
+      for (const chunkContent of chunks) {
+        const response = await generateContentWithRetry({
+          model: "gemini-3.1-pro-preview",
+          contents: [{
+            role: 'user',
+            parts: [{
+              text: `Bạn là một chuyên gia phân tích văn bản hành chính Việt Nam (như Lịch công tác tuần, Thông báo kết luận, Kế hoạch công tác). Hãy đọc nội dung sau và trích xuất tất cả các lịch họp, nhiệm vụ và sự kiện.
+
+Nội dung cần phân tích:
+${chunkContent}
+
+Yêu cầu trích xuất chi tiết:
+1. Cuộc họp (Meetings): Các buổi họp, làm việc, tiếp khách, đi cơ sở. Cần xác định:
+   - Tên nội dung (name): Ngắn gọn nhưng đầy đủ ý nghĩa hành chính.
+   - Ngày (date): Định dạng "YYYY-MM-DD". Năm hiện tại là ${currentYear}.
+   - Giờ (time): Định dạng "HH:mm" (24h). Nếu ghi "Sáng" mặc định "08:00", "Chiều" mặc định "14:00".
+   - Địa điểm (location): Nơi diễn ra.
+   - Người chủ trì (chairperson): Tên lãnh đạo chủ trì.
+2. Nhiệm vụ (Tasks): Các đầu việc cần thực hiện, thời hạn hoàn thành.
+3. Sự kiện (Events): Ngày lễ, kỷ niệm, hội nghị lớn, các mốc thời gian quan trọng.
+
+Quy tắc suy luận thông minh:
+- Nếu văn bản ghi "Thứ Hai, ngày 06/04" thì hiểu là "${currentYear}-04-06".
+- Nếu không ghi năm, mặc định là ${currentYear}.
+- Nếu nội dung lộn xộn (do lỗi trích xuất PDF), hãy tìm các từ khóa: "Chủ trì", "Thành phần", "Địa điểm", "Tại", "Làm việc với".
+- Cố gắng chuẩn hóa tên người (ví dụ: "đ/c Cúc" -> "Nguyễn Thu Cúc" nếu có trong ngữ cảnh hoặc danh sách lãnh đạo phổ biến).
+
+Trả về JSON duy nhất:
+{
+  "meetings": [ { "name": string, "date": "YYYY-MM-DD", "time": "HH:mm", "location": string, "chairperson": string } ],
+  "tasks": [ { "title": string, "deadline": "YYYY-MM-DD", "priority": "low"|"medium"|"high" } ],
+  "events": [ { "name": string, "date": "YYYY-MM-DD", "type": "meeting"|"anniversary"|"holiday"|"other", "location": string } ]
+}
+
+Chỉ trả về JSON.`
+            }]
+          }],
+          config: {
+            responseMimeType: "application/json"
+          }
+        });
+
+        try {
+          const text = response?.text || "{}";
+          const parsed = parseAIResponse(text);
+          
+          if (parsed && parsed.meetings && Array.isArray(parsed.meetings)) allMeetings = [...allMeetings, ...parsed.meetings];
+          if (parsed.tasks && Array.isArray(parsed.tasks)) allTasks = [...allTasks, ...parsed.tasks];
+          if (parsed.events && Array.isArray(parsed.events)) allEvents = [...allEvents, ...parsed.events];
+        } catch (parseError) {
+          console.error("Lỗi phân tích JSON từ AI:", parseError, response?.text);
+        }
       }
 
-      if (Array.isArray(result) && result.length > 0) {
+      // Lọc bỏ các mục trùng lặp hoặc không hợp lệ
+      const validMeetings = allMeetings.filter(m => m.name && m.date && m.time);
+      const validTasks = allTasks.filter(t => t.title && t.deadline);
+      const validEvents = allEvents.filter(e => e.name && e.date);
+
+      // 1. Cập nhật Meetings
+      if (validMeetings.length > 0) {
         updateMeetings(prev => {
-          // Ensure each new meeting has a unique ID and filter out duplicates based on content
-          const processedNewMeetings = result.map((nm, idx) => ({
+          const processed = validMeetings.map((nm, idx) => ({
             ...nm,
-            id: nm.id && !result.slice(0, idx).some(prevNm => prevNm.id === nm.id) 
-                ? nm.id 
-                : `m-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            id: `m-sync-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 5)}`,
+            priority: nm.priority || 'medium'
           })).filter(nm => 
             !prev.some(pm => pm.name === nm.name && pm.date === nm.date && pm.time === nm.time)
           );
-          
-          const updatedMeetings = [...prev, ...processedNewMeetings];
-          
-          return updatedMeetings;
+          return [...prev, ...processed];
         });
-        
-        showToast?.(`Đã thêm ${result.length} lịch công tác từ file`, "success");
-      } else {
-        showToast?.("Không tìm thấy lịch công tác nào trong file", "info");
       }
-    } catch (e) {
-      console.error("Calendar parse error:", e);
-      showToast?.("Lỗi khi phân tích nội dung lịch", "error");
+
+      // 2. Cập nhật Tasks
+      if (validTasks.length > 0 && updateTasks) {
+        updateTasks(prev => {
+          const processed = validTasks.map((nt, idx) => ({
+            ...nt,
+            id: `t-sync-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 5)}`,
+            status: 'Pending' as const,
+            createdAt: Date.now()
+          })).filter(nt => 
+            !prev.some(pt => pt.title === nt.title && pt.deadline === nt.deadline)
+          );
+          return [...prev, ...processed];
+        });
+      }
+
+      // 3. Cập nhật Events
+      if (validEvents.length > 0) {
+        updateEvents(prev => {
+          const processed = validEvents.map((ne, idx) => ({
+            ...ne,
+            id: `e-sync-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 5)}`
+          })).filter(ne => 
+            !prev.some(pe => pe.name === ne.name && pe.date === ne.date)
+          );
+          return [...prev, ...processed];
+        });
+      }
+
+      const totalAdded = validMeetings.length + validTasks.length + validEvents.length;
+      if (totalAdded > 0) {
+        showToast?.(`Đã phân tích thành công: ${validMeetings.length} cuộc họp, ${validTasks.length} nhiệm vụ, ${validEvents.length} sự kiện.`, "success");
+      } else {
+        showToast?.("Không tìm thấy dữ liệu lịch trình phù hợp trong tệp này. Vui lòng kiểm tra lại định dạng tệp.", "warning");
+      }
+    } catch (e: any) {
+      console.error("Lỗi phân tích lịch:", e);
+      showToast?.(`Lỗi khi phân tích nội dung lịch: ${e.message}`, "error");
     } finally {
       setIsParsingCalendar(false);
     }
-  }, [isParsingCalendar, showToast, updateMeetings]);
+  }, [isParsingCalendar, showToast, updateMeetings, updateTasks, updateEvents]);
 
   const parseCalendarFile = useCallback(async (file: File) => {
     console.log("Parsing file:", file.name, file.type, file.size);
@@ -396,85 +457,6 @@ export function useDashboard(showToast?: (message: string, type?: ToastType) => 
     }
   }, [isUploadingFile, parseCalendarFile, showToast]);
 
-  const syncGoogleDrive = useCallback(async (folderId: string) => {
-    if (isSyncingDrive) return;
-    setIsSyncingDrive(true);
-
-    try {
-      // 1. Check status
-      const statusRes = await fetch('/api/drive/status');
-      const status = await statusRes.json();
-
-      if (!status.connected) {
-        // 2. Get Auth URL
-        const authUrlRes = await fetch('/api/auth/google/url');
-        const { url } = await authUrlRes.json();
-
-        // 3. Open Popup
-        const authWindow = window.open(url, 'google_auth', 'width=600,height=600');
-        
-        if (!authWindow) {
-          showToast?.("Vui lòng cho phép cửa sổ bật lên để kết nối Google Drive", "error");
-          setIsSyncingDrive(false);
-          return;
-        }
-
-        // 4. Wait for message
-        await new Promise<void>((resolve, reject) => {
-          const handleMessage = (event: MessageEvent) => {
-            if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
-              window.removeEventListener('message', handleMessage);
-              resolve();
-            }
-          };
-          window.addEventListener('message', handleMessage);
-          
-          // Timeout after 2 minutes
-          setTimeout(() => {
-            window.removeEventListener('message', handleMessage);
-            reject(new Error("Hết thời gian chờ xác thực"));
-          }, 120000);
-        });
-      }
-
-      // 5. Sync
-      showToast?.("Đang đồng bộ từ Google Drive...", "info");
-      const syncRes = await fetch('/api/drive/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folderId })
-      });
-
-      if (!syncRes.ok) {
-        const error = await syncRes.json();
-        throw new Error(error.details || error.error || "Lỗi đồng bộ");
-      }
-
-      const syncData = await syncRes.json();
-      if (syncData.success && syncData.data && syncData.data.length > 0) {
-        showToast?.(`Đã tìm thấy ${syncData.data.length} tệp mới. Đang phân tích...`, "info");
-        
-        let totalMeetings = 0;
-        for (const file of syncData.data) {
-          if (file.content) {
-            // We need to await each parse to avoid overwhelming Gemini if there are many files
-            // or we could batch them, but one by one is safer for now.
-            await parseCalendarFile(file.content);
-            totalMeetings++;
-          }
-        }
-        showToast?.(`Đã đồng bộ thành công ${totalMeetings} tệp từ Google Drive`, "success");
-      } else {
-        showToast?.("Không có tệp mới nào cần đồng bộ", "info");
-      }
-    } catch (error: any) {
-      console.error("Google Drive sync error:", error);
-      showToast?.(`Lỗi đồng bộ Google Drive: ${error.message}`, "error");
-    } finally {
-      setIsSyncingDrive(false);
-    }
-  }, [isSyncingDrive, parseCalendarFile, showToast]);
-
   return {
     birthdays,
     meetings,
@@ -487,9 +469,8 @@ export function useDashboard(showToast?: (message: string, type?: ToastType) => 
     isSavingEvents,
     config,
     currentTime,
-    isParsingCalendar: isParsingCalendar || isUploadingFile || isSavingMeetings || isSavingEvents || isSyncingDrive,
-    fetchConfig,
-    loadMeetings,
+    isParsingCalendar: isParsingCalendar || isUploadingFile || isSavingMeetings || isSavingEvents || isSavingBirthdays,
+    loadMeetings: loadMeetingsData,
     loadEvents,
     loadBirthdays,
     updateMeetings,
@@ -497,69 +478,9 @@ export function useDashboard(showToast?: (message: string, type?: ToastType) => 
     updateBirthdays,
     parseCalendarFile,
     uploadAndParseCalendar,
-    syncGoogleDrive,
-    isSyncingDrive,
     isBirthdaysLoading,
     smartBriefing,
     isGeneratingBriefing,
-    generateSmartBriefing,
-    syncBirthdaysFromKnowledge: async (knowledge: any[]) => {
-      if (isBirthdaysLoading || knowledge.length === 0) return;
-      try {
-        const response = await generateContentWithRetry({
-          model: "gemini-3-flash-preview",
-          contents: [{
-            role: 'user',
-            parts: [{
-              text: `Dựa trên dữ liệu tri thức sau, hãy trích xuất danh sách sinh nhật của các cá nhân.
-              Trả về kết quả dưới dạng mảng JSON các đối tượng có cấu trúc:
-              { "name": string, "date": "DD/MM", "source": "agency" | "friends" }
-              
-              Lưu ý: 
-              - Chỉ trích xuất nếu có tên và ngày tháng năm sinh rõ ràng.
-              - Trả về ngày tháng theo định dạng DD/MM.
-              - Phân loại nguồn (source) là "agency" (Cơ quan) hoặc "friends" (Bạn bè) dựa vào ngữ cảnh. Nếu không rõ, mặc định là "agency".
-              - Chỉ trả về JSON, không giải thích gì thêm.
-              
-              Dữ liệu:
-              ${knowledge.map(k => k.content).join('\n')}`
-            }]
-          }],
-          config: {
-            responseMimeType: "application/json"
-          }
-        });
-
-        let result = [];
-        try {
-          const text = response?.text || "[]";
-          const cleanJson = text.replace(/```json\n?|```/g, "").trim();
-          result = JSON.parse(cleanJson);
-        } catch (parseError) {
-          console.error("Gemini JSON parse error:", parseError);
-          showToast?.("Lỗi khi xử lý dữ liệu từ AI", "error");
-          return;
-        }
-
-        if (Array.isArray(result) && result.length > 0) {
-          updateBirthdays(prev => {
-            const newBirthdays = result.map(nb => ({
-              ...nb,
-              id: `b-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              source: nb.source === 'friends' ? 'friends' : 'agency'
-            })).filter(nb => 
-              !prev.some(pb => pb.name === nb.name && pb.date === nb.date)
-            );
-            return [...prev, ...newBirthdays];
-          });
-          showToast?.(`Đã đồng bộ ${result.length} sinh nhật từ tri thức`, "success");
-        } else {
-          showToast?.("Không tìm thấy thông tin sinh nhật mới trong tri thức", "info");
-        }
-      } catch (e) {
-        console.error("Birthday sync error:", e);
-        showToast?.("Lỗi khi đồng bộ sinh nhật", "error");
-      }
-    }
+    generateSmartBriefing
   };
 }

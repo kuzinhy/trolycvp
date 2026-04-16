@@ -31,12 +31,15 @@ import {
   ChevronDown,
   ChevronUp,
   Zap,
+  BrainCircuit,
+  Rocket,
   ClipboardList,
   Newspaper,
   FileCheck,
   Target,
   Lightbulb,
-  BarChart3
+  BarChart3,
+  StickyNote
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { SPECIALIZED_TASKS, APP_VERSION } from '../constants';
@@ -65,25 +68,35 @@ interface SidebarProps {
   sidebarPosition?: 'left' | 'right';
 }
 
-const NavButton = memo(({ active, onClick, icon, label, collapsed }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, collapsed?: boolean }) => (
+const NavButton = memo(({ active, onClick, icon, label, collapsed, badge }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, collapsed?: boolean, badge?: string }) => (
   <button 
     onClick={onClick}
     title={collapsed ? label : ""}
     className={cn(
-      "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 font-medium text-sm group",
+      "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 font-medium text-sm group relative",
       active 
         ? "bg-blue-50 text-blue-700" 
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
       collapsed && "justify-center px-0"
     )}
   >
-    <div className={cn(
-      "transition-all duration-200 shrink-0",
-      active ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"
-    )}>
-      {icon}
+    <div className="flex items-center gap-3">
+      <div className={cn(
+        "transition-all duration-200 shrink-0",
+        active ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"
+      )}>
+        {icon}
+      </div>
+      {!collapsed && <span className="tracking-tight truncate">{label}</span>}
     </div>
-    {!collapsed && <span className="tracking-tight truncate">{label}</span>}
+    {!collapsed && badge && (
+      <span className="px-1.5 py-0.5 bg-blue-600 text-white text-[8px] font-black uppercase rounded-md tracking-tighter">
+        {badge}
+      </span>
+    )}
+    {collapsed && badge && (
+      <span className="absolute top-1 right-1 w-2 h-2 bg-blue-600 rounded-full ring-2 ring-white" />
+    )}
   </button>
 ));
 
@@ -114,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
     'ai-assistant': true,
     'drafting-pro': currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review',
     'management': currentTab === 'dashboard' || currentTab === 'resolution-tracking' || currentTab === 'evaluation',
-    'operations': currentTab === 'party-advisory' || currentTab === 'news' || currentTab === 'forecasting' || currentTab === 'knowledge'
+    'operations': currentTab === 'party-advisory' || currentTab === 'news' || currentTab === 'forecasting' || currentTab === 'knowledge' || currentTab === 'strategic'
   });
 
   const toggleSection = (section: string) => {
@@ -127,40 +140,47 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
   return (
     <aside 
       className={cn(
-        "fixed inset-y-0 z-50 bg-[hsl(var(--card))] transition-all duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col",
-        sidebarPosition === 'right' ? "right-0 border-l border-[hsl(var(--border))]" : "left-0 border-r border-[hsl(var(--border))]",
-        isCollapsed ? "w-20" : "w-64",
-        !isSidebarOpen && (sidebarPosition === 'right' ? "translate-x-full" : "-translate-x-full") + " md:hidden"
+        "fixed inset-y-0 z-50 bg-white/80 dark:bg-blue-950/80 backdrop-blur-xl transition-all duration-500 ease-in-out md:relative md:translate-x-0 flex flex-col",
+        sidebarPosition === 'right' ? "right-0 border-l border-slate-200 dark:border-blue-900/30" : "left-0 border-r border-slate-200 dark:border-blue-900/30",
+        isCollapsed ? "w-20" : "w-72",
+        !isSidebarOpen && (sidebarPosition === 'right' ? "translate-x-full" : "-translate-x-full") + " md:hidden",
+        "shadow-[1px_0_0_0_rgba(0,0,0,0.05)]"
       )}
     >
       {/* Collapse Toggle */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
         className={cn(
-          "absolute top-24 w-6 h-6 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-full hidden md:flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary))]/30 shadow-sm z-10 transition-all",
+          "absolute top-24 w-6 h-6 bg-white border border-slate-200 rounded-full hidden md:flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm z-10 transition-all",
           sidebarPosition === 'right' ? "-left-3" : "-right-3"
         )}
       >
         {isCollapsed ? (sidebarPosition === 'right' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />) : (sidebarPosition === 'right' ? <ChevronRight size={14} /> : <ChevronLeft size={14} />)}
       </button>
 
-      <div className={cn("p-5 flex items-center gap-3 shrink-0", isCollapsed && "justify-center px-0")}>
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-600/20">
-          <ShieldCheck size={20} />
+      {/* Header Section */}
+      <div className={cn("p-6 flex items-center gap-4 shrink-0 border-b border-slate-100/60", isCollapsed && "justify-center px-0")}>
+        <div className="relative group">
+          <div className="w-11 h-11 bg-blue-950 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-2xl shadow-blue-950/20 group-hover:scale-105 transition-transform duration-500">
+            <ShieldCheck size={22} className="text-emerald-400" />
+          </div>
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full animate-pulse" />
         </div>
         {!isCollapsed && (
           <div className="min-w-0">
-            <h1 className="font-black text-[hsl(var(--foreground))] text-sm tracking-tight truncate uppercase">Strategic Hub</h1>
+            <h1 className="font-black text-slate-900 text-sm tracking-tighter truncate uppercase leading-none mb-1">Elite Strategic Hub</h1>
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-[9px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-widest">System v5.0 Active</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] font-mono">System v6.0.2</p>
+              <span className="w-1 h-1 rounded-full bg-slate-300" />
+              <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest font-mono">Active</p>
             </div>
           </div>
         )}
       </div>
 
+      {/* Search Section */}
       {!isCollapsed && (
-        <div className="px-3 mb-2">
+        <div className="px-4 py-4">
           <div className="relative group">
             <Search className={cn(
               "absolute left-3 top-1/2 -translate-y-1/2 transition-colors",
@@ -168,34 +188,50 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
             )} size={14} />
             <input
               type="text"
-              placeholder="Tìm kiếm menu..."
+              placeholder="Tìm kiếm chức năng..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-slate-100 rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className="w-full pl-9 pr-8 py-2.5 bg-slate-50/80 border border-slate-200/60 rounded-xl text-[11px] font-bold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 transition-all font-mono"
             />
-            {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
-              >
-                <X size={12} />
-              </button>
-            )}
           </div>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-3 space-y-1 custom-scrollbar py-2">
-        {/* Simplified navigation */}
-        {(!searchTerm || "hội thoại ai".includes(searchTerm.toLowerCase())) && (
-          <NavButton 
-            active={currentTab === 'chat'} 
-            onClick={() => onNavigate('chat')} 
-            icon={<MessageSquare size={18} />} 
-            label="Hội thoại AI" 
-            collapsed={isCollapsed}
-          />
-        )}
+      {/* Navigation Section */}
+      <div className="flex-1 overflow-y-auto px-4 space-y-1 custom-scrollbar py-2">
+        <div className="mb-4">
+          {!isCollapsed && <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2 font-mono">Core Systems</p>}
+          <div className="space-y-1">
+            {(!searchTerm || "việc cần làm".includes(searchTerm.toLowerCase())) && (
+              <NavButton 
+                active={currentTab === 'todo-assistant'} 
+                onClick={() => onNavigate('todo-assistant')} 
+                icon={<ListTodo size={18} />} 
+                label="Việc cần làm" 
+                collapsed={isCollapsed}
+              />
+            )}
+            {(!searchTerm || "ghi chú elite".includes(searchTerm.toLowerCase())) && (
+              <NavButton 
+                active={currentTab === 'notes'} 
+                onClick={() => onNavigate('notes')} 
+                icon={<StickyNote size={18} />} 
+                label="Ghi chú Elite" 
+                collapsed={isCollapsed}
+                badge="Mới"
+              />
+            )}
+            {(!searchTerm || "hội thoại ai".includes(searchTerm.toLowerCase())) && (
+              <NavButton 
+                active={currentTab === 'chat'} 
+                onClick={() => onNavigate('chat')} 
+                icon={<BrainCircuit size={18} />} 
+                label="Hội thoại AI Elite" 
+                collapsed={isCollapsed}
+              />
+            )}
+          </div>
+        </div>
 
         {/* Nhóm Soạn thảo Pro */}
         {(!searchTerm || [
@@ -206,23 +242,23 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
             <button 
               onClick={() => toggleSection('drafting-pro')}
               className={cn(
-                "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 group",
+                "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-300 group",
                 (expandedSections['drafting-pro'] || currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'reporting' || searchTerm) 
-                  ? "bg-indigo-50/50 text-indigo-700" 
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                  ? "bg-indigo-50/80 text-indigo-700" 
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                 isCollapsed && "justify-center px-0"
               )}
             >
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  "transition-all duration-200 shrink-0",
+                  "transition-all duration-300 shrink-0",
                   (expandedSections['drafting-pro'] || currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'reporting' || searchTerm) 
                     ? "text-indigo-600" 
                     : "text-slate-400 group-hover:text-slate-600"
                 )}>
                   <PenTool size={18} />
                 </div>
-                {!isCollapsed && <span className="font-bold tracking-tight truncate">Soạn thảo Pro</span>}
+                {!isCollapsed && <span className="font-bold tracking-tight truncate text-sm">Soạn thảo Pro</span>}
               </div>
               {!isCollapsed && (
                 <div className={cn(
@@ -240,7 +276,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden mt-1 ml-4 border-l-2 border-slate-100 space-y-1"
+                  className="overflow-hidden mt-1 ml-4 border-l border-slate-200/60 space-y-1 pl-2"
                 >
                   {(!searchTerm || "phân tích & báo cáo".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
@@ -269,30 +305,21 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       collapsed={isCollapsed}
                     />
                   )}
+                  {(!searchTerm || "soạn bài phát biểu".includes(searchTerm.toLowerCase())) && (
+                    <NavButton 
+                      active={currentTab === 'drafting-pro-speech'} 
+                      onClick={() => onNavigate('drafting-pro-speech')} 
+                      icon={<Mic size={16} />} 
+                      label="Soạn bài phát biểu" 
+                      collapsed={isCollapsed}
+                    />
+                  )}
                   {(!searchTerm || "tạo thư mời".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
                       active={currentTab === 'invitation'} 
                       onClick={() => onNavigate('invitation')} 
                       icon={<FileText size={16} />} 
                       label="Tạo thư mời" 
-                      collapsed={isCollapsed}
-                    />
-                  )}
-                  {(!searchTerm || "soạn thảo email".includes(searchTerm.toLowerCase())) && (
-                    <NavButton 
-                      active={currentTab === 'email-assistant'} 
-                      onClick={() => onNavigate('email-assistant')} 
-                      icon={<Mail size={16} />} 
-                      label="Soạn thảo Email" 
-                      collapsed={isCollapsed}
-                    />
-                  )}
-                  {(!searchTerm || "bài phát biểu".includes(searchTerm.toLowerCase())) && (
-                    <NavButton 
-                      active={currentTab === 'drafting-pro-speech'} 
-                      onClick={() => onNavigate('drafting-pro-speech')} 
-                      icon={<Mic size={16} />} 
-                      label="Bài phát biểu" 
                       collapsed={isCollapsed}
                     />
                   )}
@@ -310,19 +337,19 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
             <button 
               onClick={() => toggleSection('management')}
               className={cn(
-                "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 group",
-                (expandedSections['management'] || searchTerm) ? "bg-blue-50/50 text-blue-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-300 group",
+                (expandedSections['management'] || searchTerm) ? "bg-blue-50/80 text-blue-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                 isCollapsed && "justify-center px-0"
               )}
             >
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  "transition-all duration-200 shrink-0",
+                  "transition-all duration-300 shrink-0",
                   (expandedSections['management'] || searchTerm) ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"
                 )}>
                   <LayoutDashboard size={18} />
                 </div>
-                {!isCollapsed && <span className="font-bold tracking-tight truncate">Quản trị & Điều hành</span>}
+                {!isCollapsed && <span className="font-bold tracking-tight truncate text-sm">Quản trị & Điều hành</span>}
               </div>
               {!isCollapsed && (
                 <div className={cn(
@@ -340,7 +367,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden mt-1 ml-4 border-l-2 border-slate-100 space-y-1"
+                  className="overflow-hidden mt-1 ml-4 border-l border-slate-200/60 space-y-1 pl-2"
                 >
                   {(!searchTerm || "bảng điều khiển".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
@@ -401,24 +428,24 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
             <button 
               onClick={() => toggleSection('operations')}
               className={cn(
-                "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 group",
-                (expandedSections['operations'] || searchTerm) ? "bg-emerald-50/50 text-emerald-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-300 group",
+                (expandedSections['operations'] || currentTab === 'strategic' || searchTerm) ? "bg-emerald-50/80 text-emerald-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                 isCollapsed && "justify-center px-0"
               )}
             >
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  "transition-all duration-200 shrink-0",
-                  (expandedSections['operations'] || searchTerm) ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"
+                  "transition-all duration-300 shrink-0",
+                  (expandedSections['operations'] || currentTab === 'strategic' || searchTerm) ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"
                 )}>
                   <Database size={18} />
                 </div>
-                {!isCollapsed && <span className="font-bold tracking-tight truncate">Nghiệp vụ & Dữ liệu</span>}
+                {!isCollapsed && <span className="font-bold tracking-tight truncate text-sm">Nghiệp vụ & Dữ liệu</span>}
               </div>
               {!isCollapsed && (
                 <div className={cn(
                   "transition-transform duration-300",
-                  (expandedSections['operations'] || searchTerm) ? "rotate-180" : ""
+                  (expandedSections['operations'] || currentTab === 'strategic' || searchTerm) ? "rotate-180" : ""
                 )}>
                   <ChevronDown size={14} className="text-slate-400" />
                 </div>
@@ -431,8 +458,17 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden mt-1 ml-4 border-l-2 border-slate-100 space-y-1"
+                  className="overflow-hidden mt-1 ml-4 border-l border-slate-200/60 space-y-1 pl-2"
                 >
+                  {(!searchTerm || "tham mưu chiến lược".includes(searchTerm.toLowerCase())) && (
+                    <NavButton 
+                      active={currentTab === 'strategic'} 
+                      onClick={() => onNavigate('strategic')} 
+                      icon={<BrainCircuit size={16} />} 
+                      label="Tham mưu chiến lược" 
+                      collapsed={isCollapsed}
+                    />
+                  )}
                   {(!searchTerm || "tham mưu & sinh hoạt".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
                       active={currentTab === 'party-advisory'} 
@@ -486,7 +522,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
         )}
       </div>
 
-      <div className={cn("p-3 border-t border-[hsl(var(--border))] bg-[hsl(var(--secondary))]/30 flex flex-col gap-2", isCollapsed && "px-2")}>
+      {/* User Profile Section */}
+      <div className={cn("p-4 border-t border-slate-100 bg-slate-50/40 flex flex-col gap-3", isCollapsed && "px-2")}>
         <div 
           onClick={() => {
             if (isCollapsed) {
@@ -496,29 +533,29 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
             }
           }}
           className={cn(
-            "w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-[hsl(var(--card))] hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group border border-transparent hover:border-[hsl(var(--border))] cursor-pointer",
+            "w-full flex items-center gap-3 p-2.5 rounded-2xl hover:bg-white hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-500 group border border-transparent hover:border-slate-200 cursor-pointer",
             isCollapsed && "justify-center p-1"
           )}
         >
           <div className="relative shrink-0">
             {user?.photoURL ? (
-              <img src={user.photoURL} alt={user.displayName || 'User'} className="w-10 h-10 rounded-xl ring-2 ring-white dark:ring-slate-800 shadow-md object-cover" />
+              <img src={user.photoURL} alt={user.displayName || 'User'} className="w-11 h-11 rounded-xl ring-2 ring-white shadow-md object-cover" />
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white dark:ring-slate-800 shadow-md">
+              <div className="w-11 h-11 rounded-xl bg-blue-950 flex items-center justify-center text-white font-black text-xs ring-2 ring-white shadow-md">
                 {user?.displayName?.split(' ').map(n => n[0]).join('') || user?.email?.substring(0, 2).toUpperCase() || 'U'}
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full" />
+            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-extrabold text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">{user?.displayName || user?.email || 'Người dùng'}</p>
+                <p className="text-sm font-black text-slate-900 truncate group-hover:text-blue-600 transition-colors">{user?.displayName || user?.email || 'Người dùng'}</p>
                 {user?.email === 'nguyenhuy.thudaumot@gmail.com' && (
-                  <span className="text-[8px] font-black bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">Admin</span>
+                  <span className="text-[8px] font-black bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">Admin</span>
                 )}
               </div>
-              <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate font-semibold">Chánh Văn phòng Đảng uỷ</p>
+              <p className="text-[10px] text-slate-400 truncate font-black uppercase tracking-widest font-mono">Elite Member</p>
             </div>
           )}
           {!isCollapsed && (
@@ -528,12 +565,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                   e.stopPropagation();
                   onOpenSettings();
                 }}
-                className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10 rounded-lg transition-all"
+                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                 title="Cài đặt"
               >
-                <Settings size={16} className="group-hover:rotate-90 transition-all duration-500" />
+                <Settings size={16} className="group-hover:rotate-90 transition-all duration-700" />
               </button>
-              {isProfileExpanded ? <ChevronUp size={16} className="text-[hsl(var(--muted-foreground))]" /> : <ChevronDown size={16} className="text-[hsl(var(--muted-foreground))]" />}
             </div>
           )}
         </div>
@@ -546,18 +582,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden flex flex-col gap-2"
             >
-              {unitInfo && !isCollapsed && (
-                <div className="px-3 py-2.5 rounded-2xl bg-gradient-to-br from-emerald-50/50 to-teal-50/50 border border-emerald-100/40 shadow-sm mx-1">
-                  <div className="flex items-center gap-1.5 text-emerald-700 mb-1.5">
-                    <MapPin size={12} className="text-emerald-500" />
-                    <span className="text-[9px] font-black uppercase tracking-widest">Đơn vị công tác</span>
-                  </div>
-                  <p className="text-[10px] font-bold text-slate-700 leading-relaxed line-clamp-2" title={unitInfo.fullName}>
-                    {unitInfo.fullName}
-                  </p>
-                </div>
-              )}
-
               <div className="space-y-1">
                 <NavButton 
                   active={currentTab === 'history'} 
@@ -571,13 +595,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                   onClick={() => onNavigate('work-log')} 
                   icon={<ClipboardList size={16} />} 
                   label="Nhật ký công việc" 
-                  collapsed={isCollapsed}
-                />
-                <NavButton 
-                  active={currentTab === 'access-history'} 
-                  onClick={() => onNavigate('access-history')} 
-                  icon={<Activity size={16} />} 
-                  label="Lịch sử truy cập" 
                   collapsed={isCollapsed}
                 />
                 {isAdmin && (
@@ -596,49 +613,50 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       label="Trung tâm Sửa lỗi" 
                       collapsed={isCollapsed}
                     />
+                    <NavButton 
+                      active={currentTab === 'roadmap'} 
+                      onClick={() => onNavigate('roadmap')} 
+                      icon={<Rocket size={16} />} 
+                      label="Tầm nhìn & Lộ trình" 
+                      collapsed={isCollapsed}
+                      badge="Mới"
+                    />
                   </div>
                 )}
-                <NavButton 
-                  active={currentTab === 'tracking'} 
-                  onClick={() => onNavigate('tracking')} 
-                  icon={<ListTodo size={16} />} 
-                  label="Theo dõi tiến độ" 
-                  collapsed={isCollapsed}
-                />
               </div>
 
               <div className={cn("flex items-center gap-2 px-1", isCollapsed && "flex-col")}>
                 <button 
                   onClick={onToggleTeamChat}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300 font-bold text-[10px] uppercase tracking-wider",
+                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-500 font-black text-[10px] uppercase tracking-[0.15em] font-mono",
                     isCollapsed && "w-full",
                     isTeamChatOpen 
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
-                      : "bg-white text-slate-500 hover:text-blue-600 hover:bg-blue-50/50 border border-slate-200/60"
+                      ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20" 
+                      : "bg-white text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200/60"
                   )}
                   title="Nhóm"
                 >
                   <MessageCircle size={14} />
-                  {!isCollapsed && <span>Nhóm</span>}
+                  {!isCollapsed && <span>Team</span>}
                 </button>
                 <button 
                   onClick={() => setShowNotifications(!showNotifications)}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300 font-bold text-[10px] uppercase tracking-wider relative",
+                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-500 font-black text-[10px] uppercase tracking-[0.15em] font-mono relative",
                     isCollapsed && "w-full",
                     showNotifications 
-                      ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" 
-                      : "bg-white text-slate-500 hover:text-emerald-600 hover:bg-emerald-50/50 border border-slate-200/60"
+                      ? "bg-emerald-600 text-white shadow-xl shadow-emerald-600/20" 
+                      : "bg-white text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200/60"
                   )}
                   title="Thông báo"
                 >
                   <Bell size={14} />
-                  {!isCollapsed && <span>Thông báo</span>}
+                  {!isCollapsed && <span>Alerts</span>}
                   {notifications.some(n => !n.isRead) && (
                     <span className={cn(
-                      "absolute bg-red-500 rounded-full ring-2 ring-white animate-pulse",
-                      isCollapsed ? "top-2 right-2 w-1.5 h-1.5" : "top-2 right-2 w-2 h-2"
+                      "absolute bg-rose-500 rounded-full ring-2 ring-white animate-pulse",
+                      isCollapsed ? "top-2 right-2 w-2 h-2" : "top-2 right-2 w-2.5 h-2.5"
                     )} />
                   )}
                 </button>
@@ -656,8 +674,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
           />
         )}
       </div>
-
-      {/* Footer area can be added here if needed */}
     </aside>
   );
 });

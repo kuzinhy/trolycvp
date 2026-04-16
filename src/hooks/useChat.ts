@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc, getDocs, where, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
-import { Message, SYSTEM_INSTRUCTION } from '../constants';
+import { Message, SYSTEM_INSTRUCTION, Meeting, Task, Event, Birthday } from '../constants';
 import { ToastType } from '../components/ui/Toast';
 import { useAuth } from '../context/AuthContext';
 import { generateContentWithRetry, generateContentStreamWithRetry } from '../lib/ai-utils';
@@ -44,7 +44,11 @@ function generateAITitle(text: string): string | undefined {
 export function useChat(
   aiKnowledge: any[], 
   showToast: (message: string, type?: ToastType) => void,
-  loadKnowledge: () => void
+  loadKnowledge: () => void,
+  meetings: Meeting[] = [],
+  tasks: Task[] = [],
+  events: Event[] = [],
+  birthdays: Birthday[] = []
 ) {
   const { user, isAdmin, isSuperAdmin, unitId, userInfo } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -144,6 +148,7 @@ export function useChat(
           const docRef = doc(collection(db, "party_documents"));
           batch.set(docRef, {
             content,
+            title: content.substring(0, 200),
             summary: content.substring(0, 200),
             category: "Auto-Learned",
             tags: ["auto-learned", "chat-history"],
@@ -151,7 +156,7 @@ export function useChat(
             isPublic: true,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-            authorId: user.uid,
+            authorUid: user.uid,
             unitId: unitId || 'default_unit',
             type: 'document'
           });
@@ -221,6 +226,26 @@ export function useChat(
 
       const userName = user?.displayName || user?.email?.split('@')[0] || 'Đồng chí';
       const userRole = isAdmin ? (isSuperAdmin ? 'Super Admin' : 'Admin') : 'Người dùng';
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+      // Format schedule context
+      const scheduleContext = `
+THỜI GIAN HIỆN TẠI: ${timeStr}, ${dateStr}
+
+LỊCH CÔNG TÁC & NHIỆM VỤ (DỮ LIỆU THỰC TẾ):
+- Cuộc họp/Lịch công tác: ${meetings.length > 0 ? meetings.map(m => `${m.date} ${m.time}: ${m.name} (${m.location})`).join('; ') : 'Không có lịch họp.'}
+- Nhiệm vụ: ${tasks.length > 0 ? tasks.map(t => `${t.title} (Hạn: ${t.deadline}, Trạng thái: ${t.status})`).join('; ') : 'Không có nhiệm vụ.'}
+- Sự kiện: ${events.length > 0 ? events.map(e => `${e.date}: ${e.name}`).join('; ') : 'Không có sự kiện.'}
+- Sinh nhật: ${birthdays.length > 0 ? birthdays.map(b => `${b.date}: ${b.name}`).join('; ') : 'Không có thông tin sinh nhật.'}
+
+LƯU Ý QUAN TRỌNG: 
+1. Tuyệt đối chỉ trả lời dựa trên dữ liệu lịch công tác thực tế được cung cấp ở trên. 
+2. BỎ QUA mọi thông tin về lịch trình, ngày giờ, sự kiện đã xuất hiện trong các tin nhắn trước đó nếu chúng không có trong dữ liệu thực tế ở trên.
+3. Nếu người dùng hỏi về lịch trình mà không có trong dữ liệu này, hãy báo là "Hiện tại không có thông tin chính thức về nội dung này trong hệ thống".
+4. Luôn ưu tiên độ chính xác tuyệt đối về thời gian và nội dung.
+`;
       
       // Dynamic system instruction based on user context
       let dynamicInstruction = SYSTEM_INSTRUCTION
@@ -238,6 +263,8 @@ export function useChat(
             role: 'user',
             parts: [{
               text: `${dynamicInstruction}
+              
+              ${scheduleContext}
               
               DỮ LIỆU TRI THỨC BỔ TRỢ (KNOWLEDGE BASE):
               ${knowledgeContext}
@@ -299,7 +326,7 @@ export function useChat(
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, aiKnowledge, messages, user, isAdmin, isSuperAdmin, unitId, isSearchEnabled, isSimpleMode, showToast]);
+  }, [input, isLoading, aiKnowledge, messages, user, isAdmin, isSuperAdmin, unitId, isSearchEnabled, isSimpleMode, showToast, meetings, tasks, events, birthdays]);
 
   const saveToKnowledge = useCallback(async (text: string, tags: string[], index: number) => {
     if (!user) {
@@ -310,6 +337,7 @@ export function useChat(
     try {
       await addDoc(collection(db, "party_documents"), {
         content: text,
+        title: text.substring(0, 200) + (text.length > 200 ? "..." : ""),
         summary: text.substring(0, 200) + (text.length > 200 ? "..." : ""),
         category: "Chat",
         tags: [...tags, "chat-saved"],
@@ -317,7 +345,7 @@ export function useChat(
         isPublic: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        authorId: user.uid,
+        authorUid: user.uid,
         unitId: unitId || 'default_unit',
         type: 'document'
       });

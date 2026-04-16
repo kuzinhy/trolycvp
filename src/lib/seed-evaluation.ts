@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, getDocs, addDoc, query, limit, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, limit, Timestamp, serverTimestamp } from 'firebase/firestore';
 
 export const seedEvaluationData = async () => {
   try {
@@ -40,11 +40,11 @@ export const seedEvaluationData = async () => {
     
     if (officersSnap.empty) {
       const defaultOfficers = [
-        { fullName: 'Nguyễn Văn A', unitId: 'VP', role: 'specialist', position: 'Chuyên viên chính', status: 'active', createdAt: Timestamp.now() },
-        { fullName: 'Trần Thị B', unitId: 'VP', role: 'staff', position: 'Nhân viên hành chính', status: 'active', createdAt: Timestamp.now() },
-        { fullName: 'Lê Văn C', unitId: 'TC', role: 'specialist', position: 'Chuyên viên tài chính', status: 'active', createdAt: Timestamp.now() },
-        { fullName: 'Phạm Minh D', unitId: 'VP', role: 'leader', position: 'Trưởng phòng', status: 'active', createdAt: Timestamp.now() },
-        { fullName: 'Hoàng Thị E', unitId: 'TC', role: 'leader', position: 'Phó phòng', status: 'active', createdAt: Timestamp.now() }
+        { fullName: 'Nguyễn Văn A', unitId: 'VP', role: 'specialist', position: 'Chuyên viên chính', status: 'active', createdAt: serverTimestamp() },
+        { fullName: 'Trần Thị B', unitId: 'VP', role: 'staff', position: 'Nhân viên hành chính', status: 'active', createdAt: serverTimestamp() },
+        { fullName: 'Lê Văn C', unitId: 'TC', role: 'specialist', position: 'Chuyên viên tài chính', status: 'active', createdAt: serverTimestamp() },
+        { fullName: 'Phạm Minh D', unitId: 'VP', role: 'leader', position: 'Trưởng phòng', status: 'active', createdAt: serverTimestamp() },
+        { fullName: 'Hoàng Thị E', unitId: 'TC', role: 'leader', position: 'Phó phòng', status: 'active', createdAt: serverTimestamp() }
       ];
       
       for (const p of defaultOfficers) {

@@ -41,7 +41,7 @@ import { useTasks } from '../context/TaskContext';
 import { Task } from '../constants';
 import { useSpeechToText } from '../hooks/useSpeechToText';
 import { ConfirmationModal } from './ui/ConfirmationModal';
-import { generateContentWithRetry } from '../lib/ai-utils';
+import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
 import { updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { toast } from 'react-hot-toast';
@@ -51,6 +51,7 @@ export const SmartTaskManager: React.FC = () => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskDeadline, setNewTaskDeadline] = useState('');
+  const [newTaskTime, setNewTaskTime] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [isSmartSorted, setIsSmartSorted] = useState(true);
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
@@ -83,14 +84,16 @@ export const SmartTaskManager: React.FC = () => {
         config: { responseMimeType: 'application/json' }
       });
       
-      const subTasks = JSON.parse(response.text.trim());
+      const subTasks = parseAIResponse(response.text);
       
-      // Update task with sub-tasks
-      updateTasks(tasks.map(t => 
-        t.id === task.id 
-          ? { ...t, subTasks: subTasks.map((st: any) => ({ ...st, status: 'Pending' })) } 
-          : t
-      ));
+      if (subTasks && Array.isArray(subTasks)) {
+        // Update task with sub-tasks
+        updateTasks(tasks.map(t => 
+          t.id === task.id 
+            ? { ...t, subTasks: subTasks.map((st: any) => ({ ...st, status: 'Pending' })) } 
+            : t
+        ));
+      }
       
     } catch (error: any) {
       console.error('Task Decomposition Error:', error);
@@ -129,6 +132,7 @@ export const SmartTaskManager: React.FC = () => {
       title: newTaskTitle,
       description: newTaskDesc,
       deadline: newTaskDeadline || new Date().toISOString().split('T')[0],
+      time: newTaskTime,
       priority: 'medium',
       status: 'Pending',
       createdAt: Date.now(),
@@ -137,6 +141,7 @@ export const SmartTaskManager: React.FC = () => {
     setNewTaskTitle('');
     setNewTaskDesc('');
     setNewTaskDeadline('');
+    setNewTaskTime('');
   };
 
   const toggleTask = (id: string) => {
@@ -214,9 +219,9 @@ export const SmartTaskManager: React.FC = () => {
     if (searchTerm.trim()) {
       const lowerSearch = searchTerm.toLowerCase();
       result = result.filter(t => 
-        t.title.toLowerCase().includes(lowerSearch) || 
-        t.description?.toLowerCase().includes(lowerSearch) ||
-        t.category?.toLowerCase().includes(lowerSearch)
+        (t.title || '').toLowerCase().includes(lowerSearch) || 
+        (t.description || '').toLowerCase().includes(lowerSearch) ||
+        (t.category || '').toLowerCase().includes(lowerSearch)
       );
     }
 
@@ -480,13 +485,21 @@ export const SmartTaskManager: React.FC = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hạn chót</label>
-            <input 
-              type="date" 
-              value={newTaskDeadline}
-              onChange={(e) => setNewTaskDeadline(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-600"
-            />
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hạn chót & Giờ</label>
+            <div className="flex gap-2">
+              <input 
+                type="date" 
+                value={newTaskDeadline}
+                onChange={(e) => setNewTaskDeadline(e.target.value)}
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-600"
+              />
+              <input 
+                type="time" 
+                value={newTaskTime}
+                onChange={(e) => setNewTaskTime(e.target.value)}
+                className="w-32 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-600"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mô tả chi tiết</label>
@@ -703,6 +716,7 @@ export const SmartTaskManager: React.FC = () => {
                               )}>
                                 <Clock size={8} />
                                 {isOverdue ? `Quá hạn: ${new Date(task.deadline).toLocaleDateString('vi-VN')}` : new Date(task.deadline).toLocaleDateString('vi-VN')}
+                                {task.time && <span className="ml-1 text-indigo-600 font-black">({task.time})</span>}
                               </span>
                             )}
                           </div>
