@@ -19,7 +19,8 @@ import {
   Sparkles,
   PenTool,
   Download,
-  RefreshCw
+  RefreshCw,
+  Zap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { db } from '../lib/firebase';
@@ -34,7 +35,8 @@ import {
   limit,
   updateDoc,
   doc,
-  Timestamp
+  Timestamp,
+  deleteDoc
 } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
@@ -104,11 +106,57 @@ export const WorkLogModule: React.FC = () => {
   const isInitialLoad = useRef(true);
 
   // Load log for selected date
-  useEffect(() => {
-    if (user) {
-      loadLogByDate(selectedDate);
+  const loadLogByDate = useCallback(async (dateStr: string) => {
+    if (!user) return;
+    setIndexError(null);
+    try {
+      const targetDate = new Date(dateStr);
+      targetDate.setHours(0, 0, 0, 0);
+      
+      const nextDay = new Date(targetDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      
+      const q = query(
+        collection(db, 'work_logs'),
+        where('userId', '==', user.uid),
+        where('date', '>=', Timestamp.fromDate(targetDate)),
+        where('date', '<', Timestamp.fromDate(nextDay)),
+        limit(1)
+      );
+      
+      let querySnapshot;
+      try {
+        querySnapshot = await getDocs(q);
+      } catch (err: any) {
+        if (err.message.includes('index')) {
+          setIndexError("Yêu cầu tạo Index cho 'work_logs'.");
+        }
+        handleFirestoreError(err, OperationType.LIST, 'work_logs', user);
+        return;
+      }
+
+      if (querySnapshot && !querySnapshot.empty) {
+        const targetLog = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as any;
+        setLastLog(targetLog);
+        if (targetLog.tasks) setTasks(targetLog.tasks);
+        if (targetLog.additionalTasks) setAdditionalTasks(targetLog.additionalTasks);
+        if (targetLog.calendarTasks) setCalendarTasks(targetLog.calendarTasks);
+        if (targetLog.notes) setNotes(targetLog.notes);
+      } else {
+        // Reset to defaults if no log found for this date
+        setLastLog(null);
+        setTasks(FIXED_TASKS);
+        setAdditionalTasks([]);
+        setNotes('');
+      }
+    } catch (error) {
+      console.error("Error loading log for date:", error);
     }
-  }, [user, unitId, selectedDate]);
+  }, [user]);
+
+  useEffect(() => {
+    loadLogByDate(selectedDate);
+  }, [selectedDate, loadLogByDate]);
 
   // Extract tasks from calendar for selected date
   useEffect(() => {
@@ -140,8 +188,11 @@ export const WorkLogModule: React.FC = () => {
 
     const allCalendarTasks = [...todayMeetings, ...todayEvents, ...todayCalendarTasks];
     
-    setCalendarTasks(allCalendarTasks);
-  }, [meetings, events, calendarTasksList, selectedDate]);
+    // Only update if no existing log OR if we are merging (simple version: just set if no lastLog)
+    if (!lastLog) {
+      setCalendarTasks(allCalendarTasks);
+    }
+  }, [meetings, events, calendarTasksList, selectedDate, lastLog]);
 
   // Auto-save logic
   useEffect(() => {
@@ -179,63 +230,56 @@ export const WorkLogModule: React.FC = () => {
     }
   };
 
-  const loadLogByDate = async (dateStr: string) => {
-    setIndexError(null);
+  const refreshCalendarTasks = () => {
+    const targetDateStr = selectedDate;
+    
+    const todayMeetings = meetings.filter(m => m.date === targetDateStr).map(m => ({
+      task_name: `Họp: ${m.name}`,
+      priority: 'high' as const,
+      description: `Thời gian: ${m.time} | Địa điểm: ${m.location}`,
+      status: 'not completed' as const,
+      source: 'calendar' as const
+    }));
+
+    const todayEvents = events.filter(e => e.date === targetDateStr).map(e => ({
+      task_name: `Sự kiện: ${e.name}`,
+      priority: 'medium' as const,
+      description: `Loại: ${e.type}`,
+      status: 'not completed' as const,
+      source: 'calendar' as const
+    }));
+
+    const todayCalendarTasks = calendarTasksList.filter(t => t.deadline === targetDateStr).map(t => ({
+      task_name: `Nhiệm vụ: ${t.title}`,
+      priority: t.priority as 'high' | 'medium' | 'low',
+      description: `Trạng thái: ${t.status}`,
+      status: t.status === 'Completed' ? 'completed' as const : 'not completed' as const,
+      source: 'calendar' as const
+    }));
+
+    setCalendarTasks([...todayMeetings, ...todayEvents, ...todayCalendarTasks]);
+    toastFn?.("Đã cập nhật nhiệm vụ từ lịch", "success");
+  };
+
+  const deleteLog = async () => {
+    if (!lastLog?.id || !user) return;
+    
+    if (!window.confirm("Bạn có chắc chắn muốn xóa nhật ký ngày này?")) return;
+    
+    setIsSaving(true);
     try {
-      const targetDate = new Date(dateStr);
-      targetDate.setHours(0, 0, 0, 0);
-      
-      const nextDay = new Date(targetDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      
-      const q = query(
-        collection(db, 'work_logs'),
-        where('userId', '==', user?.uid)
-      );
-      
-      let querySnapshot;
-      try {
-        querySnapshot = await getDocs(q);
-      } catch (err: any) {
-        if (err.message.includes('index')) {
-          setIndexError("Yêu cầu tạo Index cho 'work_logs'.");
-        }
-        handleFirestoreError(err, OperationType.LIST, 'work_logs', user);
-        return;
-      }
-
-      if (querySnapshot && !querySnapshot.empty) {
-        const logs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const targetLog = logs.find((log: any) => {
-          if (!log.date) return false;
-          const logDate = log.date.toDate ? log.date.toDate() : new Date(log.date);
-          return logDate >= targetDate && logDate < nextDay;
-        });
-
-        if (targetLog) {
-          setLastLog(targetLog);
-          if (targetLog.tasks) setTasks(targetLog.tasks);
-          if (targetLog.additionalTasks) setAdditionalTasks(targetLog.additionalTasks);
-          if (targetLog.calendarTasks) setCalendarTasks(targetLog.calendarTasks);
-          if (targetLog.notes) setNotes(targetLog.notes);
-        } else {
-          // Reset to defaults if no log found for this date
-          setLastLog(null);
-          setTasks(FIXED_TASKS);
-          setAdditionalTasks([]);
-          setNotes('');
-          // Calendar tasks are handled by the other useEffect
-        }
-      } else {
-        // Reset to defaults if no log found for this date
-        setLastLog(null);
-        setTasks(FIXED_TASKS);
-        setAdditionalTasks([]);
-        setNotes('');
-        // Calendar tasks are handled by the other useEffect
-      }
+      await deleteDoc(doc(db, 'work_logs', lastLog.id));
+      setLastLog(null);
+      setTasks(FIXED_TASKS);
+      setAdditionalTasks([]);
+      setCalendarTasks([]);
+      setNotes('');
+      toastFn?.("Đã xóa nhật ký thành công", "success");
     } catch (error) {
-      console.error("Error loading log for date:", error);
+      console.error("Error deleting log:", error);
+      toastFn?.("Lỗi khi xóa nhật ký", "error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -520,21 +564,35 @@ export const WorkLogModule: React.FC = () => {
             </button>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleSaveLog()}
-            disabled={isSaving}
-            className={cn(
-              "flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all shadow-lg",
-              isSaving 
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
-                : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20"
+          <div className="flex items-center gap-3">
+            {lastLog && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={deleteLog}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all border border-rose-200"
+              >
+                <Trash2 size={18} />
+                <span className="hidden md:inline uppercase tracking-tight">Xóa</span>
+              </motion.button>
             )}
-          >
-            {isSaving ? <Clock className="animate-spin" size={18} /> : <Save size={18} />}
-            {lastLog ? 'CẬP NHẬT NHẬT KÝ' : 'LƯU NHẬT KÝ'}
-          </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleSaveLog()}
+              disabled={isSaving}
+              className={cn(
+                "flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all shadow-lg",
+                isSaving 
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
+                  : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20"
+              )}
+            >
+              {isSaving ? <Clock className="animate-spin" size={18} /> : <Save size={18} />}
+              {lastLog ? 'CẬP NHẬT NHẬT KÝ' : 'LƯU NHẬT KÝ'}
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -581,7 +639,7 @@ export const WorkLogModule: React.FC = () => {
           <div className="space-y-3">
             {tasks.map((task, index) => (
               <motion.div
-                key={index}
+                key={`fixed-${index}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
@@ -640,6 +698,13 @@ export const WorkLogModule: React.FC = () => {
                 <CalendarIcon size={20} className="text-purple-500" />
                 Nhiệm vụ từ lịch làm việc
               </h3>
+              <button 
+                onClick={refreshCalendarTasks}
+                className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
+                title="Cập nhật từ lịch"
+              >
+                <Zap size={16} />
+              </button>
             </div>
 
             <div className="space-y-3">

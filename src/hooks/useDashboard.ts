@@ -8,6 +8,7 @@ import { db } from '../lib/firebase';
 import { collection, getDocs, doc, setDoc, query, deleteDoc } from 'firebase/firestore';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
 import { useAuth } from '../context/AuthContext';
+import { cacheData, getCachedData } from '../lib/cache';
 
 export function useDashboard(
   showToast?: (message: string, type?: ToastType) => void,
@@ -115,11 +116,19 @@ export function useDashboard(
   const loadEvents = useCallback(async () => {
     if (!user) return;
     setIsEventsLoading(true);
+
+    // Cache first
+    const cacheKey = `events_${user.uid}`;
+    getCachedData('app_settings', cacheKey).then(cached => {
+      if (cached) setEvents(cached);
+    });
+
     try {
       const q = query(collection(db, 'users', user.uid, 'events'));
       const querySnapshot = await getDocs(q);
       const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event));
       setEvents(eventsData);
+      cacheData('app_settings', cacheKey, eventsData);
     } catch (e) {
       handleFirestoreError(e, OperationType.GET, `users/${user.uid}/events`);
       showToast?.("Lỗi tải sự kiện từ Firestore", "error");
@@ -131,11 +140,19 @@ export function useDashboard(
   const loadMeetingsData = useCallback(async () => {
     if (!user) return;
     setIsMeetingsLoading(true);
+
+    // Cache first
+    const cacheKey = `meetings_${user.uid}`;
+    getCachedData('app_settings', cacheKey).then(cached => {
+      if (cached) setMeetings(cached);
+    });
+
     try {
       const q = query(collection(db, 'users', user.uid, 'meetings'));
       const querySnapshot = await getDocs(q);
       const meetingsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Meeting));
       setMeetings(meetingsData);
+      cacheData('app_settings', cacheKey, meetingsData);
     } catch (e) {
       handleFirestoreError(e, OperationType.GET, `users/${user.uid}/meetings`);
       showToast?.("Lỗi tải lịch công tác từ Firestore", "error");

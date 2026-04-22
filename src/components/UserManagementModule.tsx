@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
-import { collection, getDocs, query, doc, updateDoc, where, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, doc, updateDoc, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
 import { Shield, Users, Loader2, Search, Bell, Send, Building, RefreshCw, Clock, ExternalLink, UserCheck, UserMinus, Filter, Download, MoreVertical, Mail, Calendar as CalendarIcon, Activity, X, Eye, AlertCircle, UserPlus } from 'lucide-react';
@@ -86,7 +86,7 @@ const UserRow = memo(({
             onChange={(e) => onUnitChange(u.id, e.target.value)}
             placeholder="Mã đơn vị"
             disabled={u.email === currentUserEmail}
-            className="bg-slate-50 border border-slate-200 text-slate-900 text-[10px] rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-1.5 disabled:opacity-50 font-bold uppercase tracking-wider"
+            className="bg-slate-50 border border-slate-200 text-slate-900 text-[10px] rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 disabled:opacity-50 font-bold uppercase tracking-wider"
           />
           {u.unitInfo?.fullName && (
             <span className="text-[10px] text-slate-500 font-medium truncate max-w-[150px]" title={u.unitInfo.fullName}>
@@ -101,7 +101,7 @@ const UserRow = memo(({
         value={u.role || 'user'}
         onChange={(e) => onRoleChange(u.id, e.target.value)}
         disabled={u.email === currentUserEmail || (!isSuperAdmin && u.role === 'super_admin')}
-        className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 disabled:opacity-50 font-medium cursor-pointer"
+        className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 disabled:opacity-50 font-medium cursor-pointer"
       >
         <option value="user">Người dùng</option>
         <option value="admin">Quản trị viên</option>
@@ -189,14 +189,7 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
     online: usersList.filter(u => u.isOnline).length
   }), [usersList]);
 
-  useEffect(() => {
-    if (isAdmin) {
-      loadUsers();
-      loadNotificationHistory();
-    }
-  }, [isAdmin, isSuperAdmin, unitId]);
-
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(() => {
     setIsLoading(true);
     setIndexError(null);
     try {
@@ -206,19 +199,25 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
       } else {
         q = query(collection(db, 'users'), where('unitId', '==', unitId || ''));
       }
-      const snapshot = await getDocs(q);
-      const users = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
-      setUsersList(users);
+      
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const users = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+        setUsersList(users);
+        setIsLoading(false);
+      }, (error) => {
+        if (error.message.includes('index')) {
+          setIndexError("Yêu cầu tạo Index cho 'users'.");
+        }
+        handleFirestoreError(error, OperationType.GET, 'users');
+        setIsLoading(false);
+      });
+
+      return unsubscribe;
     } catch (error: any) {
-      if (error.message.includes('index')) {
-        setIndexError("Yêu cầu tạo Index cho 'users'.");
-      }
       handleFirestoreError(error, OperationType.GET, 'users');
-      showToast("Lỗi khi tải danh sách người dùng", "error");
-    } finally {
       setIsLoading(false);
     }
-  }, [isSuperAdmin, unitId, showToast]);
+  }, [isSuperAdmin, unitId]);
 
   const loadNotificationHistory = useCallback(async () => {
     setIsHistoryLoading(true);
@@ -260,6 +259,16 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
       setIsHistoryLoading(false);
     }
   }, [isSuperAdmin, unitId, showToast]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      const unsubscribe = loadUsers();
+      loadNotificationHistory();
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
+    }
+  }, [isAdmin, loadUsers, loadNotificationHistory]);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {

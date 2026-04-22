@@ -72,10 +72,12 @@ export interface Meeting {
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
   location: string;
-  chairperson?: string; // Added chairperson
-  participants?: string; // Added participants
-  description?: string; // Added description
-  priority?: 'low' | 'medium' | 'high'; // Added priority
+  chairperson?: string;
+  participants?: string;
+  description?: string;
+  priority?: 'low' | 'medium' | 'high';
+  projectId?: string; // Liên kết với Dự án chiến lược
+  references?: string[]; // Danh sách IDs văn bản liên quan
   reminderMinutes?: number;
   reminderType?: 'minutes' | 'hours' | 'days' | 'none';
   reminderValue?: number;
@@ -91,11 +93,14 @@ export interface Task {
   status: 'Pending' | 'In Progress' | 'Completed';
   progress?: number; // 0-100
   category?: string;
-  estimatedTime?: string; // e.g., "2 giờ"
+  estimatedTime?: string;
   aiSuggestion?: string;
   assignee?: string;
+  departmentId?: string; // Đơn vị chịu trách nhiệm
+  projectId?: string; // Thuộc dự án/chương trình nào
+  references?: string[]; // Các nghị quyết, văn bản hướng dẫn
   subTasks?: { title: string; description: string; status?: 'Pending' | 'Completed' }[];
-  dependencies?: string[]; // IDs of tasks that must be completed first
+  dependencies?: string[];
   createdAt: number;
   completedAt?: number;
   isSystem?: boolean;
@@ -198,6 +203,20 @@ export interface KnowledgeItem {
   updatedAt: string;
   demoUrl?: string;
 }
+
+export interface StrategicProject {
+  id: string;
+  title: string;
+  code: string;
+  description: string;
+}
+
+export const STRATEGIC_PROJECTS: StrategicProject[] = [
+  { id: 'proj-001', title: 'Chuyển đổi số công tác Đảng', code: 'CDS-01', description: 'Số hóa toàn bộ hồ sơ, văn bản và quy trình điều hành.' },
+  { id: 'proj-002', title: 'Xây dựng kho tri thức dùng chung', code: 'KTT-02', description: 'Xây dựng hệ thống RAG kết nối tri thức đa nguồn.' },
+  { id: 'proj-003', title: 'Nâng cao năng lực tham mưu AI', code: 'AI-03', description: 'Đào tạo và ứng dụng AI trong phân tích chiến lược.' },
+  { id: 'proj-004', title: 'Giám sát an ninh tư tưởng số', code: 'AN-04', description: 'Phân tích dư luận và bảo vệ nền tảng tư tưởng trên không gian mạng.' }
+];
 
 export const WEB_SOURCES = [
   { id: 'dangcongsan', label: 'Báo điện tử Đảng Cộng sản Việt Nam', url: 'https://dangcongsan.vn', category: 'Chính thống' },

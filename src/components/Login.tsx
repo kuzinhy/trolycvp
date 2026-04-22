@@ -25,10 +25,18 @@ export const Login: React.FC = () => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100 text-center max-w-sm w-full"
+        className="bg-white p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center max-w-sm w-full"
       >
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Chào mừng trở lại</h1>
-        <p className="text-slate-500 mb-8">Vui lòng đăng nhập để tiếp tục sử dụng Trợ lý CVP Đảng ủy</p>
+        <div className="w-20 h-20 bg-white rounded-3xl mx-auto mb-6 flex items-center justify-center p-2 shadow-xl shadow-blue-500/10 border border-slate-50">
+          <img 
+            src="https://i.imgur.com/S9tvwYs.png" 
+            alt="Elite Strategic Hub" 
+            className="w-full h-full object-contain"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+        <h1 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter uppercase">Elite Strategic Hub</h1>
+        <p className="text-[10px] font-black text-slate-400 mb-8 uppercase tracking-[0.25em]">Trợ lý Chiến lược Đảng uỷ</p>
         
         {error && (
           <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">

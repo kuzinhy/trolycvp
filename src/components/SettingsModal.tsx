@@ -400,36 +400,133 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               )}
 
               {activeTab === 'notifications' && (
-                <div className="space-y-4 max-w-2xl mx-auto">
-                  {[
-                    { id: 'email', label: 'Thông báo qua Email', desc: 'Nhận cập nhật quan trọng qua hòm thư cá nhân', icon: User },
-                    { id: 'push', label: 'Thông báo đẩy (Push)', desc: 'Nhận thông báo trực tiếp trên trình duyệt web', icon: Bell },
-                    { id: 'sound', label: 'Âm thanh hệ thống', desc: 'Phát âm thanh khi có tin nhắn hoặc nhắc nhở', icon: Monitor },
-                  ].map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-6 bg-[hsl(var(--secondary))]/30 border border-[hsl(var(--border))] rounded-[2rem] group hover:bg-[hsl(var(--secondary))]/50 transition-all">
-                      <div className="flex items-center gap-5">
-                        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm group-hover:scale-110 transition-transform">
-                          <item.icon className="w-5 h-5 text-blue-500" />
+                <div className="space-y-8 max-w-2xl mx-auto">
+                  <section className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                      <div className="w-1 h-1 bg-blue-500 rounded-full" />
+                      Kênh thông báo
+                    </h4>
+                    <div className="space-y-3">
+                      {[
+                        { id: 'email', label: 'Thông báo qua Email', desc: 'Nhận cập nhật quan trọng qua hòm thư cá nhân', icon: User },
+                        { id: 'push', label: 'Thông báo đẩy (Push)', desc: 'Nhận thông báo trực tiếp trên trình duyệt web', icon: Bell },
+                        { id: 'sound', label: 'Âm thanh hệ thống', desc: 'Phát âm thanh khi có tin nhắn hoặc nhắc nhở', icon: Monitor },
+                      ].map((item: any) => (
+                        <div key={item.id} className="flex items-center justify-between p-6 bg-[hsl(var(--secondary))]/30 border border-[hsl(var(--border))] rounded-[2rem] group hover:bg-[hsl(var(--secondary))]/50 transition-all">
+                          <div className="flex items-center gap-5">
+                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+                              <item.icon className="w-5 h-5 text-blue-500" />
+                            </div>
+                            <div>
+                              <h4 className="text-base font-black text-[hsl(var(--foreground))]">{item.label}</h4>
+                              <p className="text-xs text-[hsl(var(--muted-foreground))]">{item.desc}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setNotificationSettings({ ...notificationSettings, [item.id]: !notificationSettings[item.id] })}
+                            className={cn(
+                              "w-14 h-7 rounded-full transition-all relative p-1",
+                              notificationSettings[item.id] ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300",
+                              notificationSettings[item.id] ? "translate-x-7" : "translate-x-0"
+                            )} />
+                          </button>
                         </div>
-                        <div>
-                          <h4 className="text-base font-black text-[hsl(var(--foreground))]">{item.label}</h4>
-                          <p className="text-xs text-[hsl(var(--muted-foreground))]">{item.desc}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setNotificationSettings({ ...notificationSettings, [item.id]: !notificationSettings[item.id] })}
-                        className={cn(
-                          "w-14 h-7 rounded-full transition-all relative p-1",
-                          notificationSettings[item.id] ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300",
-                          notificationSettings[item.id] ? "translate-x-7" : "translate-x-0"
-                        )} />
-                      </button>
+                      ))}
                     </div>
-                  ))}
+                  </section>
+
+                  <section className="space-y-6">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                      <div className="w-1 h-1 bg-indigo-500 rounded-full" />
+                      Cấu hình nhắc nhở Elite
+                    </h4>
+                    
+                    {!preferences.reminderSettings ? (
+                      <div className="p-8 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+                        <p className="text-sm font-bold text-slate-400">Đang khởi tạo cấu hình nhắc nhở...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-6 bg-[hsl(var(--secondary))]/20 border border-[hsl(var(--border))] rounded-[2rem]">
+                        <label className="block text-xs font-black uppercase tracking-wider mb-4 opacity-70">Nhắc nhiệm vụ (Mặc định)</label>
+                        <select 
+                          value={preferences.reminderSettings.defaultTaskMinutes}
+                          onChange={(e) => updatePreference('reminderSettings', { ...preferences.reminderSettings, defaultTaskMinutes: parseInt(e.target.value) })}
+                          className="w-full p-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl text-sm font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-blue-500/20"
+                        >
+                          <option value={5}>5 phút trước</option>
+                          <option value={15}>15 phút trước</option>
+                          <option value={30}>30 phút trước</option>
+                          <option value={60}>1 giờ trước</option>
+                          <option value={120}>2 giờ trước</option>
+                          <option value={1440}>1 ngày trước</option>
+                        </select>
+                      </div>
+
+                      <div className="p-6 bg-[hsl(var(--secondary))]/20 border border-[hsl(var(--border))] rounded-[2rem]">
+                        <label className="block text-xs font-black uppercase tracking-wider mb-4 opacity-70">Nhắc sự kiện (Mặc định)</label>
+                        <select 
+                          value={preferences.reminderSettings.defaultEventMinutes}
+                          onChange={(e) => updatePreference('reminderSettings', { ...preferences.reminderSettings, defaultEventMinutes: parseInt(e.target.value) })}
+                          className="w-full p-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl text-sm font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500/20"
+                        >
+                          <option value={15}>15 phút trước</option>
+                          <option value={30}>30 phút trước</option>
+                          <option value={60}>1 giờ trước</option>
+                          <option value={180}>3 giờ trước</option>
+                          <option value={1440}>1 ngày trước</option>
+                          <option value={2880}>2 ngày trước</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="p-8 bg-indigo-600/5 border border-indigo-600/20 rounded-[2.5rem] space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-600 rounded-lg text-white">
+                            <Bell className="w-4 h-4" />
+                          </div>
+                          <span className="text-sm font-black">Các mốc nhắc nhở tùy chỉnh</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full uppercase tracking-widest">Intervals Mode</span>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {[5, 15, 30, 45, 60, 120, 180, 240, 1440, 2880].map((mins) => {
+                          const isActive = preferences.reminderSettings.customIntervals.includes(mins);
+                          return (
+                            <button
+                              key={mins}
+                              onClick={() => {
+                                const newIntervals = isActive
+                                  ? preferences.reminderSettings.customIntervals.filter(i => i !== mins)
+                                  : [...preferences.reminderSettings.customIntervals, mins].sort((a, b) => a - b);
+                                updatePreference('reminderSettings', { ...preferences.reminderSettings, customIntervals: newIntervals });
+                              }}
+                              className={cn(
+                                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all",
+                                isActive 
+                                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
+                                  : "bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:border-indigo-600/50"
+                              )}
+                            >
+                              {mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.floor(mins/60)}h` : `${Math.floor(mins/1440)}d`}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic">
+                        * Các mốc đã chọn sẽ được ưu tiên đề xuất khi bạn tạo hoặc chỉnh sửa hạng mục công việc.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </section>
                 </div>
               )}
 

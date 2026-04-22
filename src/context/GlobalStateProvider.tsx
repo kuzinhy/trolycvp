@@ -1,7 +1,6 @@
 import React from 'react';
 import { AuthProvider } from './AuthContext';
 import { KnowledgeProvider } from './KnowledgeContext';
-import { TaskProvider } from './TaskContext';
 import { ChatProvider } from './ChatContext';
 import { DashboardProvider } from './DashboardContext';
 import { DraftingProvider } from './DraftingContext';
@@ -13,17 +12,15 @@ export const GlobalStateProvider: React.FC<{ children: React.ReactNode }> = ({ c
     <AuthProvider>
       <HistoryProvider>
         <KnowledgeProvider>
-          <TaskProvider>
-            <ChatProvider>
-              <DashboardProvider>
-                <DraftingProvider>
-                  <NewsProvider>
-                    {children}
-                  </NewsProvider>
-                </DraftingProvider>
-              </DashboardProvider>
-            </ChatProvider>
-          </TaskProvider>
+          <ChatProvider>
+            <DashboardProvider>
+              <DraftingProvider>
+                <NewsProvider>
+                  {children}
+                </NewsProvider>
+              </DraftingProvider>
+            </DashboardProvider>
+          </ChatProvider>
         </KnowledgeProvider>
       </HistoryProvider>
     </AuthProvider>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, memo } from 'react';
 import { motion } from 'motion/react';
 import { 
   Calendar as CalendarIcon, 
@@ -31,6 +31,7 @@ import { extractTextFromPDF } from '../lib/pdf-utils';
 import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
 import Papa from 'papaparse';
 import ICAL from 'ical.js';
+import { useUserPreferences } from '../context/UserPreferencesContext';
 
 interface OptimizedScheduleViewProps {
   meetings: Meeting[];
@@ -48,6 +49,131 @@ interface OptimizedScheduleViewProps {
   isLearning: boolean;
   showToast: (message: string, type?: any) => void;
 }
+
+const ScheduleItemCard = React.memo(({ item, type, onEdit, isConflict }: { item: any, type: 'meeting' | 'task' | 'event', onEdit?: (item: any) => void, isConflict?: boolean }) => {
+  const isMeeting = type === 'meeting';
+  const isTask = type === 'task';
+  
+  return (
+    <motion.div 
+      layout
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      className={cn(
+        "group relative p-4 rounded-2xl border transition-all duration-300",
+        isConflict ? "bg-rose-50/50 border-rose-200" : "bg-white border-slate-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5",
+        "before:absolute before:left-0 before:top-4 before:bottom-4 before:w-1 before:rounded-full",
+        isMeeting ? "before:bg-blue-500" : isTask ? "before:bg-emerald-500" : "before:bg-amber-500"
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter",
+              isMeeting ? "bg-blue-50 text-blue-600" : isTask ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
+            )}>
+              {item.time || 'Cả ngày'}
+            </div>
+            {item.priority === 'high' && (
+              <div className="flex items-center gap-1 px-2 py-0.5 bg-rose-50 text-rose-600 rounded-md text-[9px] font-black uppercase tracking-tighter">
+                <ShieldAlert size={10} /> Ưu tiên
+              </div>
+            )}
+          </div>
+          
+          <h4 className="text-sm font-black text-slate-800 leading-snug group-hover:text-blue-700 transition-colors uppercase tracking-tight">
+            {item.content || item.title}
+          </h4>
+          
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">
+            {item.location && (
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <MapPin size={12} className="text-slate-300" />
+                <span className="text-[11px] font-bold tracking-tight">{item.location}</span>
+              </div>
+            )}
+            {item.chairperson && (
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <Users size={12} className="text-slate-300" />
+                <span className="text-[11px] font-bold tracking-tight">{item.chairperson}</span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <button 
+          onClick={() => onEdit?.(item)}
+          className="p-2 opacity-0 group-hover:opacity-100 bg-white shadow-sm border border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-200 rounded-xl transition-all scale-90 group-hover:scale-100"
+        >
+          <Edit2 size={14} />
+        </button>
+      </div>
+      
+      {isConflict && (
+        <div className="absolute top-2 right-2 text-rose-500">
+          <AlertTriangle size={14} className="animate-pulse" />
+        </div>
+      )}
+    </motion.div>
+  );
+});
+
+ScheduleItemCard.displayName = 'ScheduleItemCard';
+
+const QuickStats = memo(({ stats }: { stats: any }) => (
+  <div className="grid grid-cols-3 gap-4 mb-8">
+    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+      <div className="text-blue-200 mb-1"><TrendingUp size={16} /></div>
+      <div className="text-lg font-black">85%</div>
+      <div className="text-[9px] font-bold uppercase tracking-wider opacity-60">Mật độ lịch</div>
+    </div>
+    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+      <div className="text-amber-300 mb-1"><ShieldAlert size={16} /></div>
+      <div className="text-lg font-black">{stats.highPriorityCount}</div>
+      <div className="text-[9px] font-bold uppercase tracking-wider opacity-60">Trọng điểm</div>
+    </div>
+    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+      <div className="text-emerald-300 mb-1"><Zap size={16} /></div>
+      <div className="text-lg font-black">{Math.round(stats.totalDuration / 60)}h</div>
+      <div className="text-[9px] font-bold uppercase tracking-wider opacity-60">Tổng thời gian</div>
+    </div>
+  </div>
+));
+
+QuickStats.displayName = 'QuickStats';
+
+const ConflictAlerts = memo(({ conflicts }: { conflicts: Record<string, string[]> }) => (
+  <div className="flex-1 flex flex-col min-h-0">
+    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+      <AlertTriangle size={16} className="text-amber-500" />
+      Cảnh báo Xung đột
+    </h3>
+    <div className="flex-1 space-y-3 overflow-y-auto max-h-[240px] pr-2 custom-scrollbar">
+      {Object.keys(conflicts).length > 0 ? (
+        Object.entries(conflicts).map(([date, msgs]) => (
+          <div key={date} className="p-4 bg-rose-50 border border-rose-100 rounded-2xl space-y-2">
+            <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">{date}</div>
+            {msgs.map((msg, i) => (
+              <p key={i} className="text-xs font-bold text-rose-700 flex items-start gap-2">
+                <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                {msg}
+              </p>
+            ))}
+          </div>
+        ))
+      ) : (
+        <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex flex-col items-center justify-center text-center py-8">
+          <CheckCircle2 size={32} className="text-emerald-500 mb-2 opacity-50" />
+          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Không có xung đột</p>
+          <p className="text-[9px] font-bold text-emerald-600 opacity-60 mt-1">Lịch trình đã được tối ưu</p>
+        </div>
+      )}
+    </div>
+  </div>
+));
+
+ConflictAlerts.displayName = 'ConflictAlerts';
 
 export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({ 
   meetings, 
@@ -78,6 +204,8 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
   const [selectedType, setSelectedType] = React.useState<'meeting' | 'task' | 'event' | null>(null);
   const [smartInput, setSmartInput] = React.useState('');
   const [isSmartProcessing, setIsSmartProcessing] = React.useState(false);
+
+  const { preferences } = useUserPreferences();
 
   const handleSmartInput = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -115,6 +243,11 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
       const data = parseAIResponse(response.text || '{}');
 
       if (data && data.content) {
+        const reminderSettings = preferences?.reminderSettings;
+        const defaultReminder = data.type === 'task' 
+          ? (reminderSettings?.defaultTaskMinutes ?? 15) 
+          : (reminderSettings?.defaultEventMinutes ?? 30);
+        
         const baseItem = {
           id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
           date: data.date || format(new Date(), 'yyyy-MM-dd'),
@@ -123,7 +256,9 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
           location: data.location || '',
           participants: data.participants || [],
           description: data.notes || '',
-          status: 'pending'
+          status: 'pending',
+          reminderType: 'minutes',
+          reminderValue: defaultReminder
         };
 
         if (data.type === 'meeting') {
@@ -435,23 +570,7 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                <div className="text-blue-200 mb-1"><TrendingUp size={16} /></div>
-                <div className="text-lg font-black">85%</div>
-                <div className="text-[9px] font-bold uppercase tracking-wider opacity-60">Mật độ lịch</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                <div className="text-amber-300 mb-1"><ShieldAlert size={16} /></div>
-                <div className="text-lg font-black">{scheduleStats.highPriorityCount}</div>
-                <div className="text-[9px] font-bold uppercase tracking-wider opacity-60">Trọng điểm</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                <div className="text-emerald-300 mb-1"><Zap size={16} /></div>
-                <div className="text-lg font-black">{Math.round(scheduleStats.totalDuration / 60)}h</div>
-                <div className="text-[9px] font-bold uppercase tracking-wider opacity-60">Tổng thời gian</div>
-              </div>
-            </div>
+            <QuickStats stats={scheduleStats} />
 
             <div className="flex items-center justify-between pt-4 border-t border-white/10">
               <p className="text-sm font-medium text-blue-50 italic">
@@ -507,32 +626,7 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
           <div className="h-px bg-slate-100" />
 
           {/* Conflict Alerts */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <AlertTriangle size={16} className="text-amber-500" />
-              Cảnh báo Xung đột
-            </h3>
-            <div className="flex-1 space-y-3 overflow-y-auto max-h-[240px] pr-2 custom-scrollbar">
-              {Object.keys(scheduleStats.conflicts).length > 0 ? (
-                Object.entries(scheduleStats.conflicts).map(([date, msgs]) => (
-                  <div key={date} className="p-4 bg-rose-50 border border-rose-100 rounded-2xl space-y-2">
-                    <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">{date}</div>
-                    {msgs.map((msg, i) => (
-                      <p key={i} className="text-xs font-bold text-rose-700 flex items-start gap-2">
-                        <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-                        {msg}
-                      </p>
-                    ))}
-                  </div>
-                ))
-              ) : (
-                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex flex-col items-center justify-center text-center py-8">
-                  <CheckCircle2 size={32} className="text-emerald-500 mb-2" />
-                  <p className="text-xs font-bold text-emerald-700">Lịch trình tuần này rất khoa học. Không phát hiện xung đột lớn.</p>
-                </div>
-              )}
-            </div>
-          </div>
+          <ConflictAlerts conflicts={scheduleStats.conflicts} />
         </motion.div>
       </div>
 
@@ -663,36 +757,14 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
                     </div>
                   ))}
 
-                  {dayMeetings.length > 0 ? (
+                   {dayMeetings.length > 0 ? (
                     dayMeetings.map(m => (
-                      <div 
-                        key={m.id} 
-                        onClick={() => { setSelectedItem(m); setSelectedType('meeting'); }}
-                        className="p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-indigo-50 hover:border-indigo-200 transition-all group cursor-pointer relative"
-                      >
-                        <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1.5">
-                          <Clock size={10} />
-                          {m.time}
-                        </div>
-                        <div className="text-[11px] font-bold text-slate-900 leading-snug mb-2 group-hover:text-indigo-700 transition-colors">
-                          {m.name}
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
-                            <MapPin size={10} className="text-rose-400" />
-                            <span className="truncate">{m.location || 'Chưa rõ'}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
-                            <Users size={10} className="text-blue-400" />
-                            <span className="truncate">{m.chairperson || 'Chưa rõ'}</span>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleDeleteMeeting(m.id); }}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                      <div key={m.id} onClick={() => { setSelectedItem(m); setSelectedType('meeting'); }}>
+                        <ScheduleItemCard 
+                          item={m} 
+                          type="meeting" 
+                          onEdit={(item) => onEditItem?.(item)}
+                        />
                       </div>
                     ))
                   ) : (

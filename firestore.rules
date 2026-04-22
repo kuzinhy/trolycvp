@@ -122,9 +122,8 @@ service cloud.firestore {
 
     function isValidTask(data) {
       return hasRequiredFields(['title', 'status', 'authorUid']) &&
-             hasOnlyAllowedFields(['title', 'description', 'status', 'dueDate', 'authorUid', 'createdAt', 'id', 'unitId', 'priority', 'category']) &&
              data.title is string && data.title.size() < 200 &&
-             data.status in ['pending', 'in-progress', 'completed'] &&
+             (data.status.lower() in ['pending', 'in-progress', 'completed', 'active']) &&
              (data.description == null || (data.description is string && data.description.size() < 2000));
     }
 
@@ -188,9 +187,47 @@ service cloud.firestore {
              data.userId is string && data.displayName is string;
     }
 
+    function isValidWorkLog(data) {
+      return hasRequiredFields(['userId', 'date']) &&
+             hasOnlyAllowedFields(['userId', 'unitId', 'date', 'tasks', 'additionalTasks', 'calendarTasks', 'notes', 'updatedAt']) &&
+             data.userId == request.auth.uid &&
+             data.date is timestamp;
+    }
+
+    function isValidConclusionDraft(data) {
+      return hasRequiredFields(['userId', 'meetingName']) &&
+             hasOnlyAllowedFields(['userId', 'unitId', 'meetingName', 'meetingDate', 'directives', 'finalReport', 'status', 'createdAt', 'updatedAt']) &&
+             data.userId == request.auth.uid &&
+             data.meetingName is string && data.meetingName.size() <= 200;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
+
+    // ===============================================================
+    // Shared Dashboard Collections
+    // ===============================================================
+    
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated() && (resource.data.unitId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.unitId || isAdmin() || resource.data.authorUid == request.auth.uid);
+      allow create: if isAuthenticated() && isValidTask(request.resource.data);
+      allow update: if isAuthenticated() && (resource.data.authorUid == request.auth.uid || isAdmin()) && isValidTask(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.authorUid == request.auth.uid || isAdmin());
+    }
+
+    match /meetings/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /birthdays/{id} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /events/{id} {
+      allow read, write: if isAuthenticated();
+    }
 
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
@@ -282,6 +319,20 @@ service cloud.firestore {
     match /vice_chief_assignments/{assignmentId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin() && isValidViceChiefAssignment(request.resource.data);
+    }
+
+    match /work_logs/{logId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidWorkLog(request.resource.data);
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin()) && isValidWorkLog(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /conclusion_drafts/{draftId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidConclusionDraft(request.resource.data);
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin()) && isValidConclusionDraft(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /system_errors/{errorId} {

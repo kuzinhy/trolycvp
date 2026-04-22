@@ -7,7 +7,6 @@ import { DraftingRule } from '../hooks/useDraftingRules';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '../lib/utils';
 import { ComposePro } from './ComposePro';
-import { InvitationGenerator } from './InvitationGenerator';
 import { PartyDocumentChecker } from './PartyDocumentChecker';
 import { SmartEmailAssistant } from './SmartEmailAssistant';
 import { SpeechAssistant } from './SpeechAssistant';
@@ -28,14 +27,14 @@ interface DraftingModuleProps {
   updateRule: (id: string, content: string) => void;
   showToast: (msg: string, type?: ToastType) => void;
   aiKnowledge: any[];
-  initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'party-docs' | 'email' | 'speech';
+  initialMainTab?: 'review' | 'compose' | 'bulk' | 'party-docs' | 'email' | 'speech';
   navigationParams?: any;
 }
 
 export const DraftingModule: React.FC<DraftingModuleProps> = ({
   rules, addRule, toggleRule, deleteRule, updateRule, showToast, aiKnowledge, initialMainTab = 'compose', navigationParams
 }) => {
-  const [mainTab, setMainTab] = useState<'review' | 'compose' | 'invitation' | 'bulk' | 'party-docs' | 'email' | 'speech'>(initialMainTab);
+  const [mainTab, setMainTab] = useState<'review' | 'compose' | 'bulk' | 'party-docs' | 'email' | 'speech'>(initialMainTab);
   const [documentText, setDocumentText] = useState(navigationParams?.content || '');
   const [author, setAuthor] = useState('');
   const [status, setStatus] = useState('draft');
@@ -299,7 +298,7 @@ ${documentText}
       <div className="mb-8 flex items-end justify-between border-b border-slate-100 pb-6">
         <div>
           <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <Sparkles className="text-indigo-600" size={32} />
+            <Sparkles className="text-blue-600" size={32} />
             Trợ lý Soạn thảo Chuyên sâu
           </h2>
           <p className="text-slate-500 mt-2 text-sm font-medium">Soạn thảo, hiệu đính, chuẩn hóa văn phong và kiểm tra tuân thủ quy tắc hành chính</p>
@@ -308,7 +307,6 @@ ${documentText}
             {[
               { id: 'compose', label: 'Soạn thảo Pro', icon: <PenTool size={14} /> },
               { id: 'review', label: 'Kiểm tra văn bản', icon: <FileCheck size={14} /> },
-              { id: 'invitation', label: 'Tạo thư mời', icon: <Mail size={14} /> },
               { id: 'email', label: 'Soạn Email', icon: <Send size={14} /> },
               { id: 'speech', label: 'Bài phát biểu', icon: <Mic size={14} /> },
               { id: 'party-docs', label: 'Văn bản Đảng', icon: <UserCheck size={14} /> },
@@ -319,7 +317,7 @@ ${documentText}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                   mainTab === tab.id 
-                    ? "bg-white text-indigo-600 shadow-sm border border-slate-200/60" 
+                    ? "bg-white text-blue-600 shadow-sm border border-slate-200/60" 
                     : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
                 )}
               >
@@ -337,8 +335,6 @@ ${documentText}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <PartyDocumentChecker />
         </div>
-      ) : mainTab === 'invitation' ? (
-        <InvitationGenerator />
       ) : mainTab === 'email' ? (
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
           <SmartEmailAssistant aiKnowledge={aiKnowledge} showToast={showToast} />
@@ -353,7 +349,7 @@ ${documentText}
           <div className="flex-[1.2] flex flex-col min-h-0 bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
             <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20">
+                <div className="p-2 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-600/20">
                   <FileText size={18} />
                 </div>
                 <span className="text-xs font-black text-slate-700 uppercase tracking-[0.2em]">Văn bản gốc</span>
@@ -362,7 +358,7 @@ ${documentText}
                 <button
                   onClick={() => handleCheck()}
                   disabled={isChecking || !documentText.trim()}
-                  className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {isChecking ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                   Phân tích & Sửa lỗi
@@ -375,7 +371,7 @@ ${documentText}
               <div className="w-16 border-r border-slate-100 bg-slate-50/30 flex flex-col items-center py-6 gap-6 shrink-0">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
+                  className="p-3 text-slate-400 hover:text-blue-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
                   title="Tải lên file Word"
                 >
                   <Upload size={20} />
@@ -384,7 +380,7 @@ ${documentText}
                 
                 <button
                   onClick={handleExport}
-                  className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
+                  className="p-3 text-slate-400 hover:text-blue-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
                   title="Xuất văn bản"
                 >
                   <Copy size={20} />
@@ -392,7 +388,7 @@ ${documentText}
 
                 <button
                   onClick={copyText}
-                  className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
+                  className="p-3 text-slate-400 hover:text-blue-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
                   title="Sao chép"
                 >
                   <Layers size={20} />
@@ -453,7 +449,7 @@ ${documentText}
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div className={cn(
                       "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
-                      complianceCheck ? "bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-600/20" : "border-slate-300 group-hover:border-indigo-400"
+                      complianceCheck ? "bg-blue-600 border-blue-600 shadow-lg shadow-blue-600/20" : "border-slate-300 group-hover:border-blue-400"
                     )}>
                       {complianceCheck && <CheckCircle2 size={12} className="text-white" />}
                     </div>
@@ -484,7 +480,7 @@ ${documentText}
                         <button
                           key={i}
                           onClick={() => insertKnowledge(s.content)}
-                          className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all flex items-center gap-2 border border-indigo-100/50"
+                          className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all flex items-center gap-2 border border-blue-100/50"
                         >
                           <Sparkles size={12} />
                           {s.title || 'Kiến thức'}
@@ -503,13 +499,13 @@ ${documentText}
             <div className="flex-[2] bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex flex-col">
               <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-600/20">
+                  <div className="p-2 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-600/20">
                     <CheckCircle size={18} />
                   </div>
                   <span className="text-xs font-black text-slate-700 uppercase tracking-[0.2em]">Kết quả phân tích</span>
                 </div>
                 {score > 0 && (
-                  <div className="px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-black">
+                  <div className="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-black">
                     Điểm: {score}/10
                   </div>
                 )}
@@ -518,8 +514,8 @@ ${documentText}
                 {isChecking ? (
                   <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-6">
                     <div className="relative">
-                      <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin" />
-                      <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-400 animate-pulse" size={24} />
+                      <div className="w-16 h-16 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin" />
+                      <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-400 animate-pulse" size={24} />
                     </div>
                     <div className="text-center">
                       <p className="text-sm font-black text-slate-600 uppercase tracking-widest">AI đang thẩm định...</p>
@@ -527,7 +523,7 @@ ${documentText}
                     </div>
                   </div>
                 ) : feedback ? (
-                  <div className="prose prose-slate max-w-none prose-headings:text-indigo-900 prose-headings:font-black prose-headings:uppercase prose-headings:tracking-widest prose-headings:text-xs prose-a:text-indigo-600 prose-strong:text-slate-900 prose-p:leading-relaxed prose-li:leading-relaxed text-sm">
+                  <div className="prose prose-slate max-w-none prose-headings:text-blue-900 prose-headings:font-black prose-headings:uppercase prose-headings:tracking-widest prose-headings:text-xs prose-a:text-blue-600 prose-strong:text-slate-900 prose-p:leading-relaxed prose-li:leading-relaxed text-sm">
                     <ReactMarkdown>{feedback}</ReactMarkdown>
                   </div>
                 ) : (

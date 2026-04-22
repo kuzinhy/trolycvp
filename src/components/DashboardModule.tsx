@@ -156,7 +156,298 @@ interface DashboardModuleProps {
   visitCount: number;
 }
 
-export const DashboardModule: React.FC<DashboardModuleProps> = memo((props) => {
+const StatCard = memo(({ 
+  title, 
+  value, 
+  subtitle, 
+  icon: Icon, 
+  colorClass, 
+  progress, 
+  trend, 
+  onAction 
+}: { 
+  title: string, 
+  value: string, 
+  subtitle: string, 
+  icon: any, 
+  colorClass: string, 
+  progress: number, 
+  trend?: string,
+  onAction?: () => void
+}) => (
+  <div className="bento-card p-8 flex flex-col justify-between group overflow-hidden relative min-h-[220px]">
+    <div className={cn("absolute -right-4 -top-4 w-32 h-32 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-all duration-700", colorClass)} />
+    <div className="flex items-center justify-between mb-6 relative z-10">
+      <div className={cn("p-3.5 rounded-2xl group-hover:scale-110 transition-all duration-500 shadow-sm border border-opacity-50", colorClass.replace('bg-', 'bg-opacity-10 text-').replace('-500', '-600'))}>
+        <Icon size={26} />
+      </div>
+      <div className="flex items-center gap-2">
+        {onAction && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onAction(); }}
+            className="p-2 bg-white text-slate-400 hover:text-blue-600 rounded-xl shadow-sm border border-slate-100 hover:border-blue-200 transition-all opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
+          >
+            <Icon size={16} />
+          </button>
+        )}
+        {trend && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full font-black text-[10px] uppercase tracking-wider border border-emerald-100 shadow-sm">
+            <ArrowUpRight size={14} />
+            {trend}
+          </div>
+        )}
+      </div>
+    </div>
+    <div className="relative z-10">
+      <p className="subheading-pro mb-1">{title}</p>
+      <div className="flex items-baseline gap-2">
+        <h3 className="text-5xl font-black text-slate-900 tracking-tighter italic">{value}</h3>
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{subtitle}</span>
+      </div>
+      <div className="mt-6 h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className={cn("h-full rounded-full shadow-lg", colorClass)} 
+        />
+      </div>
+    </div>
+  </div>
+));
+
+const StrategicBriefingCard = memo(() => (
+  <div className="xl:col-span-3 bento-card p-8 flex flex-col justify-between group bg-white border border-blue-100 shadow-xl shadow-blue-500/5 relative overflow-hidden min-h-[220px]">
+    <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl -mr-24 -mt-24 animate-pulse duration-[4000ms]" />
+    <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(circle_at_bottom_left,rgba(37,99,235,0.05),transparent_70%)]" />
+    <div className="flex items-center justify-between mb-6 relative z-10">
+      <div className="p-3.5 bg-blue-600 text-white rounded-2xl group-hover:rotate-12 transition-transform duration-500 shadow-lg shadow-blue-600/20 border border-white/20">
+        <BrainCircuit size={26} />
+      </div>
+      <div className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full font-black text-[10px] uppercase tracking-widest border border-blue-100 shadow-sm">
+        AI Core Active
+      </div>
+    </div>
+    <div className="relative z-10">
+      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-1">Dự báo chiến lược</p>
+      <h3 className="text-4xl font-black tracking-tighter italic uppercase text-slate-900">Tích cực</h3>
+      <div className="flex items-center gap-2 mt-3">
+        <div className="flex -space-x-2">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-blue-50 flex items-center justify-center text-[8px] font-black text-blue-600 shadow-sm">AI</div>
+          ))}
+        </div>
+        <p className="text-[9px] font-bold text-slate-500 italic">
+          Phân tích 128 biến số
+        </p>
+      </div>
+    </div>
+  </div>
+));
+
+StrategicBriefingCard.displayName = 'StrategicBriefingCard';
+
+const PerformanceChart = memo(({ data }: { data: any[] }) => (
+  <div className="xl:col-span-8 bento-card p-10 relative overflow-hidden min-h-[550px]">
+    <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none" />
+    <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] -ml-48 -mb-48 pointer-events-none" />
+    
+    <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 relative z-10">
+      <div>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+            <BarChart3 size={20} />
+          </div>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Phân tích Hiệu suất Chiến lược</h3>
+        </div>
+        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] ml-13">Dữ liệu tổng hợp thời gian thực từ các đơn vị nghiệp vụ</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-5 p-3.5 bg-slate-50/80 backdrop-blur-md rounded-[1.5rem] border border-slate-200/60 shadow-inner">
+        <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-slate-100">
+          <div className="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+          <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Thực tế</span>
+        </div>
+        <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-slate-100">
+          <div className="w-2.5 h-2.5 bg-blue-200 rounded-full"></div>
+          <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Dự báo</span>
+        </div>
+        <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-slate-100">
+          <div className="w-2.5 h-2.5 bg-rose-400 rounded-full shadow-[0_0_8px_rgba(251,113,133,0.5)]"></div>
+          <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Rủi ro</span>
+        </div>
+      </div>
+    </div>
+
+    <div className="h-[420px] w-full relative z-10">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
+              <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+          <XAxis 
+            dataKey="name" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }}
+            dy={20}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }}
+            domain={[0, 100]}
+          />
+          <Tooltip 
+            contentStyle={{ 
+              borderRadius: '24px', 
+              border: '1px solid rgba(226, 232, 240, 0.8)', 
+              boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.12)', 
+              padding: '24px', 
+              backgroundColor: 'rgba(255, 255, 255, 0.98)', 
+              backdropFilter: 'blur(12px)' 
+            }}
+            itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', marginBottom: '4px' }}
+            labelStyle={{ fontSize: '12px', fontWeight: '900', color: '#0f172a', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+            cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
+          />
+          <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={5} fillOpacity={1} fill="url(#colorValue)" animationDuration={2500} />
+          <Area type="monotone" dataKey="predicted" stroke="#93c5fd" strokeWidth={2} strokeDasharray="10 10" fill="transparent" />
+          <Area type="monotone" dataKey="risk" stroke="#fb7185" strokeWidth={3} fillOpacity={1} fill="url(#colorRisk)" animationDuration={3000} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
+));
+
+PerformanceChart.displayName = 'PerformanceChart';
+
+const CompetencyMatrix = memo(({ data }: { data: any[] }) => (
+  <div className="xl:col-span-4 bento-card p-10 bg-white border border-slate-200 shadow-xl shadow-slate-200/20 relative overflow-hidden min-h-[550px]">
+    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.03),transparent_60%)]" />
+    <div className="absolute bottom-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-[80px] -mr-32 -mb-32" />
+    
+    <div className="relative z-10">
+      <div className="flex items-center gap-3 mb-1">
+        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20 text-white">
+          <PieChartIcon size={16} />
+        </div>
+        <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase italic">Ma trận Năng lực</h3>
+      </div>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-10">Đánh giá 6 chiều tiêu chuẩn Elite</p>
+      
+      <div className="h-[340px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+            <PolarGrid stroke="#e2e8f0" strokeWidth={1} />
+            <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 900 }} />
+            <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
+            <Radar
+              name="Hiện tại"
+              dataKey="A"
+              stroke="#3b82f6"
+              strokeWidth={3}
+              fill="#3b82f6"
+              fillOpacity={0.2}
+              animationDuration={2500}
+            />
+            <Radar
+              name="Mục tiêu"
+              dataKey="B"
+              stroke="#10b981"
+              strokeWidth={2}
+              fill="#10b981"
+              fillOpacity={0.05}
+              animationDuration={3000}
+            />
+            <Tooltip 
+              contentStyle={{ borderRadius: '24px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#0f172a', padding: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="grid grid-cols-2 gap-5 mt-8">
+        <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 group transition-all">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Chỉ số Elite</p>
+          <p className="text-3xl font-black text-blue-600 italic tracking-tighter">104.2</p>
+          <div className="mt-2 h-1 w-full bg-blue-100 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-600 w-[70%]" />
+          </div>
+        </div>
+        <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 group transition-all">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Độ ổn định</p>
+          <p className="text-3xl font-black text-blue-500 italic tracking-tighter">98.5%</p>
+          <div className="mt-2 h-1 w-full bg-blue-100 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-600 w-[98%]" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+));
+
+CompetencyMatrix.displayName = 'CompetencyMatrix';
+
+const StrategicRoadmap = memo(({ data }: { data: any[] }) => (
+  <div className="xl:col-span-4 bento-card p-10 relative overflow-hidden group">
+    <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl -mr-24 -mt-24" />
+    <div className="flex items-center justify-between mb-10 relative z-10">
+      <div>
+        <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Lộ trình Chiến lược</h3>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Mục tiêu trung hạn 2024-2026</p>
+      </div>
+      <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl shadow-sm border border-indigo-100/50 group-hover:rotate-12 transition-transform duration-500">
+        <Target size={24} />
+      </div>
+    </div>
+    <div className="space-y-10 relative z-10">
+      {data.map((goal, i) => (
+        <div key={i} className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn("w-2 h-2 rounded-full animate-pulse", goal.color.replace('bg-', 'bg-'))} />
+              <h4 className="text-[13px] font-black text-slate-800 tracking-tight uppercase">{goal.title}</h4>
+            </div>
+            <span className={cn(
+              "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm border",
+              goal.status === 'On Track' ? "bg-blue-50 text-blue-600 border-blue-100" : goal.status === 'Ahead' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
+            )}>{goal.status}</span>
+          </div>
+          <div className="relative h-2.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/40">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${goal.progress}%` }}
+              transition={{ duration: 2, ease: "circOut", delay: i * 0.3 }}
+              className={cn("h-full rounded-full shadow-[0_0_10px_rgba(0,0,0,0.1)]", goal.color)} 
+            />
+          </div>
+          <div className="flex justify-between items-center px-1">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={12} className="text-slate-400" />
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tiến độ thực hiện</p>
+            </div>
+            <p className="text-sm font-black text-slate-900 italic">{goal.progress}%</p>
+          </div>
+        </div>
+      ))}
+    </div>
+    <button className="w-full mt-12 py-4.5 bg-blue-600 text-white text-[11px] font-black uppercase tracking-[0.3em] rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-[0.98] border border-blue-500/10">
+      Phân tích chuyên sâu
+    </button>
+  </div>
+));
+
+StrategicRoadmap.displayName = 'StrategicRoadmap';
+
+export const DashboardModule = memo((props: DashboardModuleProps) => {
   const [activeTab, setActiveTab] = useState<'command' | 'knowledge' | 'history'>(props.initialTab || 'command');
   const [isSyncing, setIsSyncing] = useState(false);
   const [isReseeding, setIsReseeding] = useState(false);
@@ -253,21 +544,21 @@ export const DashboardModule: React.FC<DashboardModuleProps> = memo((props) => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
         <div className="space-y-3">
           <div className="flex items-center gap-4">
-            <div className="p-4 bg-gradient-to-br from-blue-800 to-blue-950 text-emerald-500 rounded-[2rem] shadow-2xl shadow-emerald-500/20 border border-emerald-500/20 animate-float">
+            <div className="p-4 bg-white text-blue-600 rounded-[2rem] shadow-xl shadow-blue-500/10 border border-blue-100 animate-float">
               <BrainCircuit size={32} />
             </div>
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Strategic Hub</h1>
-                <span className="px-3 py-1 bg-emerald-600 text-white text-[10px] font-black rounded-full shadow-lg shadow-emerald-500/20">v6.0 ELITE</span>
+                <span className="px-3 py-1 bg-blue-600 text-white text-[10px] font-black rounded-full shadow-lg shadow-blue-500/20">v8.0 ELITE</span>
               </div>
               <div className="flex items-center gap-3 mt-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Hệ thống Chỉ huy Chiến lược Tích hợp AI</p>
                 </div>
                 <span className="text-slate-200">|</span>
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
               </div>
             </div>
           </div>
@@ -288,7 +579,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = memo((props) => {
               onClick={() => setRole('staff')}
               className={cn(
                 "px-6 py-2.5 text-[11px] font-black rounded-2xl flex items-center gap-2 transition-all uppercase tracking-widest", 
-                role === 'staff' ? "bg-emerald-600 text-white shadow-xl" : "text-slate-500 hover:text-slate-700"
+                role === 'staff' ? "bg-blue-600 text-white shadow-xl" : "text-slate-500 hover:text-slate-700"
               )}
             >
               <Zap size={14} /> Tham mưu
@@ -319,7 +610,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = memo((props) => {
             <button 
               onClick={() => props.syncUnifiedStrategicKnowledge && props.syncUnifiedStrategicKnowledge()}
               disabled={props.isSyncingUnified}
-              className="btn-pro bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 gap-2 group"
+              className="btn-pro bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 gap-2 group"
             >
               <RefreshCw size={14} className={cn("transition-transform duration-500 group-hover:rotate-180", props.isSyncingUnified && "animate-spin")} />
               <span>Nạp Bộ Não</span>
@@ -355,307 +646,53 @@ export const DashboardModule: React.FC<DashboardModuleProps> = memo((props) => {
 
       {/* Bento Grid Layout v6.0 ELITE */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-12 gap-8">
-        
-        {/* Key Metrics Row - Glassmorphism style */}
-        <div className="xl:col-span-3 bento-card p-8 flex flex-col justify-between group overflow-hidden relative min-h-[220px]">
-          <div className="absolute -right-4 -top-4 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-700" />
-          <div className="flex items-center justify-between mb-6 relative z-10">
-            <div className="p-3.5 bg-blue-50 text-blue-600 rounded-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-sm border border-blue-100/50">
-              <Users size={26} />
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full font-black text-[10px] uppercase tracking-wider border border-emerald-100 shadow-sm">
-              <ArrowUpRight size={14} />
-              +{(props.memberCount / 150 * 100).toFixed(1)}%
-            </div>
-          </div>
-          <div className="relative z-10">
-            <p className="subheading-pro mb-1">Tổng số nhân sự</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-5xl font-black text-slate-900 tracking-tighter italic">{props.memberCount.toLocaleString()}</h3>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active</span>
-            </div>
-            <div className="mt-6 h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(props.memberCount / 150 * 100, 100)}%` }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.3)]" 
-              />
-            </div>
-          </div>
+        {/* Key Metrics Row */}
+        <div className="xl:col-span-3">
+          <StatCard 
+            title="Tổng số nhân sự"
+            value={props.memberCount.toLocaleString()}
+            subtitle="Active"
+            icon={Users}
+            colorClass="bg-blue-500"
+            progress={Math.min(props.memberCount / 150 * 100, 100)}
+            trend={`+${(props.memberCount / 150 * 100).toFixed(1)}%`}
+            onAction={() => props.onNavigate('users')}
+          />
         </div>
 
-        <div className="xl:col-span-3 bento-card p-8 flex flex-col justify-between group overflow-hidden relative min-h-[220px]">
-          <div className="absolute -right-4 -top-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700" />
-          <div className="flex items-center justify-between mb-6 relative z-10">
-            <div className="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500 shadow-sm border border-emerald-100/50">
-              <Activity size={26} />
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full font-black text-[10px] uppercase tracking-wider border border-emerald-100 shadow-sm">
-              <ArrowUpRight size={14} />
-              +5.4%
-            </div>
-          </div>
-          <div className="relative z-10">
-            <p className="subheading-pro mb-1">Hiệu suất đơn vị</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-5xl font-black text-slate-900 tracking-tighter italic">92.8%</h3>
-              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Optimal</span>
-            </div>
-            <div className="mt-6 h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: '92.8%' }}
-                transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
-                className="h-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-700 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]" 
-              />
-            </div>
-          </div>
+        <div className="xl:col-span-3">
+          <StatCard 
+            title="Hiệu suất đơn vị"
+            value="92.8%"
+            subtitle="Optimal"
+            icon={Activity}
+            colorClass="bg-emerald-500"
+            progress={92.8}
+            trend="+5.4%"
+            onAction={() => props.onNavigate('reporting')}
+          />
         </div>
 
-        <div className="xl:col-span-3 bento-card p-8 flex flex-col justify-between group overflow-hidden relative min-h-[220px]">
-          <div className="absolute -right-4 -top-4 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/20 transition-all duration-700" />
-          <div className="flex items-center justify-between mb-6 relative z-10">
-            <div className="p-3.5 bg-amber-50 text-amber-600 rounded-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-sm border border-amber-100/50">
-              <TrendingUp size={26} />
-            </div>
-            <div className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-full font-black text-[10px] uppercase tracking-wider border border-amber-100 shadow-sm">
-              {props.visitCount.toLocaleString()} Visits
-            </div>
-          </div>
-          <div className="relative z-10">
-            <p className="subheading-pro mb-1">Lượt truy cập</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-5xl font-black text-slate-900 tracking-tighter italic">{props.visitCount.toLocaleString()}</h3>
-              <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Growth</span>
-            </div>
-            <div className="mt-6 h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: '86%' }}
-                transition={{ duration: 1.5, ease: "easeOut", delay: 0.4 }}
-                className="h-full bg-gradient-to-r from-amber-500 via-amber-600 to-orange-700 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.3)]" 
-              />
-            </div>
-          </div>
+        <div className="xl:col-span-3">
+          <StatCard 
+            title="Lượt truy cập"
+            value={props.visitCount.toLocaleString()}
+            subtitle="Growth"
+            icon={TrendingUp}
+            colorClass="bg-amber-500"
+            progress={86}
+          />
         </div>
 
-        <div className="xl:col-span-3 bento-card p-8 flex flex-col justify-between group bg-slate-900 text-white border-none shadow-2xl shadow-slate-900/40 relative overflow-hidden min-h-[220px]">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl -mr-24 -mt-24 animate-pulse duration-[4000ms]" />
-          <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.15),transparent_70%)]" />
-          <div className="flex items-center justify-between mb-6 relative z-10">
-            <div className="p-3.5 bg-white/10 backdrop-blur-xl text-white rounded-2xl group-hover:rotate-12 transition-transform duration-500 shadow-lg border border-white/10">
-              <BrainCircuit size={26} />
-            </div>
-            <div className="px-3 py-1.5 bg-emerald-500/20 backdrop-blur-xl text-emerald-400 rounded-full font-black text-[10px] uppercase tracking-widest border border-emerald-500/20">
-              AI Core Active
-            </div>
-          </div>
-          <div className="relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60 mb-1">Dự báo chiến lược</p>
-            <h3 className="text-4xl font-black tracking-tighter italic uppercase">Tích cực</h3>
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black">AI</div>
-                ))}
-              </div>
-              <p className="text-[9px] font-bold opacity-70 italic">
-                Phân tích 128 biến số
-              </p>
-            </div>
-          </div>
-        </div>
+        <StrategicBriefingCard />
 
         {/* Charts Section v6.0 ELITE */}
-        <div className="xl:col-span-8 bento-card p-10 relative overflow-hidden min-h-[550px]">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] -ml-48 -mb-48 pointer-events-none" />
-          
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 relative z-10">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                  <BarChart3 size={20} />
-                </div>
-                <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Phân tích Hiệu suất Chiến lược</h3>
-              </div>
-              <p className="subheading-pro ml-13">Dữ liệu tổng hợp thời gian thực từ các đơn vị nghiệp vụ</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-5 p-3.5 bg-slate-50/80 backdrop-blur-md rounded-[1.5rem] border border-slate-200/60 shadow-inner">
-              <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-slate-100">
-                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Thực tế</span>
-              </div>
-              <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-slate-100">
-                <div className="w-2.5 h-2.5 bg-blue-200 rounded-full"></div>
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Dự báo</span>
-              </div>
-              <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-slate-100">
-                <div className="w-2.5 h-2.5 bg-rose-400 rounded-full shadow-[0_0_8px_rgba(251,113,133,0.5)]"></div>
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Rủi ro</span>
-              </div>
-            </div>
-          </div>
+        <PerformanceChart data={performanceData} />
 
-          <div className="h-[420px] w-full relative z-10">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={performanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }}
-                  dy={20}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }}
-                  domain={[0, 100]}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    borderRadius: '24px', 
-                    border: '1px solid rgba(226, 232, 240, 0.8)', 
-                    boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.12)', 
-                    padding: '24px', 
-                    backgroundColor: 'rgba(255, 255, 255, 0.98)', 
-                    backdropFilter: 'blur(12px)' 
-                  }}
-                  itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', marginBottom: '4px' }}
-                  labelStyle={{ fontSize: '12px', fontWeight: '900', color: '#0f172a', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
-                  cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
-                />
-                <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={5} fillOpacity={1} fill="url(#colorValue)" animationDuration={2500} />
-                <Area type="monotone" dataKey="predicted" stroke="#93c5fd" strokeWidth={2} strokeDasharray="10 10" fill="transparent" />
-                <Area type="monotone" dataKey="risk" stroke="#fb7185" strokeWidth={3} fillOpacity={1} fill="url(#colorRisk)" animationDuration={3000} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="xl:col-span-4 bento-card p-10 bg-blue-950 text-white border-none shadow-2xl shadow-blue-950/40 relative overflow-hidden min-h-[550px]">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_60%)]" />
-          <div className="absolute bottom-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[80px] -mr-32 -mb-32" />
-          
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
-                <PieChartIcon size={16} />
-              </div>
-              <h3 className="text-xl font-black text-white tracking-tight uppercase italic">Ma trận Năng lực</h3>
-            </div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-10">Đánh giá 6 chiều tiêu chuẩn Elite</p>
-            
-            <div className="h-[340px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={competencyData}>
-                  <PolarGrid stroke="#1e293b" strokeWidth={1} />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 900 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                  <Radar
-                    name="Hiện tại"
-                    dataKey="A"
-                    stroke="#3b82f6"
-                    strokeWidth={3}
-                    fill="#3b82f6"
-                    fillOpacity={0.4}
-                    animationDuration={2500}
-                  />
-                  <Radar
-                    name="Mục tiêu"
-                    dataKey="B"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    fill="#10b981"
-                    fillOpacity={0.1}
-                    animationDuration={3000}
-                  />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '20px', border: 'none', backgroundColor: '#0f172a', color: '#fff', padding: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="grid grid-cols-2 gap-5 mt-8">
-              <div className="p-5 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md group hover:bg-white/10 transition-all">
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Chỉ số Elite</p>
-                <p className="text-3xl font-black text-blue-400 italic tracking-tighter">104.2</p>
-                <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 w-[70%]" />
-                </div>
-              </div>
-              <div className="p-5 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md group hover:bg-white/10 transition-all">
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Độ ổn định</p>
-                <p className="text-3xl font-black text-emerald-400 italic tracking-tighter">98.5%</p>
-                <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 w-[98%]" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CompetencyMatrix data={competencyData} />
 
         {/* Strategic Roadmap v6.0 ELITE */}
-        <div className="xl:col-span-4 bento-card p-10 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl -mr-24 -mt-24" />
-          <div className="flex items-center justify-between mb-10 relative z-10">
-            <div>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Lộ trình Chiến lược</h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Mục tiêu trung hạn 2024-2026</p>
-            </div>
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl shadow-sm border border-indigo-100/50 group-hover:rotate-12 transition-transform duration-500">
-              <Target size={24} />
-            </div>
-          </div>
-          <div className="space-y-10 relative z-10">
-            {strategicGoals.map((goal, i) => (
-              <div key={i} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={cn("w-2 h-2 rounded-full animate-pulse", goal.color.replace('bg-', 'bg-'))} />
-                    <h4 className="text-[13px] font-black text-slate-800 tracking-tight uppercase">{goal.title}</h4>
-                  </div>
-                  <span className={cn(
-                    "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm border",
-                    goal.status === 'On Track' ? "bg-blue-50 text-blue-600 border-blue-100" : goal.status === 'Ahead' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
-                  )}>{goal.status}</span>
-                </div>
-                <div className="relative h-2.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/40">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${goal.progress}%` }}
-                    transition={{ duration: 2, ease: "circOut", delay: i * 0.3 }}
-                    className={cn("h-full rounded-full shadow-[0_0_10px_rgba(0,0,0,0.1)]", goal.color)} 
-                  />
-                </div>
-                <div className="flex justify-between items-center px-1">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp size={12} className="text-slate-400" />
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tiến độ thực hiện</p>
-                  </div>
-                  <p className="text-sm font-black text-slate-900 italic">{goal.progress}%</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button className="w-full mt-12 py-4.5 bg-slate-900 text-white text-[11px] font-black uppercase tracking-[0.3em] rounded-2xl hover:bg-slate-800 transition-all shadow-2xl shadow-slate-900/20 active:scale-[0.98] border border-slate-800">
-            Phân tích chuyên sâu
-          </button>
-        </div>
+        <StrategicRoadmap data={strategicGoals} />
 
         {/* Tasks & Reminders v6.0 ELITE */}
         <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -679,7 +716,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = memo((props) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  key={i} 
+                  key={task.id || `task-${i}`} 
                   className="group/item flex items-center gap-5 p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50 hover:border-blue-200 transition-all duration-500 cursor-pointer"
                 >
                   <div className={cn(
@@ -736,7 +773,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = memo((props) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  key={i} 
+                  key={meeting.id || `meeting-${i}`} 
                   className="group/item flex items-center gap-5 p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50 hover:border-blue-200 transition-all duration-500 cursor-pointer"
                 >
                   <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl group-hover/item:bg-blue-600 group-hover/item:text-white transition-all duration-500 shadow-sm border border-blue-100/50">
@@ -792,7 +829,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = memo((props) => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  key={i} 
+                  key={chat.id || `chat-${i}`} 
                   className="flex gap-5 items-start relative z-10 group/log"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-white border-4 border-slate-50 flex items-center justify-center text-slate-400 shadow-sm group-hover/log:scale-110 group-hover/log:border-blue-50 group-hover/log:text-blue-500 transition-all duration-500 shrink-0">

@@ -43,6 +43,7 @@ import { logActivity } from '../lib/logService';
 import { auth } from '../lib/firebase';
 import { STAFF_LIST } from '../constants';
 import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
+import { useUserPreferences } from '../context/UserPreferencesContext';
 import { 
   format, 
   startOfWeek, 
@@ -92,6 +93,8 @@ interface ScheduleItem {
   notes?: string;
   endTime?: string;
   status?: 'draft' | 'published' | 'cancelled';
+  reminderType?: 'minutes' | 'hours' | 'days' | 'none';
+  reminderValue?: number;
 }
 
 interface DraftState {
@@ -420,6 +423,7 @@ export const WorkScheduleCreator: React.FC<WorkScheduleCreatorProps> = ({
   items: externalItems,
   setItems: setExternalItems
 }) => {
+  const { preferences } = useUserPreferences();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [internalItems, setInternalItems] = useState<ScheduleItem[]>([]);
   
@@ -429,6 +433,7 @@ export const WorkScheduleCreator: React.FC<WorkScheduleCreatorProps> = ({
   const [isGeneratingWeekly, setIsGeneratingWeekly] = useState(false);
   const [isResolvingConflicts, setIsResolvingConflicts] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const resolveConflictsWithAI = async () => {
     if (items.length === 0) return;
@@ -547,7 +552,9 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
           location: item.location || '',
           participants: item.participants || [],
           description: item.notes || '',
-          status: item.status || 'pending'
+          status: item.status || 'pending',
+          reminderType: item.reminderType || 'minutes',
+          reminderValue: item.reminderValue || 30
         };
 
         const typeLower = (item.type || '').toLowerCase();
@@ -745,6 +752,8 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
       location: '',
       priority: 'medium',
       status: 'draft',
+      reminderType: 'minutes',
+      reminderValue: preferences?.reminderSettings?.defaultEventMinutes ?? 30
     };
     setItems(prev => [...prev, newItem]);
     setEditingItem(newItem);
@@ -836,8 +845,26 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
   }, [items, checkConflicts]);
 
   const updateItem = useCallback((updatedItem: ScheduleItem) => {
+    if (!updatedItem.content?.trim()) {
+      setError('Vui lòng nhập nội dung công việc/cuộc họp');
+      return;
+    }
+    if (!updatedItem.date) {
+      setError('Vui lòng chọn ngày');
+      return;
+    }
+    if (!updatedItem.time) {
+      setError('Vui lòng chọn giờ bắt đầu');
+      return;
+    }
+    if (!updatedItem.location?.trim()) {
+      setError('Vui lòng nhập địa điểm');
+      return;
+    }
+
     setItems(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
     setEditingItem(null);
+    setError(null);
     if (autoSync) syncItemsToSystem([updatedItem], true);
     
     logActivity({
@@ -1788,7 +1815,10 @@ Chỉ trả về JSON.`;
                       </div>
                     </div>
                     <button 
-                      onClick={() => setEditingItem(null)}
+                      onClick={() => {
+                        setEditingItem(null);
+                        setError(null);
+                      }}
                       className="p-3 hover:bg-slate-200 rounded-2xl transition-all text-slate-400 hover:text-slate-900"
                     >
                       <X size={24} />
@@ -1797,6 +1827,16 @@ Chỉ trả về JSON.`;
 
                   {/* Modal Body */}
                   <div className="flex-1 overflow-y-auto p-8 space-y-10">
+                    {error && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 text-sm font-bold sticky top-0 z-10 shadow-sm"
+                      >
+                        <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+                        {error}
+                      </motion.div>
+                    )}
                     
                     {/* Section 1: Basic Info */}
                     <div className="space-y-6">
@@ -1927,11 +1967,11 @@ Chỉ trả về JSON.`;
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Thành phần tham dự</label>
                         <div className="flex flex-wrap gap-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl min-h-[60px]">
-                          {editingItem.participants.map(p => (
-                            <span key={p} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm">
+                          {editingItem.participants.map((p, pIdx) => (
+                            <span key={`${p}-${pIdx}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm">
                               {p}
                               <button 
-                                onClick={() => setEditingItem({ ...editingItem, participants: editingItem.participants.filter(x => x !== p) })}
+                                onClick={() => setEditingItem({ ...editingItem, participants: editingItem.participants.filter((_, i) => i !== pIdx) })}
                                 className="text-slate-400 hover:text-red-500"
                               >
                                 <X size={12} />
@@ -1948,6 +1988,59 @@ Chỉ trả về JSON.`;
                             <Plus size={12} /> Thêm
                           </button>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Section: Reminders */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-1.5 h-6 bg-emerald-600 rounded-full" />
+                        <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Nhắc nhở & Thông báo</h4>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Loại nhắc nhở</label>
+                          <select 
+                            value={editingItem.reminderType || 'minutes'}
+                            onChange={(e) => setEditingItem({ ...editingItem, reminderType: e.target.value as any })}
+                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all appearance-none"
+                          >
+                            <option value="minutes">Phút trước</option>
+                            <option value="hours">Giờ trước</option>
+                            <option value="days">Ngày trước</option>
+                            <option value="none">Không nhắc</option>
+                          </select>
+                        </div>
+                        {editingItem.reminderType !== 'none' && (
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Thời gian nhắc</label>
+                            <input 
+                              type="number"
+                              value={editingItem.reminderValue ?? 15}
+                              onChange={(e) => setEditingItem({ ...editingItem, reminderValue: Number(e.target.value) })}
+                              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                            />
+                            {editingItem.reminderType === 'minutes' && (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {preferences.reminderSettings.customIntervals.map(mins => (
+                                  <button
+                                    key={mins}
+                                    onClick={() => setEditingItem({ ...editingItem, reminderValue: mins })}
+                                    className={cn(
+                                      "px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight transition-all",
+                                      editingItem.reminderValue === mins 
+                                        ? "bg-blue-600 text-white shadow-sm" 
+                                        : "bg-white text-slate-400 border border-slate-200 hover:border-blue-300 hover:text-blue-600"
+                                    )}
+                                  >
+                                    {mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.floor(mins/60)}h` : `${Math.floor(mins/1440)}d`}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 

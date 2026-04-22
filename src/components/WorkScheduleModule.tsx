@@ -41,7 +41,7 @@ export const WorkScheduleModule: React.FC<WorkScheduleModuleProps> = (props) => 
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200",
             activeTab === 'optimized' 
-              ? "bg-indigo-50 text-indigo-700 font-medium shadow-sm" 
+              ? "bg-blue-50 text-blue-700 font-medium shadow-sm" 
               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           )}
         >

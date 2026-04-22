@@ -6,6 +6,7 @@ import { Message, SYSTEM_INSTRUCTION, Meeting, Task, Event, Birthday } from '../
 import { ToastType } from '../components/ui/Toast';
 import { useAuth } from '../context/AuthContext';
 import { generateContentWithRetry, generateContentStreamWithRetry } from '../lib/ai-utils';
+import { cacheData, getCachedData } from '../lib/cache';
 
 function generateUserTitle(text: string): string | undefined {
   const trimmed = text.trim();
@@ -76,8 +77,14 @@ export function useChat(
   const loadChatHistory = useCallback(async () => {
     if (!user) return;
     setIsHistoryLoading(true);
-    console.log("Loading chat history from Firestore...");
     
+    // Load from cache first for instant UI
+    const cacheKey = `chat_history_${user.uid}_${unitId || 'default'}`;
+    const cached = await getCachedData('chat_history', cacheKey);
+    if (cached) {
+      setChatHistory(cached);
+    }
+
     try {
       let q;
       if (isSuperAdmin) {
@@ -94,10 +101,11 @@ export function useChat(
         ...(doc.data() as any)
       }));
       
-      // Sort in memory to avoid requiring composite indexes
       history.sort((a, b) => b.timestamp - a.timestamp);
       
       setChatHistory(history);
+      // Update cache
+      await cacheData('chat_history', cacheKey, history);
     } catch (e: any) {
       handleFirestoreError(e, OperationType.GET, 'chat_history');
       showToast("Lỗi khi tải lịch sử chat.", "error");

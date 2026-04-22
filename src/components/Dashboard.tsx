@@ -10,7 +10,7 @@ interface DashboardProps {
   onNavigate?: (tab: string) => void;
 }
 
-const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#f43f5e', '#8b5cf6'];
+const COLORS = ['#3b82f6', '#6366f1', '#f59e0b', '#f43f5e', '#8b5cf6'];
 
 const DateTimeWidget = () => {
   const [time, setTime] = useState(new Date());
@@ -105,7 +105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ knowledge, chatHistory, on
 
   const stats = [
     { label: 'Kiến thức', value: knowledge.length, icon: Database, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', trend: '+5%', tab: 'knowledge' },
-    { label: 'Hội thoại', value: chatHistory.length, icon: MessageSquare, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', trend: '+12%', tab: 'chat' },
+    { label: 'Hội thoại', value: chatHistory.length, icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', trend: '+12%', tab: 'chat' },
     { label: 'Chủ đề', value: tagData.length, icon: Brain, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', trend: '+2%', tab: 'knowledge' },
     { label: 'Hoạt động', value: chatHistory.filter(h => new Date(h.timestamp) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length, icon: TrendingUp, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', trend: '+8%', tab: 'chat' },
   ];
@@ -132,7 +132,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ knowledge, chatHistory, on
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-black text-blue-200 uppercase tracking-widest">AI Command Center</span>
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-300" />
-                <span className="text-xs font-black text-emerald-300 uppercase tracking-widest">Smart Summary</span>
+                <span className="text-xs font-black text-blue-300 uppercase tracking-widest">Smart Summary</span>
               </div>
               <h2 className="text-2xl font-black text-white tracking-tight mb-3">Tóm tắt hoạt động thông minh</h2>
               {isGeneratingSummary ? (
@@ -180,7 +180,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ knowledge, chatHistory, on
               <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color} transition-all duration-300 group-hover:scale-110 shadow-sm`}>
                 <stat.icon size={24} />
               </div>
-              <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-100">
+              <div className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-xl border border-blue-100">
                 <TrendingUp size={12} />
                 {stat.trend}
               </div>
@@ -212,8 +212,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ knowledge, chatHistory, on
               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Tần suất tương tác trong 7 ngày qua</p>
             </div>
             <div className="flex gap-2">
-              <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold uppercase tracking-widest border border-emerald-100 shadow-sm">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50"></div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold uppercase tracking-widest border border-blue-100 shadow-sm">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-sm shadow-blue-500/50"></div>
                 Trực tuyến
               </div>
             </div>

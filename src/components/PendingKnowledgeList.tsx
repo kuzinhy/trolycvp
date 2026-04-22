@@ -35,9 +35,9 @@ export const PendingKnowledgeList: React.FC<PendingKnowledgeListProps> = memo(({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <AnimatePresence mode="popLayout">
-          {items.map((item) => (
+          {items.map((item, index) => (
             <motion.div
-              key={item.id}
+              key={item.id || `pending-${index}`}
               layout
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

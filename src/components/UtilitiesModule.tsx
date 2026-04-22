@@ -16,7 +16,7 @@ const SpeechAssistant = lazy(() => import('./SpeechAssistant').then(m => ({ defa
 
 interface UtilitiesModuleProps {
   initialTab?: TabId;
-  initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'party-docs' | 'email' | 'speech';
+  initialMainTab?: 'review' | 'compose' | 'bulk' | 'party-docs' | 'email' | 'speech';
   navigationParams?: any;
   hideTabs?: boolean;
   draftingProps?: {
@@ -27,7 +27,7 @@ interface UtilitiesModuleProps {
     updateRule: (id: string, content: string) => void;
     showToast: (message: string, type?: any) => void;
     aiKnowledge: any[];
-    initialMainTab?: 'review' | 'compose' | 'invitation' | 'bulk' | 'party-docs' | 'email' | 'speech';
+    initialMainTab?: 'review' | 'compose' | 'bulk' | 'party-docs' | 'email' | 'speech';
   };
   speechProps?: {
     aiKnowledge: any[];

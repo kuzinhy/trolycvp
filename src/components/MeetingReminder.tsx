@@ -4,6 +4,7 @@ import { Calendar, Plus, X, MapPin, Clock, Trash2, Eraser } from 'lucide-react';
 import { Meeting } from '../constants';
 import { cn } from '../lib/utils';
 import { ToastType } from './ui/Toast';
+import { useUserPreferences } from '../context/UserPreferencesContext';
 
 interface MeetingReminderProps {
   meetings: Meeting[];
@@ -13,15 +14,17 @@ interface MeetingReminderProps {
 }
 
 export const MeetingReminder: React.FC<MeetingReminderProps> = ({ meetings, updateMeetings, showToast, isSaving }) => {
+  const { preferences } = useUserPreferences();
+  const reminderSettings = preferences?.reminderSettings;
   const [isAdding, setIsAdding] = useState(false);
   const [newMeeting, setNewMeeting] = useState({ 
     name: '', 
     date: '', 
     time: '', 
     location: '', 
-    reminderMinutes: 30,
+    reminderMinutes: reminderSettings?.defaultEventMinutes ?? 30,
     reminderType: 'minutes' as 'minutes' | 'hours' | 'days' | 'none',
-    reminderValue: 30
+    reminderValue: reminderSettings?.defaultEventMinutes ?? 30
   });
 
   const addMeeting = () => {
@@ -153,6 +156,25 @@ export const MeetingReminder: React.FC<MeetingReminderProps> = ({ meetings, upda
                   <option value="none">Không nhắc</option>
                 </select>
               </div>
+              
+              {newMeeting.reminderType === 'minutes' && reminderSettings?.customIntervals && (
+                <div className="flex flex-wrap gap-1.5 px-1">
+                  {Array.from(new Set(reminderSettings.customIntervals)).map(mins => (
+                    <button
+                      key={`interval-${mins}`}
+                      onClick={() => setNewMeeting({...newMeeting, reminderValue: mins})}
+                      className={cn(
+                        "px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight transition-all",
+                        newMeeting.reminderValue === mins 
+                          ? "bg-blue-600 text-white shadow-sm" 
+                          : "bg-white text-slate-400 border border-slate-200 hover:border-blue-300 hover:text-blue-600"
+                      )}
+                    >
+                      {mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.floor(mins/60)}h` : `${Math.floor(mins/1440)}d`}
+                    </button>
+                  ))}
+                </div>
+              )}
               <button 
                 onClick={addMeeting} 
                 className="w-full py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-500 transition-colors"

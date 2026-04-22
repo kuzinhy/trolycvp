@@ -9,15 +9,34 @@ interface Note {
   id: string;
   content: string;
   timestamp: number;
+  colorIndex?: number;
 }
 
-export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) => void }> = ({ showToast }) => {
+export const QuickNotes: React.FC<{ 
+  showToast: (msg: string, type?: ToastType) => void,
+  externalIsAdding?: boolean,
+  setExternalIsAdding?: (val: boolean) => void
+}> = ({ showToast, externalIsAdding, setExternalIsAdding }) => {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
+  const [internalIsAdding, setInternalIsAdding] = useState(false);
+  
+  const isAdding = externalIsAdding !== undefined ? externalIsAdding : internalIsAdding;
+  const setIsAdding = setExternalIsAdding !== undefined ? setExternalIsAdding : setInternalIsAdding;
   const [newContent, setNewContent] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+
+  const noteColors = [
+    { bg: '#fef9c3', border: '#fde047', line: '#facc15', text: '#854d0e', name: 'Vàng' },
+    { bg: '#dbeafe', border: '#bfdbfe', line: '#60a5fa', text: '#1e40af', name: 'Xanh dương' },
+    { bg: '#dcfce7', border: '#bbf7d0', line: '#4ade80', text: '#166534', name: 'Xanh lá' },
+    { bg: '#fee2e2', border: '#fecaca', line: '#f87171', text: '#991b1b', name: 'Đỏ' },
+    { bg: '#f3e8ff', border: '#e9d5ff', line: '#a855f7', text: '#6b21a8', name: 'Tím' },
+    { bg: '#ffedd5', border: '#fed7aa', line: '#fb923c', text: '#9a3412', name: 'Cam' },
+  ];
 
   useEffect(() => {
     const saved = localStorage.getItem('ai_assistant_quick_notes');
@@ -40,22 +59,25 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
     const newNote: Note = {
       id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       content: newContent,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      colorIndex: selectedColorIndex
     };
     saveNotes([newNote, ...notes]);
     setNewContent('');
     setIsAdding(false);
-    showToast('Đã lưu ghi chú', 'success');
+    showToast('Đã lưu vào sổ tay cá nhân', 'success');
   };
 
   const handleDelete = (id: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa ghi chú này?')) return;
     saveNotes(notes.filter(n => n.id !== id));
     showToast('Đã xóa ghi chú', 'info');
   };
 
-  const handleEdit = (id: string, content: string) => {
+  const handleEdit = (id: string, content: string, colorIndex?: number) => {
     setEditingId(id);
     setEditContent(content);
+    if (colorIndex !== undefined) setSelectedColorIndex(colorIndex);
   };
 
   const handleSaveEdit = (id: string) => {
@@ -63,17 +85,16 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
       handleDelete(id);
       return;
     }
-    saveNotes(notes.map(n => n.id === id ? { ...n, content: editContent, timestamp: Date.now() } : n));
+    saveNotes(notes.map(n => n.id === id ? { 
+      ...n, 
+      content: editContent, 
+      timestamp: Date.now(),
+      colorIndex: selectedColorIndex 
+    } : n));
     setEditingId(null);
     showToast('Đã cập nhật ghi chú', 'success');
   };
 
-  const noteColors = [
-    { bg: '#fef9c3', border: '#fde047', line: '#facc15' }, // Yellow
-    { bg: '#dbeafe', border: '#bfdbfe', line: '#60a5fa' }, // Blue
-    { bg: '#dcfce7', border: '#bbf7d0', line: '#4ade80' }, // Green
-    { bg: '#fee2e2', border: '#fecaca', line: '#f87171' }, // Pink
-  ];
 
   return (
     <motion.div 
@@ -126,7 +147,7 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
           >
             <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
               {notes.map((note, index) => {
-                const color = noteColors[index % noteColors.length];
+                const color = noteColors[note.colorIndex !== undefined ? note.colorIndex : index % noteColors.length];
                 return (
                   <motion.div 
                     key={note.id}
@@ -136,6 +157,7 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
                     style={{ 
                       backgroundColor: color.bg,
                       borderColor: color.border,
+                      color: color.text,
                       backgroundImage: `linear-gradient(${color.line}20 1px, transparent 1px)`,
                       backgroundSize: '100% 1.5rem'
                     }}
@@ -148,7 +170,7 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
                     />
 
                     {editingId === note.id ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         <textarea 
                           value={editContent}
                           onChange={e => setEditContent(e.target.value)}
@@ -156,13 +178,29 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
                           className="w-full text-sm px-4 py-3 bg-white/80 backdrop-blur-sm border border-amber-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all resize-none font-medium"
                           autoFocus
                         />
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => setEditingId(null)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                            <X size={16} />
-                          </button>
-                          <button onClick={() => handleSaveEdit(note.id)} className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm shadow-amber-200">
-                            <Check size={16} />
-                          </button>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex gap-1.5 p-1 bg-white/50 backdrop-blur-sm rounded-lg border border-white/50">
+                            {noteColors.map((c, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setSelectedColorIndex(i)}
+                                className={cn(
+                                  "w-5 h-5 rounded-full border-2 transition-all",
+                                  selectedColorIndex === i ? "border-slate-800 scale-110 shadow-sm" : "border-transparent opacity-60 hover:opacity-100"
+                                )}
+                                style={{ backgroundColor: c.bg, borderColor: selectedColorIndex === i ? c.line : 'transparent' }}
+                                title={c.name}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => setEditingId(null)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                              <X size={16} />
+                            </button>
+                            <button onClick={() => handleSaveEdit(note.id)} className="p-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm">
+                              <Check size={16} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -173,7 +211,7 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
                             {new Date(note.timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} • {new Date(note.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                           <div className="opacity-0 group-hover/item:opacity-100 flex items-center gap-1 transition-all translate-x-2 group-hover/item:translate-x-0">
-                            <button onClick={() => handleEdit(note.id, note.content)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-white rounded-xl transition-all shadow-sm"><Edit2 size={12} /></button>
+                            <button onClick={() => handleEdit(note.id, note.content, note.colorIndex)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-white rounded-xl transition-all shadow-sm"><Edit2 size={12} /></button>
                             <button onClick={() => handleDelete(note.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-white rounded-xl transition-all shadow-sm"><Trash2 size={12} /></button>
                           </div>
                         </div>
@@ -217,6 +255,25 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
               </div>
 
               <div className="p-8 space-y-6">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Chọn màu sắc</p>
+                  <div className="flex gap-3 p-2 bg-slate-100 rounded-2xl border border-slate-200 w-fit">
+                    {noteColors.map((c, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedColorIndex(i)}
+                        className={cn(
+                          "w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center",
+                          selectedColorIndex === i ? "border-slate-800 scale-110 shadow-md" : "border-transparent opacity-60 hover:opacity-100"
+                        )}
+                        style={{ backgroundColor: c.bg }}
+                      >
+                        {selectedColorIndex === i && <Check size={14} className="text-slate-800" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <textarea 
                   placeholder="Nhập ghi chú nhanh của bạn tại đây..." 
                   value={newContent}
@@ -230,7 +287,7 @@ export const QuickNotes: React.FC<{ showToast: (msg: string, type?: ToastType) =
                   disabled={!newContent.trim()}
                   className="w-full rounded-2xl py-6 font-bold shadow-lg shadow-amber-200 bg-amber-500 hover:bg-amber-600"
                 >
-                  <Save size={18} className="mr-2" /> Lưu vào sổ tay
+                  <Plus size={18} className="mr-2" /> Thêm vào sổ tay cá nhân
                 </Button>
               </div>
             </motion.div>

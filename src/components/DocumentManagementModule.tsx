@@ -25,6 +25,8 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { requestLocalLink, verifyPermission, listDirectoryFiles, LocalFileHandle } from '../lib/localFs';
+import { HardDrive, FolderOpen, RefreshCcw, ExternalLink } from 'lucide-react';
 
 // Types for Document Management
 interface ApprovalStep {
@@ -130,10 +132,42 @@ const MOCK_SEAL_LOGS: SealLog[] = [
 ];
 
 export const DocumentManagementModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'documents' | 'logs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'documents' | 'logs' | 'local'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'incoming' | 'outgoing'>('all');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+
+  // Local Linking State
+  const [localHandle, setLocalHandle] = useState<FileSystemDirectoryHandle | null>(null);
+  const [localFiles, setLocalFiles] = useState<LocalFileHandle[]>([]);
+  const [isRefreshingLocal, setIsRefreshingLocal] = useState(false);
+
+  const handleLinkLocalFolder = async () => {
+    try {
+      const handle = await requestLocalLink('directory') as FileSystemDirectoryHandle;
+      if (handle) {
+        setLocalHandle(handle);
+        const files = await listDirectoryFiles(handle);
+        setLocalFiles(files);
+      }
+    } catch (err) {
+      console.error("Local link error:", err);
+    }
+  };
+
+  const refreshLocalFiles = async () => {
+    if (!localHandle) return;
+    setIsRefreshingLocal(true);
+    try {
+      const hasPermission = await verifyPermission(localHandle);
+      if (hasPermission) {
+        const files = await listDirectoryFiles(localHandle);
+        setLocalFiles(files);
+      }
+    } finally {
+      setIsRefreshingLocal(false);
+    }
+  };
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -175,7 +209,7 @@ export const DocumentManagementModule: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <FileText className="text-indigo-600" />
+              <FileText className="text-blue-600" />
               QUẢN LÝ VĂN BẢN & ĐIỀU HÀNH
             </h1>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
@@ -183,7 +217,7 @@ export const DocumentManagementModule: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
               <Plus size={16} />
               Tạo văn bản mới
             </button>
@@ -194,8 +228,9 @@ export const DocumentManagementModule: React.FC = () => {
         <div className="flex items-center gap-1">
           {[
             { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
-            { id: 'documents', label: 'Danh sách văn bản', icon: Files },
-            { id: 'logs', label: 'Nhật ký con dấu/chữ ký', icon: Activity },
+            { id: 'documents', label: 'Văn bản', icon: Files },
+            { id: 'logs', label: 'Nhật ký', icon: Activity },
+            { id: 'local', label: 'Laptop Link', icon: HardDrive }
           ].map(tab => (
             <button
               key={tab.id}
@@ -203,7 +238,7 @@ export const DocumentManagementModule: React.FC = () => {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                 activeTab === tab.id 
-                  ? "bg-indigo-50 text-indigo-600 shadow-sm" 
+                  ? "bg-blue-50 text-blue-600 shadow-sm" 
                   : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
               )}
             >
@@ -217,6 +252,95 @@ export const DocumentManagementModule: React.FC = () => {
       <div className="flex-1 overflow-hidden flex">
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+          {activeTab === 'local' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 border-none">Liên kết Cục bộ (Laptop Link)</h3>
+                  <p className="text-xs text-slate-500">Truy cập và đồng bộ văn bản trực tiếp từ thư mực trên máy tính cá nhân của bạn.</p>
+                </div>
+                {!localHandle ? (
+                  <button 
+                    onClick={handleLinkLocalFolder}
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all"
+                  >
+                    <FolderOpen size={16} />
+                    Chọn thư mục liên kết
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={refreshLocalFiles}
+                      className={cn(
+                        "p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm",
+                        isRefreshingLocal && "animate-spin text-blue-600 border-blue-200"
+                      )}
+                      title="Làm mới"
+                    >
+                      <RefreshCcw size={18} />
+                    </button>
+                    <button 
+                      onClick={() => setLocalHandle(null)}
+                      className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-all shadow-sm"
+                      title="Hủy liên kết"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {!localHandle ? (
+                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center">
+                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                    <HardDrive size={32} className="text-slate-300" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 mb-2">Chưa có liên kết cục bộ</h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto mb-6">Liên kết với thư mục văn bản trên laptop của bạn để truy cập nhanh mà không cần upload lên đám mây.</p>
+                  <button 
+                    onClick={handleLinkLocalFolder}
+                    className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-blue-600 hover:border-blue-200 transition-all"
+                  >
+                    Bắt đầu liên kết
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {localFiles.length === 0 ? (
+                    <div className="col-span-full py-12 text-center text-slate-400 italic text-xs">Thư mục trống hoặc chưa được cấp quyền truy cập.</div>
+                  ) : (
+                    localFiles.map((file) => (
+                      <motion.div
+                        key={file.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={cn(
+                            "p-2.5 rounded-xl",
+                            file.kind === 'directory' ? "bg-amber-50 text-amber-600" : "bg-blue-50 text-blue-600"
+                          )}>
+                            {file.kind === 'directory' ? <FolderOpen size={18} /> : <FileText size={18} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">{file.name}</h4>
+                            <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-widest">
+                              {file.kind === 'directory' ? 'Thư mục' : 'Tập tin'}
+                            </p>
+                          </div>
+                          <button className="p-1.5 text-slate-300 hover:text-blue-600 transition-colors">
+                            <ExternalLink size={14} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               {/* Stats Grid */}
@@ -250,7 +374,7 @@ export const DocumentManagementModule: React.FC = () => {
                 <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Văn bản cần xử lý ngay</h3>
-                    <button className="text-[10px] font-bold text-indigo-600 uppercase hover:underline">Xem tất cả</button>
+                    <button className="text-[10px] font-bold text-blue-600 uppercase hover:underline">Xem tất cả</button>
                   </div>
                   <div className="divide-y divide-slate-50">
                     {MOCK_DOCUMENTS.filter(d => d.status === 'reviewing').map(doc => (
@@ -264,10 +388,10 @@ export const DocumentManagementModule: React.FC = () => {
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-[10px] font-bold text-slate-400 uppercase">{doc.docNumber}</span>
                               <span className="w-1 h-1 rounded-full bg-slate-300" />
-                              <span className="text-[10px] font-bold text-indigo-500 uppercase">{doc.creator}</span>
+                              <span className="text-[10px] font-bold text-blue-500 uppercase">{doc.creator}</span>
                             </div>
                           </div>
-                          <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                          <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
                         </div>
                       </div>
                     ))}
@@ -282,7 +406,7 @@ export const DocumentManagementModule: React.FC = () => {
                     {MOCK_SEAL_LOGS.map(log => (
                       <div key={log.id} className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className={cn("p-2 rounded-lg", log.type === 'seal' ? "bg-indigo-50 text-indigo-600" : "bg-emerald-50 text-emerald-600")}>
+                          <div className={cn("p-2 rounded-lg", log.type === 'seal' ? "bg-blue-50 text-blue-600" : "bg-emerald-50 text-emerald-600")}>
                             {log.type === 'seal' ? <Stamp size={16} /> : <PenTool size={16} />}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -313,14 +437,14 @@ export const DocumentManagementModule: React.FC = () => {
                     placeholder="Tìm kiếm theo tiêu đề, số hiệu..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
                   <select 
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value as any)}
-                    className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                   >
                     <option value="all">Tất cả loại</option>
                     <option value="incoming">Văn bản đến</option>
@@ -349,8 +473,8 @@ export const DocumentManagementModule: React.FC = () => {
                       <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors group">
                         <td className="px-6 py-4" style={getStatusStyle(doc.status)}>
                           <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-indigo-600 uppercase mb-1">{doc.docNumber}</span>
-                            <span className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{doc.title}</span>
+                            <span className="text-[10px] font-black text-blue-600 uppercase mb-1">{doc.docNumber}</span>
+                            <span className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{doc.title}</span>
                             <span className="text-[10px] text-slate-400 mt-1">{new Date(doc.createdAt).toLocaleDateString('vi-VN')}</span>
                           </div>
                         </td>
@@ -484,7 +608,7 @@ export const DocumentManagementModule: React.FC = () => {
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <div>
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{selectedDoc.docNumber}</span>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{selectedDoc.docNumber}</span>
                     <h2 className="text-lg font-black text-slate-900 leading-tight mt-1">{selectedDoc.title}</h2>
                   </div>
                   
@@ -569,7 +693,7 @@ export const DocumentManagementModule: React.FC = () => {
                     <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all">
                       Yêu cầu sửa
                     </button>
-                    <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
                       Duyệt văn bản
                     </button>
                   </div>

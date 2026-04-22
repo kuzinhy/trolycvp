@@ -97,6 +97,101 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "content", "unitId", "authorUid"]
+    },
+    "WorkLog": {
+      "title": "Work Log",
+      "description": "Daily work report for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "unitId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "tasks": { "type": "array", "items": { "$ref": "WorkTask" } },
+        "additionalTasks": { "type": "array", "items": { "$ref": "WorkTask" } },
+        "calendarTasks": { "type": "array", "items": { "$ref": "WorkTask" } },
+        "notes": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date"]
+    },
+    "WorkTask": {
+      "title": "Work Task",
+      "description": "A single task within a work log",
+      "type": "object",
+      "properties": {
+        "task_name": { "type": "string" },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["completed", "not completed"] },
+        "source": { "type": "string", "enum": ["fixed", "additional", "calendar"] }
+      },
+      "required": ["task_name", "priority", "status"]
+    },
+    "ConclusionDraft": {
+      "title": "Conclusion Draft",
+      "description": "A professional draft for a meeting conclusion with version tracking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "unitId": { "type": "string" },
+        "meetingName": { "type": "string" },
+        "meetingDate": { "type": "string", "format": "date-time" },
+        "directives": { "type": "array", "items": { "$ref": "DirectiveIdea" } },
+        "finalReport": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "final", "archived"] },
+        "version": { "type": "integer" },
+        "parentDraftId": { "type": "string" },
+        "referencedItems": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "type": { "type": "string", "enum": ["brain", "note"] }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "meetingName"]
+    },
+    "DirectiveIdea": {
+      "title": "Directive Idea",
+      "description": "A single directive idea with source tracking and edit history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rawText": { "type": "string" },
+        "selectedText": { "type": "string" },
+        "type": { "type": "string" },
+        "subject": { "type": "string" },
+        "action": { "type": "string" },
+        "deadline": { "type": "string" },
+        "tone": { "type": "string", "enum": ["formal", "concise", "full"] },
+        "groupTag": { "type": "string" },
+        "order": { "type": "integer" },
+        "source": { 
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["manual", "brain", "note"] },
+            "id": { "type": "string" },
+            "originalContent": { "type": "string" }
+          }
+        },
+        "editHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "required": ["id", "rawText", "selectedText", "tone"]
     }
   },
   "firestore": {
@@ -123,6 +218,14 @@
     "/party_documents/{docId}": {
       "schema": { "$ref": "KnowledgeItem" },
       "description": "Collection of knowledge documents"
+    },
+    "/work_logs/{logId}": {
+      "schema": { "$ref": "WorkLog" },
+      "description": "Daily work logs for users"
+    },
+    "/conclusion_drafts/{draftId}": {
+      "schema": { "$ref": "ConclusionDraft" },
+      "description": "Meeting conclusion drafts"
     }
   }
 }

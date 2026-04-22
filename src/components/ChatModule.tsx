@@ -24,6 +24,8 @@ import {
   Users,
   MicOff,
   BrainCircuit,
+  History,
+  StickyNote,
   Paperclip as PaperclipIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -63,6 +65,7 @@ interface ChatModuleProps {
   setIsSearchEnabled?: (val: boolean) => void;
   isSimpleMode?: boolean;
   setIsSimpleMode?: (val: boolean) => void;
+  onNavigate: (tab: string, params?: any) => void;
 }
 
 import { KnowledgeConfirmModal } from './KnowledgeConfirmModal';
@@ -73,21 +76,30 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
   saveToKnowledge, isSaving, aiKnowledge, smartLearnFromText, isLearning,
   onClearChat, chatHistory, deleteChatHistory, showToast,
   isSearchEnabled, setIsSearchEnabled,
-  isSimpleMode, setIsSimpleMode
+  isSimpleMode, setIsSimpleMode,
+  onNavigate
 }) => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [showUserList, setShowUserList] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
   const [pendingSave, setPendingSave] = useState<{ content: string; tags: string[]; index: number } | null>(null);
+  const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [validationResult, setValidationResult] = useState<{
     isDuplicate: boolean;
     duplicateTitle?: string;
     isNew: boolean;
   } | null>(null);
+
+  const filteredHistory = useMemo(() => {
+    if (!historySearchTerm) return chatHistory;
+    return chatHistory.filter(chat => 
+      chat.content.toLowerCase().includes(historySearchTerm.toLowerCase())
+    );
+  }, [chatHistory, historySearchTerm]);
 
   const handleSaveToKnowledge = (content: string, tags: string[], index: number) => {
     const duplicate = aiKnowledge.find(k => 
@@ -272,7 +284,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50/30 relative">
+    <div className="flex flex-col h-full bg-white relative">
       {/* Confirmation Modal */}
       <KnowledgeConfirmModal 
         isOpen={showConfirmModal}
@@ -284,16 +296,16 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
       />
 
       {/* Header */}
-      <div className="px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 flex items-center justify-between sticky top-0 z-20">
+      <div className="px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center shadow-lg shadow-slate-900/20">
-            <BrainCircuit className="text-emerald-500" size={20} />
+          <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <BrainCircuit className="text-white" size={20} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-[hsl(var(--foreground))] tracking-tight">Trợ lý Chỉ huy Elite v6.0</h2>
+            <h2 className="text-sm font-bold text-slate-900 tracking-tight">Trợ lý Chỉ huy Elite v8.0</h2>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Strategic Context: Active</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shadow-sm shadow-blue-500/50"></div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Strategic Context: Active</span>
             </div>
           </div>
         </div>
@@ -355,7 +367,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
             onClick={() => setIsSearchEnabled && setIsSearchEnabled(!isSearchEnabled)}
             className={cn(
               "p-2.5 rounded-xl transition-all duration-300 shadow-sm border flex items-center gap-2",
-              isSearchEnabled ? "bg-blue-500 text-white border-blue-400 shadow-blue-500/20" : "bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-slate-200/60"
+              isSearchEnabled ? "bg-blue-600 text-white border-blue-500 shadow-blue-500/20" : "bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-slate-200"
             )}
             title="Tìm kiếm thông tin thực tế (Google Search Grounding)"
           >
@@ -364,7 +376,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
           </button>
 
           <button 
-            onClick={() => setShowHistoryModal(true)}
+            onClick={() => setIsHistorySidebarOpen(true)}
             className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200"
             title="Lịch sử hội thoại"
           >
@@ -381,108 +393,135 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
         </div>
       </div>
 
-      {/* History Modal */}
+      {/* History Sidebar */}
       <AnimatePresence>
-        {showHistoryModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div 
+        {isHistorySidebarOpen && (
+          <>
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-              onClick={() => setShowHistoryModal(false)}
+              onClick={() => setIsHistorySidebarOpen(false)}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[90]"
             />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-3xl max-h-[85vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+            <motion.div
+              initial={{ x: -400 }}
+              animate={{ x: 0 }}
+              exit={{ x: -400 }}
+              className="fixed inset-y-0 left-0 w-80 bg-white border-r border-slate-200 z-[100] shadow-2xl flex flex-col"
             >
-              <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl">
-                    <Database size={20} />
+                  <div className="p-2 bg-indigo-500 text-white rounded-lg">
+                    <History size={18} />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">Lịch sử hội thoại</h3>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">Quản lý các cuộc hội thoại trước đây</p>
-                  </div>
+                  <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Lịch sử hội thoại</h3>
                 </div>
                 <button 
-                  onClick={() => setShowHistoryModal(false)}
-                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                  onClick={() => setIsHistorySidebarOpen(false)}
+                  className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
-              
-              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                {chatHistory.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                      <Database size={24} className="text-slate-300" />
-                    </div>
-                    <p className="text-sm font-bold text-slate-900">Chưa có lịch sử</p>
-                    <p className="text-xs text-slate-500 mt-1">Các cuộc hội thoại sẽ được lưu lại ở đây.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {chatHistory.map((chat, idx) => (
-                      <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-indigo-200 transition-colors group">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-3 flex-1 min-w-0">
-                            <div className={cn(
-                              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                              chat.role === 'user' ? "bg-slate-100 text-slate-600" : "bg-emerald-50 text-emerald-600"
-                            )}>
-                              {chat.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                                  {chat.role === 'user' ? 'Bạn' : 'AI'}
-                                </span>
-                                <span className="text-[10px] text-slate-400">
-                                  {new Date(chat.timestamp).toLocaleString('vi-VN')}
-                                </span>
-                              </div>
-                              <p className="text-sm text-slate-700 line-clamp-3">{chat.content}</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => deleteChatHistory(idx)}
-                            className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
-                            title="Xóa"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+
+              <div className="px-4 py-3 border-b border-slate-50">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <input 
+                    type="text"
+                    placeholder="Tìm kiếm lịch sử..."
+                    value={historySearchTerm}
+                    onChange={(e) => setHistorySearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-xl text-xs focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium"
+                  />
+                </div>
               </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {filteredHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <Database size={24} className="mx-auto text-slate-200 mb-3" />
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Không có dữ liệu</p>
+                </div>
+              ) : (
+                chatHistory.map((chat, originalIdx) => ({ chat, originalIdx }))
+                  .filter(({ chat }) => !historySearchTerm || chat.content.toLowerCase().includes(historySearchTerm.toLowerCase()))
+                  .map(({ chat, originalIdx }) => (
+                  <div 
+                    key={chat.id || `hist-${originalIdx}`}
+                    className="group bg-white border border-slate-100 rounded-xl p-3 hover:border-indigo-200 hover:shadow-md transition-all cursor-default"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                       <div className="flex-1 min-w-0">
+                         <div className="flex items-center gap-2 mb-1">
+                           <span className={cn(
+                             "text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter",
+                             chat.role === 'user' ? "bg-slate-100 text-slate-600" : "bg-emerald-100 text-emerald-600"
+                           )}>
+                             {chat.role === 'user' ? 'Bạn' : 'AI'}
+                           </span>
+                           <span className="text-[9px] text-slate-400 font-mono">
+                             {new Date(chat.timestamp).toLocaleTimeString('vi-VN')}
+                           </span>
+                         </div>
+                         <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed italic">{chat.content}</p>
+                       </div>
+                       <button
+                         onClick={() => deleteChatHistory(originalIdx)}
+                         className="p-1 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                       >
+                         <Trash2 size={12} />
+                       </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
             </motion.div>
-          </div>
+          </>
         )}
       </AnimatePresence>
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col min-w-0 relative">
+          {/* Header Controls */}
+          <div className="absolute top-4 right-8 z-30 flex items-center gap-3">
+             <button 
+               onClick={() => setIsHistorySidebarOpen(true)}
+               className="p-3 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl text-slate-500 hover:text-indigo-600 hover:border-indigo-200 shadow-xl shadow-slate-200/20 transition-all flex items-center gap-2"
+               title="Lịch sử"
+             >
+               <History size={18} />
+               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Lịch sử</span>
+             </button>
+             
+             <button 
+               onClick={() => {
+                 onClearChat();
+               }}
+               className="p-3 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl text-slate-400 hover:text-rose-600 hover:border-rose-200 shadow-xl shadow-slate-200/20 transition-all flex items-center gap-2"
+               title="Xóa hội thoại"
+             >
+               <Trash2 size={18} />
+               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Làm mới</span>
+             </button>
+          </div>
+
           {/* Messages Area */}
           <div 
             ref={scrollContainerRef}
             className="flex-1 overflow-y-auto px-4 py-8 space-y-8 custom-scrollbar scroll-smooth"
           >
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto">
-            <div className="w-20 h-20 rounded-3xl bg-slate-900 shadow-xl shadow-slate-900/20 flex items-center justify-center mb-6 animate-bounce-slow border border-emerald-500/30">
-              <BrainCircuit size={40} className="text-emerald-500" />
+          <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto py-20">
+            <div className="w-20 h-20 rounded-3xl bg-blue-600 shadow-xl shadow-blue-500/20 flex items-center justify-center mb-6 animate-bounce-slow border border-white/20">
+              <BrainCircuit size={40} className="text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Trung tâm Chỉ huy Elite v6.0</h3>
-            <p className="text-sm text-slate-500 leading-relaxed font-medium max-w-md">
-              Hệ thống đã sẵn sàng cho các tác vụ tham mưu và chỉ huy chiến lược. Hãy nhập yêu cầu hoặc chọn một module nghiệp vụ bên dưới.
+            <h3 className="text-2xl font-bold text-slate-900 mb-2 uppercase tracking-tighter italic">Trung tâm Chỉ huy Elite v8.0</h3>
+            <p className="text-sm text-slate-400 leading-relaxed font-bold max-w-md uppercase tracking-wide">
+              Hệ thống đã sẵn sàng cho các tác vụ tham mưu và chỉ huy chiến lược.
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 w-full">
@@ -493,15 +532,15 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                     setInput(task.promptPrefix);
                     inputRef.current?.focus();
                   }}
-                  className="p-5 bg-white border border-slate-200 rounded-2xl text-left hover:border-emerald-500 hover:shadow-xl hover:-translate-y-1 transition-all group"
+                  className="p-5 bg-white border border-slate-200 rounded-2xl text-left hover:border-blue-500 hover:shadow-xl hover:-translate-y-1 transition-all group shadow-sm"
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
                       <Sparkles size={16} />
                     </div>
-                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">{task.label}</span>
+                    <span className="text-xs font-black text-slate-900 uppercase tracking-wider">{task.label}</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{task.description}</p>
+                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 font-medium">{task.description}</p>
                 </button>
               ))}
             </div>
@@ -520,38 +559,46 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                   )}
                 >
                   <div className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm border",
-                    msg.role === 'user' ? "bg-slate-800 text-white border-slate-700" : "bg-white text-emerald-500 border-slate-200"
+                    "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg border transition-transform duration-500 group-hover:scale-110",
+                    msg.role === 'user' ? "bg-blue-600 text-white border-blue-400" : "bg-white text-blue-600 border-blue-50"
                   )}>
-                    {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
+                    {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                   </div>
                   <div className={cn(
                     "flex flex-col max-w-[85%] sm:max-w-[80%]",
-                    msg.role === 'user' ? "items-end" : "items-start"
+                    msg.role === 'user' ? "items-end text-right" : "items-start"
                   )}>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
-                      {msg.role === 'user' ? 'Bạn' : 'Trợ lý AI'}
-                    </span>
-                    <div 
-                      onClick={() => toggleExpand(msg.id || `msg-${idx}`)}
-                      className={cn(
-                        "px-6 py-4 rounded-2xl text-sm leading-relaxed shadow-sm relative transition-all duration-200 hover:bg-slate-50 cursor-pointer break-words",
-                        msg.role === 'user' 
-                          ? "bg-white text-slate-800 border border-slate-200 rounded-tr-none" 
-                          : "bg-white text-slate-700 border border-slate-200/80 rounded-tl-none",
-                        expandedMessages.has(msg.id || `msg-${idx}`) && "ring-2 ring-emerald-500/20 border-emerald-200 shadow-md"
-                      )}
-                    >
-                      {msg.title && (
-                        <div className="mb-2 pb-2 border-b border-slate-100/50">
-                          <h4 className="font-bold text-slate-900">{msg.title}</h4>
-                        </div>
-                      )}
-                      <div className="markdown-body max-w-none break-words">
-                        <Suspense fallback={<div className="animate-pulse bg-slate-100 h-20 rounded-2xl"></div>}>
-                          <ReactMarkdown 
-                            remarkPlugins={[remarkGfm]}
-                            components={{
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                        {msg.role === 'user' ? 'Giao thức người dùng' : 'Phản hồi tham mưu AI'}
+                      </span>
+                    </div>
+                    
+                    <div className={cn(
+                      "group/msg relative",
+                      msg.role === 'user' ? "flex flex-col items-end" : "flex flex-col items-start"
+                    )}>
+                      <div 
+                        onClick={() => toggleExpand(msg.id || `msg-${idx}`)}
+                        className={cn(
+                          "px-6 py-5 rounded-3xl text-[13px] leading-relaxed shadow-sm relative transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer break-words border",
+                          msg.role === 'user' 
+                            ? "bg-blue-600 text-white border-blue-500 rounded-tr-none shadow-blue-500/10" 
+                            : "bg-white text-slate-700 border-slate-200 rounded-tl-none ring-1 ring-blue-500/5",
+                          expandedMessages.has(msg.id || `msg-${idx}`) && "border-blue-500/30 ring-4 ring-blue-500/5 shadow-2xl"
+                        )}
+                      >
+                        {msg.title && (
+                          <div className="mb-3 pb-3 border-b border-slate-100/50 flex items-center gap-2">
+                            <Sparkles size={14} className="text-blue-500" />
+                            <h4 className="font-black text-slate-900 uppercase tracking-tight text-xs">{msg.title}</h4>
+                          </div>
+                        )}
+                        <div className="markdown-body max-w-none break-words leading-relaxed font-medium">
+                          <Suspense fallback={<div className="animate-pulse bg-slate-100 h-20 rounded-2xl"></div>}>
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm]}
+                              components={{
                               code({ node, className, children, ...props }) {
                                 const match = /language-(\w+)/.exec(className || '');
                                 const isCodeBlock = !!match;
@@ -585,7 +632,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                                     </Suspense>
                                   </div>
                                 ) : (
-                                  <code className={cn("bg-slate-100 px-1.5 py-0.5 rounded text-emerald-600 font-mono text-xs", className)} {...props}>
+                                  <code className={cn("bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-mono text-xs", className)} {...props}>
                                     {children}
                                   </code>
                                 );
@@ -609,8 +656,8 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                                 return <td className="px-4 py-3 text-sm text-slate-600 border-b border-slate-100">{children}</td>;
                               },
                               blockquote({ children }) {
-                                return <blockquote className="border-l-4 border-emerald-500 bg-emerald-50/50 px-6 py-4 italic text-slate-700 my-6 rounded-r-2xl shadow-sm relative overflow-hidden">
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/20"></div>
+                                return <blockquote className="border-l-4 border-blue-500 bg-blue-50/50 px-6 py-4 italic text-slate-700 my-6 rounded-r-2xl shadow-sm relative overflow-hidden">
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/20"></div>
                                   {children}
                                 </blockquote>;
                               },
@@ -693,67 +740,56 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                     </div>
                     
                     <div className={cn(
-                      "flex items-center gap-3 mt-1.5 px-1",
+                      "flex items-center gap-2 mt-2 px-1",
                       msg.role === 'user' ? "flex-row-reverse" : "flex-row"
                     )}>
-                      <span className="text-[9px] font-medium text-slate-400">
+                      <span className="text-[10px] font-bold text-slate-400 font-mono">
                         {new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <button 
-                          onClick={() => copyToClipboard(msg.content, idx)}
-                          className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-all"
-                          title="Sao chép"
-                        >
-                          {copiedId === idx ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                        </button>
-                        <button 
-                          onClick={() => handleSaveToKnowledge(msg.content, [], idx)}
-                          disabled={isSaving !== null}
-                          className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-slate-100 rounded-lg transition-all"
-                          title="Lưu vào kiến thức"
-                        >
-                          {isSaving === idx ? <Loader2 size={12} className="animate-spin" /> : <Database size={12} />}
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (navigator.share) {
-                              navigator.share({
-                                title: msg.title || 'Chia sẻ nội dung từ Trợ lý AI',
-                                text: msg.content,
-                              }).catch(err => {
-                                if (err.name !== 'AbortError') {
-                                  console.error('Error sharing:', err);
-                                }
-                              });
-                            } else {
-                              copyToClipboard(msg.content, idx);
-                              if (showToast) showToast("Đã sao chép nội dung vào bộ nhớ tạm để chia sẻ", "info");
-                            }
-                          }}
-                          className="p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-all"
-                          title="Chia sẻ"
-                        >
-                          <Share2 size={12} />
-                        </button>
-                        {msg.role === 'model' && (
+                      
+                      {msg.role === 'model' && !isLoading && (
+                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300">
                           <button 
-                            onClick={() => {
-                              const zaloShareUrl = `https://zalo.me/share?text=${encodeURIComponent(msg.content)}`;
-                              window.open(zaloShareUrl, '_blank');
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSaveToKnowledge(msg.content, ['ai-derived'], idx);
                             }}
-                            className="p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-all"
-                            title="Chia sẻ Zalo"
+                            disabled={isSaving === idx}
+                            className="flex items-center gap-1.5 px-2 py-1 bg-white border border-slate-200 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-widest hover:text-indigo-600 hover:border-indigo-200 hover:shadow-sm transition-all disabled:opacity-50"
                           >
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-                              <path d="M22.12 11.23c-.15-.43-.45-.8-.85-1.04l-7.38-4.26c-.8-.46-1.8-.46-2.6 0l-7.38 4.26c-.4.23-.7.61-.85 1.04-.15.43-.15.9 0 1.33.15.43.45.8.85 1.04l7.38 4.26c.4.23.8.35 1.3.35s.9-.12 1.3-.35l7.38-4.26c.4-.23.7-.61.85-1.04.15-.43.15-.9 0-1.33zM12 15.5l-6.5-3.75 6.5-3.75 6.5 3.75-6.5 3.75z" />
-                            </svg>
+                            {isSaving === idx ? <Loader2 size={10} className="animate-spin" /> : <Database size={10} />}
+                            {isSaving === idx ? 'Đang lưu' : 'Tri thức'}
                           </button>
-                        )}
-                      </div>
+                          
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(msg.content, idx);
+                            }}
+                            className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all"
+                            title="Sao chép"
+                          >
+                            {copiedId === idx ? <Check size={12} /> : <Copy size={12} />}
+                          </button>
+                          
+                          {msg.content.length > 500 && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setInput(`Hãy tóm tắt nội dung sau một cách súc tích: \n\n${msg.content}`);
+                              }}
+                              className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-orange-500 hover:border-orange-200 transition-all"
+                              title="Tóm tắt"
+                            >
+                              <Zap size={12} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
+              </motion.div>
               ))}
             </AnimatePresence>
             {isLoading && (
@@ -811,27 +847,31 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
           </AnimatePresence>
 
           {/* Input Area */}
-          <div className="p-6 bg-white/80 backdrop-blur-md border-t border-slate-200/60 sticky bottom-0 z-20">
-            <div className="max-w-7xl mx-auto">
-              <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-3xl blur opacity-10 group-focus-within:opacity-20 transition duration-500"></div>
-                <div className="relative bg-white border border-slate-200 rounded-3xl shadow-sm focus-within:border-emerald-500/50 transition-all duration-300">
-                    {isListening && (
-                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg animate-bounce">
-                        <Mic size={14} className="animate-pulse" />
-                        Đang lắng nghe...
-                      </div>
-                    )}
-                    
+          <div className="p-6 bg-white/50 backdrop-blur-md border-t border-slate-200/60 sticky bottom-0 z-20">
+            <div className="max-w-4xl mx-auto relative">
+              {isListening && (
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-rose-500 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl animate-bounce z-30">
+                  <Mic size={14} className="animate-pulse" />
+                  Đang ghi âm...
+                </div>
+              )}
+
+              <div className="relative group/input">
+                <div className="absolute inset-0 bg-indigo-500/5 blur-xl rounded-[40px] group-focus-within/input:bg-indigo-500/10 transition-all duration-500"></div>
+                <div className="relative bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-[32px] shadow-2xl shadow-slate-200/50 group-focus-within/input:border-indigo-300/50 group-focus-within/input:shadow-indigo-500/10 transition-all duration-500 overflow-hidden">
                     {attachedFile && (
-                      <div className="absolute -top-12 left-6 bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-2 border border-indigo-200 shadow-sm">
-                        <FileText size={12} />
-                        <span className="max-w-[150px] truncate">{attachedFile.name}</span>
+                      <div className="px-6 py-3 bg-indigo-50/50 border-b border-indigo-100/50 flex items-center justify-between animate-in slide-in-from-top duration-300">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg">
+                            <FileText size={14} />
+                          </div>
+                          <span className="text-[11px] font-bold text-indigo-900 truncate max-w-[200px]">{attachedFile.name}</span>
+                        </div>
                         <button 
                           onClick={() => setAttachedFile(null)}
-                          className="p-0.5 hover:bg-indigo-200 rounded-md transition-colors"
+                          className="p-1 hover:bg-indigo-100 text-indigo-400 hover:text-indigo-600 rounded-lg transition-all"
                         >
-                          <X size={12} />
+                          <X size={14} />
                         </button>
                       </div>
                     )}
@@ -846,11 +886,12 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                           onSend();
                         }
                       }}
-                      placeholder={attachedFile ? "Nhập yêu cầu phân tích tệp..." : "Nhập nội dung cần tham mưu..."}
-                      className="w-full pl-6 pr-32 py-4 bg-transparent border-none focus:ring-0 text-sm text-slate-700 placeholder:text-slate-400 resize-none min-h-[56px] max-h-48 custom-scrollbar"
+                      placeholder={attachedFile ? "Nhập yêu cầu phân tích tệp..." : "Viết nội dung cần cố vấn hoặc chỉ huy..."}
+                      className="w-full pl-6 pr-36 py-5 bg-transparent border-none focus:ring-0 text-[14px] text-slate-700 placeholder:text-slate-400 resize-none min-h-[64px] max-h-48 custom-scrollbar leading-relaxed"
                       rows={1}
                     />
-                    <div className="absolute right-3 bottom-2.5 flex items-center gap-1.5">
+                    
+                    <div className="absolute right-4 bottom-3 flex items-center gap-2">
                       <input 
                         type="file" 
                         ref={fileInputRef}
@@ -858,35 +899,39 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                         className="hidden"
                         accept=".docx,.pdf,.txt,.md,image/*"
                       />
-                      <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className={cn(
-                          "p-2 rounded-xl transition-all",
-                          isUploading ? "text-slate-300" : "text-slate-400 hover:text-indigo-600 hover:bg-slate-50"
-                        )}
-                        title="Đính kèm tệp (.docx, .pdf, .txt, .md, ảnh)"
-                      >
-                        {isUploading ? <Loader2 size={18} className="animate-spin" /> : <PaperclipIcon size={18} />}
-                      </button>
-                      <button 
-                        onClick={toggleListening}
-                        className={cn(
-                          "p-2 rounded-xl transition-all",
-                          isListening ? "text-rose-500 bg-rose-50 animate-pulse" : "text-slate-400 hover:text-emerald-600 hover:bg-slate-50"
-                        )}
-                        title={isListening ? "Dừng nghe" : "Nhập bằng giọng nói"}
-                      >
-                        {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-                      </button>
+                      
+                      <div className="flex items-center gap-1 p-1 bg-slate-50/80 rounded-2xl border border-slate-100">
+                        <button 
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className={cn(
+                            "p-2 rounded-xl transition-all",
+                            isUploading ? "text-slate-300" : "text-slate-400 hover:text-indigo-600 hover:bg-white hover:shadow-sm"
+                          )}
+                          title="Đính kèm tệp"
+                        >
+                          {isUploading ? <Loader2 size={16} className="animate-spin" /> : <PaperclipIcon size={16} />}
+                        </button>
+                        <button 
+                          onClick={toggleListening}
+                          className={cn(
+                            "p-2 rounded-xl transition-all",
+                            isListening ? "text-rose-500 bg-white shadow-sm ring-1 ring-rose-100 animate-pulse" : "text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-sm"
+                          )}
+                          title="Nhập giọng nói"
+                        >
+                          {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                        </button>
+                      </div>
+
                       <button 
                         onClick={onSend}
                         disabled={isLoading || (!input.trim() && !attachedFile)}
                         className={cn(
-                          "p-2.5 rounded-2xl transition-all duration-300 shadow-lg",
+                          "w-11 h-11 flex items-center justify-center rounded-[18px] transition-all duration-500 shadow-lg",
                           isLoading || (!input.trim() && !attachedFile)
-                            ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
-                            : "bg-emerald-500 text-white shadow-emerald-500/30 hover:scale-105 hover:bg-emerald-600"
+                            ? "bg-slate-100 text-slate-300 cursor-not-allowed" 
+                            : "bg-indigo-600 text-white shadow-indigo-500/30 hover:bg-indigo-700 hover:scale-110 active:scale-95 group-focus-within/input:bg-indigo-50"
                         )}
                       >
                         {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
@@ -894,33 +939,37 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                     </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-3 px-2">
-                <div className="flex items-center gap-3">
+              
+              <div className="flex items-center justify-between mt-4 px-2">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => smartLearnFromText(input, [], true)}
                     disabled={!input.trim() || isLearning}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border",
+                      "flex items-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                       input.trim() 
-                        ? "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100" 
-                        : "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                        ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-100" 
+                        : "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed"
                     )}
                   >
-                    {isLearning ? <Loader2 size={12} className="animate-spin" /> : <Brain size={12} />}
-                    AI Học hỏi
+                    {isLearning ? <Loader2 size={12} className="animate-spin" /> : <Brain size={13} />}
+                    Tích lũy tri thức
                   </button>
                   <button
                     onClick={() => {
-                      setInput(input ? input + '\n\nHãy lập kế hoạch chi tiết...' : 'Hãy lập kế hoạch chi tiết cho...');
+                      setInput(input ? input + '\n\nHãy lập kế hoạch chiến lược chi tiết: ' : 'Hãy lập kế hoạch chiến lược cho: ');
                       inputRef.current?.focus();
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100"
                   >
-                    <Calendar size={12} />
-                    Lập kế hoạch
+                    <Zap size={13} />
+                    Tham mưu chiến lược
                   </button>
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Shift + Enter để xuống dòng</p>
+                <div className="hidden sm:flex items-center gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] pointer-events-none opacity-50">
+                  <span className="flex items-center gap-1"><ArrowUpRight size={10} /> Enter gửi tin</span>
+                  <span className="flex items-center gap-1"><ChevronDown size={10} /> Shift+Enter xuống dòng</span>
+                </div>
               </div>
             </div>
           </div>

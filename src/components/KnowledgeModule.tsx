@@ -534,7 +534,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
                     >
                       {filteredKnowledge.map((item, index) => (
                         <KnowledgeItem 
-                          key={item.id || index}
+                          key={item.id || `knowledge-list-${index}`}
                           item={item}
                           isEditing={editingIndex === index}
                           onEdit={() => setSelectedKnowledge(item)}
@@ -549,7 +549,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {filteredKnowledge.map((item, index) => (
                         <motion.div
-                          key={item.id || index}
+                          key={item.id || `knowledge-grid-${index}`}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                           className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
@@ -612,34 +612,34 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
           {/* Right Column: AI Insights & Strategic Analysis */}
           <div className="xl:col-span-4 space-y-8">
           {/* Strategic Analysis Card */}
-          <div className="bento-card p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-              <Zap className="w-32 h-32 text-primary" />
+          <div className="bento-card p-8 bg-gradient-to-br from-blue-700 to-indigo-800 text-white border-none relative overflow-hidden group shadow-2xl shadow-blue-600/20">
+            <div className="absolute -top-10 -right-10 p-8 opacity-10 group-hover:scale-125 transition-transform duration-700">
+              <Zap className="w-48 h-48 text-white" />
             </div>
             
             <div className="relative z-10 space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-lg">
-                  <BarChart3 className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner group-hover:scale-110 transition-transform">
+                  <BarChart3 className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="font-bold text-lg">Phân tích Chiến lược</h3>
+                <h3 className="font-black text-xl tracking-tight italic">Phân tích Chiến lược AI</h3>
               </div>
               
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Sử dụng AI để quét toàn bộ kho tri thức, xác định các mảng kiến thức còn thiếu và đề xuất hướng phát triển nghiệp vụ.
+              <p className="text-sm text-blue-100/80 leading-relaxed font-medium">
+                Sử dụng trí tuệ nhân tạo để quét toàn bộ kho tri thức, xác định các mảng kiến thức còn thiếu và đề xuất hướng phát triển nghiệp vụ mới.
               </p>
 
               <button 
                 onClick={handleStrategicAnalysis}
                 disabled={isAnalyzing}
-                className="w-full py-4 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-4 bg-white text-blue-700 font-black rounded-2xl shadow-xl shadow-black/10 hover:shadow-black/20 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 uppercase text-[11px] tracking-widest"
               >
                 {isAnalyzing ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <Brain className="w-5 h-5" />
                 )}
-                {isAnalyzing ? 'Đang phân tích...' : 'Kích hoạt AI Phân tích'}
+                {isAnalyzing ? 'Đang phân tích hệ thống...' : 'Kích hoạt Elite IQ'}
               </button>
             </div>
           </div>
@@ -844,3 +844,5 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
     </div>
   );
 };
+
+export default KnowledgeModule;

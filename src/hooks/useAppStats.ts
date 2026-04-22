@@ -3,6 +3,9 @@ import { collection, onSnapshot, doc, runTransaction, serverTimestamp, getDoc, q
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 
+import { ref, onValue } from 'firebase/database';
+import { database } from '../lib/firebase';
+
 export function useAppStats() {
   const [memberCount, setMemberCount] = useState(0);
   const [onlineCount, setOnlineCount] = useState(0);
@@ -12,42 +15,34 @@ export function useAppStats() {
   useEffect(() => {
     if (!user || loading) return;
 
-    let unsubscribeMembers: (() => void) | null = null;
-
-    // Fetch stats from system document (source of truth for unit-wide stats)
-    const visitDocRef = doc(db, 'system', 'stats');
-    const unsubscribeStats = onSnapshot(visitDocRef, (docSnap) => {
+    // 1. Lắng nghe thông số hệ thống (visitCount) từ Firestore
+    const statsDocRef = doc(db, 'system', 'stats');
+    const unsubscribeStats = onSnapshot(statsDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setMemberCount(Math.max(data.memberCount || 0, 150));
-        setVisitCount(data.visitCount || 1250);
-        
-        if (unsubscribeMembers) {
-          unsubscribeMembers();
-          unsubscribeMembers = null;
-        }
-      } else {
-        if (!unsubscribeMembers) {
-          unsubscribeMembers = onSnapshot(collection(db, 'officers'), (snapshot) => {
-            setMemberCount(Math.max(snapshot.size, 150));
-          });
-        }
-        setVisitCount(1250);
+        setVisitCount(data.visitCount || 0);
       }
-    }, (error) => {
-      console.error("Error fetching system stats:", error);
-      setMemberCount(150);
-      setVisitCount(1250);
     });
 
-    const updateOnline = () => setOnlineCount(Math.floor(Math.random() * 8) + 12);
-    updateOnline();
-    const interval = setInterval(updateOnline, 60000);
+    // 2. Lắng nghe số lượng thành viên từ Firestore
+    const unsubscribeMembers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      setMemberCount(snapshot.size);
+    });
+
+    // 3. Lắng nghe số lượng người online từ Realtime Database
+    const presenceRef = ref(database, 'presence');
+    const unsubscribeOnline = onValue(presenceRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setOnlineCount(Object.keys(snapshot.val()).length);
+      } else {
+        setOnlineCount(0);
+      }
+    });
 
     return () => {
       unsubscribeStats();
-      if (unsubscribeMembers) unsubscribeMembers();
-      clearInterval(interval);
+      unsubscribeMembers();
+      unsubscribeOnline();
     };
   }, [user?.uid, loading]);
 

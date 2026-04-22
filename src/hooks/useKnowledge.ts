@@ -9,6 +9,7 @@ import { SECOND_BRAIN_URL } from '../constants';
 import { generateEmbedding, cosineSimilarity } from '../services/embeddingService';
 import { generateContentWithRetry } from '../lib/ai-utils';
 import { logActivity } from '../lib/logService';
+import { cacheData, getCachedData } from '../lib/cache';
 
 const MOCK_KNOWLEDGE: any[] = [
   {
@@ -219,6 +220,14 @@ export function useKnowledge(showToast: (message: string, type?: ToastType) => v
 
     setKnowledgeState(prev => ({ ...prev, isMemoryLoading: true }));
     
+    // Load from cache first
+    const cacheKey = `knowledge_${currentUnitId}`;
+    getCachedData('knowledge', cacheKey).then(cached => {
+      if (cached) {
+        setKnowledgeState(prev => ({ ...prev, aiKnowledge: cached }));
+      }
+    });
+
     const q = query(
       collection(db, 'party_documents'),
       where('unitId', '==', currentUnitId)
@@ -227,11 +236,18 @@ export function useKnowledge(showToast: (message: string, type?: ToastType) => v
     const unsub = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+      const finalItems = items.length > 0 ? items : MOCK_KNOWLEDGE;
+      
       setKnowledgeState(prev => ({ 
         ...prev, 
-        aiKnowledge: items.length > 0 ? items : MOCK_KNOWLEDGE,
+        aiKnowledge: finalItems,
         isMemoryLoading: false 
       }));
+
+      // Update cache
+      if (items.length > 0) {
+        cacheData('knowledge', cacheKey, finalItems);
+      }
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'knowledge');
       setKnowledgeState(prev => ({ ...prev, isMemoryLoading: false }));
@@ -293,7 +309,7 @@ export function useKnowledge(showToast: (message: string, type?: ToastType) => v
   }, [loadKnowledge]);
 
   // Other functions (placeholders or simplified for brevity)
-  const addManualKnowledge = useCallback(async (category: string, title: string, content: string, tags: string[], pendingId?: string) => {
+  const addManualKnowledge = useCallback(async (category: string, title: string, content: string, tags: string[], pendingId?: string, projectId?: string, references?: string[]) => {
     const currentUnitId = unitId || (isSuperAdmin ? 'default_unit' : null);
     if (!user || !currentUnitId) return;
 
@@ -321,7 +337,9 @@ export function useKnowledge(showToast: (message: string, type?: ToastType) => v
         priority: formState.manualPriority || 'medium',
         deadline: formState.manualDeadline || '',
         status: formState.manualStatus || 'Pending',
-        type: 'document'
+        type: 'document',
+        projectId: projectId || null,
+        references: references || []
       };
 
       await addDoc(collection(db, 'party_documents'), docData);

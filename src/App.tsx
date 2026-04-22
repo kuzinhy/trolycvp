@@ -1,5 +1,6 @@
 import { useEffect, useState, lazy, Suspense, memo, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SessionTimeoutProvider } from './context/SessionTimeoutContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { NewsProvider } from './context/NewsContext';
 import { AnimatePresence, motion } from 'motion/react';
@@ -34,7 +35,7 @@ const ConfirmationModal = lazy(() => import('./components/ui/ConfirmationModal')
 // Lazy load modules
 const ChatModule = lazy(() => import('./components/ChatModule').then(m => ({ default: m.ChatModule })));
 const DashboardModule = lazy(() => import('./components/DashboardModule').then(m => ({ default: m.DashboardModule })));
-const KnowledgeModule = lazy(() => import('./components/KnowledgeModule').then(m => ({ default: m.KnowledgeModule })));
+const KnowledgeModule = lazy(() => import('./components/KnowledgeModule'));
 const ChatHistoryModule = lazy(() => import('./components/ChatHistoryModule').then(m => ({ default: m.ChatHistoryModule })));
 const ProgressTracking = lazy(() => import('./components/ProgressTracking').then(m => ({ default: m.ProgressTracking })));
 const DraftingModule = lazy(() => import('./components/DraftingModule').then(m => ({ default: m.DraftingModule })));
@@ -55,6 +56,7 @@ const NewsAndOpinionView = lazy(() => import('./components/NewsAndOpinionView').
 const EvaluationModule = lazy(() => import('./components/EvaluationModule').then(m => ({ default: m.EvaluationModule })));
 const MorningBriefing = lazy(() => import('./components/MorningBriefing').then(m => ({ default: m.MorningBriefing })));
 const CommandFocusMode = lazy(() => import('./components/CommandFocusMode').then(m => ({ default: m.CommandFocusMode })));
+const EliteCommandCenter = lazy(() => import('./components/EliteCommandCenter').then(m => ({ default: m.EliteCommandCenter })));
 
 // Static-ish components
 const MemoizedSidebar = Sidebar;
@@ -73,7 +75,11 @@ import { useToast } from './hooks/useToast';
 import { useDraftingRules } from './hooks/useDraftingRules';
 import { useSystemScanner } from './hooks/useSystemScanner';
 import { HistoryProvider, useHistory } from './context/HistoryContext';
-import { TaskProvider } from './context/TaskContext';
+// import { TaskProvider } from './context/TaskContext'; // Deleted
+import { MainBrainProvider } from './context/MainBrainProvider';
+import { useKnowledgeContext } from './context/KnowledgeContext';
+import { useChatContext } from './context/ChatContext';
+import { useDashboardContext } from './context/DashboardContext';
 
 import { seedEvaluationData } from './lib/seed-evaluation';
 
@@ -85,12 +91,18 @@ export default function App() {
   useEffect(() => {
     seedEvaluationData().catch(console.error);
     
+    // Prefetch important modules
+    import('./components/KnowledgeModule');
+    import('./components/DashboardModule');
+
     // Clean up URL parameters
     if (window.location.search.includes('origin=')) {
       const url = new URL(window.location.href);
       url.searchParams.delete('origin');
       window.history.replaceState({}, document.title, url.toString());
     }
+
+    // Clean up local storage if needed
   }, []);
   
   return (
@@ -98,7 +110,9 @@ export default function App() {
       <NotificationProvider>
         <NewsProvider>
           <AuthProvider>
-            <AppContent />
+            <SessionTimeoutProvider>
+              <AppContent />
+            </SessionTimeoutProvider>
           </AuthProvider>
         </NewsProvider>
       </NotificationProvider>
@@ -110,10 +124,23 @@ function AppContent() {
   const { user, isEmailVerified, loading } = useAuth();
   useSystemScanner();
   
+  useEffect(() => {
+    if (user?.uid) {
+      // Tăng số lượt truy cập khi bắt đầu phiên mới
+      const hasVisitedThisSession = sessionStorage.getItem('hasIncrementedVisitCount');
+      if (!hasVisitedThisSession) {
+        import('./lib/app-stats').then(({ incrementVisitCount }) => {
+          incrementVisitCount();
+          sessionStorage.setItem('hasIncrementedVisitCount', 'true');
+        });
+      }
+    }
+  }, [user?.uid]);
+  
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-blue-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -121,8 +148,8 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <Suspense fallback={
-        <div className="h-screen w-screen flex items-center justify-center bg-blue-950">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+        <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       }>
         {!user ? (
@@ -130,11 +157,9 @@ function AppContent() {
         ) : !isEmailVerified ? (
           <EmailVerification />
         ) : (
-          <HistoryProvider>
-            <TaskProvider>
-              <AuthenticatedApp />
-            </TaskProvider>
-          </HistoryProvider>
+          <MainBrainProvider>
+            <AuthenticatedApp />
+          </MainBrainProvider>
         )}
       </Suspense>
     </ErrorBoundary>
@@ -144,136 +169,50 @@ function AppContent() {
 // ...
 import { useUserPreferences } from './context/UserPreferencesContext';
 
+import { trackPresence } from './lib/presence';
+
 function AuthenticatedApp() {
   const { user, signOutUser, isAdmin } = useAuth();
   const { preferences } = useUserPreferences();
   const { memberCount, onlineCount, visitCount } = useAppStats();
   const { isSidebarOpen, setIsSidebarOpen, currentTab, navigationParams, navigateTo, hasUnsavedChanges, setHasUnsavedChanges, pendingTab, confirmNavigation, cancelNavigation } = useAppNavigation();
   const { showToast, toast, hideToast } = useToast();
+  
   const { 
     aiKnowledge, 
-    pendingKnowledge, 
-    isPendingLoading, 
     loadKnowledge, 
-    isMemoryLoading, 
-    isAddingManual, 
-    setIsAddingManual, 
-    manualValue, 
-    setManualValue, 
-    manualTags, 
-    setManualTags, 
-    manualTitle, 
-    setManualTitle, 
-    manualDocNumber, 
-    setManualDocNumber, 
-    manualIssueDate, 
-    setManualIssueDate, 
-    manualSigner, 
-    setManualSigner, 
-    manualStaffMember, 
-    setManualStaffMember, 
-    manualPermissionLevel,
-    setManualPermissionLevel,
-    manualVersion,
-    setManualVersion,
-    manualReviewStatus,
-    setManualReviewStatus,
-    manualReviewNotes,
-    setManualReviewNotes,
-    manualPriority,
-    setManualPriority,
-    manualDeadline,
-    setManualDeadline,
-    manualStatus,
-    setManualStatus,
-    isManualPublic, 
-    setIsManualPublic, 
-    isManualImportant, 
-    setIsManualImportant, 
-    addManualKnowledge, 
-    isUpdating, 
-    updateProgress,
-    editingIndex, 
-    setEditingIndex, 
-    editValue, 
-    setEditValue, 
-    editTags, 
-    setEditTags, 
-    editCategory, 
-    setEditCategory, 
-    editIsImportant, 
-    setEditIsImportant, 
-    editIsPublic, 
-    setEditIsPublic, 
-    editTitle, 
-    setEditTitle, 
-    editSummary, 
-    setEditSummary, 
-    editDocNumber, 
-    setEditDocNumber, 
-    editIssueDate, 
-    setEditIssueDate, 
-    editSigner, 
-    setEditSigner, 
-    editStaffMember, 
-    setEditStaffMember, 
-    editPermissionLevel,
-    setEditPermissionLevel,
-    editVersion,
-    setEditVersion,
-    editReviewStatus,
-    setEditReviewStatus,
-    editReviewNotes,
-    setEditReviewNotes,
-    editPriority,
-    setEditPriority,
-    editDeadline,
-    setEditDeadline,
-    editStatus,
-    setEditStatus,
-    updateKnowledge, 
-    deleteKnowledge, 
-    isDeleting, 
-    handleReorderKnowledge, 
-    smartLearnFromText, 
-    learnFromFile, 
-    isLearning: isKnowledgeLearning, 
-    isSuggestingTags, 
-    suggestTagsForContent, 
-    addPendingKnowledge, 
-    deletePendingKnowledge, 
-    updatePendingKnowledge, 
-    removeDuplicates, 
-    isRemovingDuplicates, 
-    deleteAllKnowledge, 
-    isDeletingAll, 
-    isSyncingRemote, 
-    syncRemoteKnowledge, 
-    auditAndOptimizeKnowledge,
-    isAuditing,
-    smartSummarizeKnowledge, 
-    isSummarizing, 
-    summarizedContent, 
-    setSummarizedContent,
+    isLearning: isKnowledgeLearning,
+    formState, // For AIReviewModal if needed, or directly from context
+    editingIndex,
+    setEditingIndex,
+    // Add these:
     pendingAIItems,
     isReviewingAI,
     setIsReviewingAI,
     confirmAIItems,
-    discardAIItems,
-    syncUnifiedStrategicKnowledge,
-    isSyncingUnified
-  } = useKnowledge(showToast, setHasUnsavedChanges);
-  const { tasks, updateTasks } = useTasks(showToast);
-  const { config, birthdays, updateBirthdays, meetings, updateMeetings, isSavingMeetings, loadMeetings, events, updateEvents, isParsingCalendar, parseCalendarFile, uploadAndParseCalendar, isBirthdaysLoading, smartBriefing, isGeneratingBriefing, generateSmartBriefing } = useDashboard(showToast, updateTasks);
-  const { messages, setMessages, input, setInput, isLoading, handleSend, messagesEndRef, inputRef, copyToClipboard, copiedId, saveToKnowledge, isSaving, isLearning: isChatLearning, chatHistory, loadChatHistory, deleteChatHistory, clearAllChatHistory, isHistoryLoading, isSearchEnabled, setIsSearchEnabled, isSimpleMode, setIsSimpleMode } = useChat(aiKnowledge, showToast, loadKnowledge, meetings, tasks, events, birthdays);
+    discardAIItems
+  } = useKnowledgeContext();
+  const { tasks, updateTasks, meetings, birthdays, events } = useDashboardContext();
+  const { isLearning: isChatLearning, messages, setMessages } = useChatContext();
+  
   const { notifications, showNotifications, setShowNotifications, markAsRead, settings: notificationSettings, setSettings: setNotificationSettings, ambientNotification, setAmbientNotification, latestNotification, setLatestNotification, markAllAsRead, addNotification } = useNotifications();
   useReminders(meetings, events, birthdays, tasks);
-  const { rules: draftingRules, addRule: addDraftingRule, toggleRule: toggleDraftingRule, deleteRule: deleteDraftingRule, updateRule: updateDraftingRule } = useDraftingRules(showToast);
   const { logAction } = useHistory();
+
   const [isTeamChatOpen, setIsTeamChatOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
   const [showMorningBriefing, setShowMorningBriefing] = useState(false);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = trackPresence(() => {});
+      return () => {
+        if (typeof unsubscribe === 'function') unsubscribe();
+      };
+    }
+  }, [user]);
 
   useEffect(() => {
     const hasSeenBriefing = sessionStorage.getItem('hasSeenMorningBriefing');
@@ -286,15 +225,22 @@ function AuthenticatedApp() {
     }
   }, [user]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandCenterOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const isAnyLearning = isKnowledgeLearning || isChatLearning;
-  const MOCK_TRACKING_DATA: any[] = [];
 
   useEffect(() => {
     if (!user?.uid) return;
-
     const userRef = doc(db, 'users', user.uid);
-    
-    // Update status to online
     const updateStatus = async (online: boolean) => {
       try {
         await setDoc(userRef, {
@@ -307,21 +253,11 @@ function AuthenticatedApp() {
         handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
       }
     };
-
     updateStatus(true);
-
-    // Visibility change listener
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        updateStatus(false);
-      } else {
-        updateStatus(true);
-      }
+      updateStatus(document.visibilityState !== 'hidden');
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Cleanup on unmount
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       updateStatus(false);
@@ -336,21 +272,22 @@ function AuthenticatedApp() {
 
   return (
     <Suspense fallback={
-      <div className="h-screen w-screen flex items-center justify-center bg-blue-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     }>
       <div className={cn(
-        "flex h-screen bg-blue-50 dark:bg-blue-950 transition-colors duration-500",
+        "flex h-screen bg-slate-50 transition-colors duration-500 os-grid relative focus:outline-none",
         preferences.sidebarPosition === 'right' && "flex-row-reverse"
       )}>
-      {/* Confirmation Modal for Unsaved Changes */}
+        <div className="os-scanline" />
+        
       <ConfirmationModal
         isOpen={pendingTab !== null}
         onClose={cancelNavigation}
         onConfirm={confirmNavigation}
         title="Thay đổi chưa lưu"
-        message="Bạn có các thay đổi chưa được lưu. Nếu bạn chuyển tab bây giờ, các thay đổi này có thể bị mất (mặc dù hệ thống có tính năng tự động lưu bản nháp). Bạn có chắc chắn muốn tiếp tục?"
+        message="Bạn có các thay đổi chưa được lưu. Nếu bạn chuyển tab bây giờ, các thay đổi này có thể bị mất. Bạn có chắc chắn muốn tiếp tục?"
         confirmText="Tiếp tục chuyển tab"
         cancelText="Ở lại và lưu"
         type="warning"
@@ -384,6 +321,7 @@ function AuthenticatedApp() {
           currentTab={currentTab}
           onQuickTask={() => {}}
           onNavigate={navigateTo}
+          onOpenCommandCenter={() => setIsCommandCenterOpen(true)}
           isLearning={isAnyLearning}
           birthdays={birthdays}
           memberCount={memberCount}
@@ -397,7 +335,7 @@ function AuthenticatedApp() {
         )}>
           <Suspense fallback={
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           }>
             <AnimatePresence mode="wait">
@@ -411,174 +349,13 @@ function AuthenticatedApp() {
               >
                 <ErrorBoundary>
                   <TabContent 
-                  currentTab={currentTab}
-                  navigationParams={navigationParams}
-                  isAdmin={isAdmin}
-                  aiKnowledge={aiKnowledge}
-                  pendingKnowledge={pendingKnowledge}
-                  isPendingLoading={isPendingLoading}
-                  loadKnowledge={loadKnowledge}
-                  isMemoryLoading={isMemoryLoading}
-                  isAddingManual={isAddingManual}
-                  setIsAddingManual={setIsAddingManual}
-                  manualValue={manualValue}
-                  setManualValue={setManualValue}
-                  manualTags={manualTags}
-                  setManualTags={setManualTags}
-                  manualTitle={manualTitle}
-                  setManualTitle={setManualTitle}
-                  manualDocNumber={manualDocNumber}
-                  setManualDocNumber={setManualDocNumber}
-                  manualIssueDate={manualIssueDate}
-                  setManualIssueDate={setManualIssueDate}
-                  manualSigner={manualSigner}
-                  setManualSigner={setManualSigner}
-                  manualStaffMember={manualStaffMember}
-                  setManualStaffMember={setManualStaffMember}
-                  manualPermissionLevel={manualPermissionLevel}
-                  setManualPermissionLevel={setManualPermissionLevel}
-                  manualVersion={manualVersion}
-                  setManualVersion={setManualVersion}
-                  manualReviewStatus={manualReviewStatus}
-                  setManualReviewStatus={setManualReviewStatus}
-                  manualReviewNotes={manualReviewNotes}
-                  setManualReviewNotes={setManualReviewNotes}
-                  manualPriority={manualPriority}
-                  setManualPriority={setManualPriority}
-                  manualDeadline={manualDeadline}
-                  setManualDeadline={setManualDeadline}
-                  manualStatus={manualStatus}
-                  setManualStatus={setManualStatus}
-                  isManualPublic={isManualPublic}
-                  setIsManualPublic={setIsManualPublic}
-                  isManualImportant={isManualImportant}
-                  setIsManualImportant={setIsManualImportant}
-                  addManualKnowledge={addManualKnowledge}
-                  isUpdating={isUpdating}
-                  updateProgress={updateProgress}
-                  editingIndex={editingIndex}
-                  setEditingIndex={setEditingIndex}
-                  editValue={editValue}
-                  setEditValue={setEditValue}
-                  editTags={editTags}
-                  setEditTags={setEditTags}
-                  editCategory={editCategory}
-                  setEditCategory={setEditCategory}
-                  editIsImportant={editIsImportant}
-                  setEditIsImportant={setEditIsImportant}
-                  editIsPublic={editIsPublic}
-                  setEditIsPublic={setEditIsPublic}
-                  editTitle={editTitle}
-                  setEditTitle={setEditTitle}
-                  editSummary={editSummary}
-                  setEditSummary={setEditSummary}
-                  editDocNumber={editDocNumber}
-                  setEditDocNumber={setEditDocNumber}
-                  editIssueDate={editIssueDate}
-                  setEditIssueDate={setEditIssueDate}
-                  editSigner={editSigner}
-                  setEditSigner={setEditSigner}
-                  editStaffMember={editStaffMember}
-                  setEditStaffMember={setEditStaffMember}
-                  editPermissionLevel={editPermissionLevel}
-                  setEditPermissionLevel={setEditPermissionLevel}
-                  editVersion={editVersion}
-                  setEditVersion={setEditVersion}
-                  editReviewStatus={editReviewStatus}
-                  setEditReviewStatus={setEditReviewStatus}
-                  editReviewNotes={editReviewNotes}
-                  setEditReviewNotes={setEditReviewNotes}
-                  editPriority={editPriority}
-                  setEditPriority={setEditPriority}
-                  editDeadline={editDeadline}
-                  setEditDeadline={setEditDeadline}
-                  editStatus={editStatus}
-                  setEditStatus={setEditStatus}
-                  updateKnowledge={updateKnowledge}
-                  deleteKnowledge={deleteKnowledge}
-                  isDeleting={isDeleting}
-                  handleReorderKnowledge={handleReorderKnowledge}
-                  smartLearnFromText={smartLearnFromText}
-                  learnFromFile={learnFromFile}
-                  isKnowledgeLearning={isKnowledgeLearning}
-                  isSuggestingTags={isSuggestingTags}
-                  suggestTagsForContent={suggestTagsForContent}
-                  addPendingKnowledge={addPendingKnowledge}
-                  deletePendingKnowledge={deletePendingKnowledge}
-                  updatePendingKnowledge={updatePendingKnowledge}
-                  removeDuplicates={removeDuplicates}
-                  isRemovingDuplicates={isRemovingDuplicates}
-                  auditAndOptimizeKnowledge={auditAndOptimizeKnowledge}
-                  isAuditing={isAuditing}
-                  deleteAllKnowledge={deleteAllKnowledge}
-                  isDeletingAll={isDeletingAll}
-                  isSyncingRemote={isSyncingRemote}
-                  syncRemoteKnowledge={syncRemoteKnowledge}
-                  syncUnifiedStrategicKnowledge={syncUnifiedStrategicKnowledge}
-                  isSyncingUnified={isSyncingUnified}
-                  smartSummarizeKnowledge={smartSummarizeKnowledge}
-                  isSummarizing={isSummarizing}
-                  summarizedContent={summarizedContent}
-                  setSummarizedContent={setSummarizedContent}
-                  tasks={tasks}
-                  updateTasks={updateTasks}
-                  messages={messages}
-                  setMessages={setMessages}
-                  input={input}
-                  setInput={setInput}
-                  isLoading={isLoading}
-                  handleSend={handleSend}
-                  messagesEndRef={messagesEndRef}
-                  inputRef={inputRef}
-                  copyToClipboard={copyToClipboard}
-                  copiedId={copiedId}
-                  saveToKnowledge={saveToKnowledge}
-                  isSaving={isSaving}
-                  isChatLearning={isChatLearning}
-                  chatHistory={chatHistory}
-                  loadChatHistory={loadChatHistory}
-                  deleteChatHistory={deleteChatHistory}
-                  clearAllChatHistory={clearAllChatHistory}
-                  isHistoryLoading={isHistoryLoading}
-                  isSearchEnabled={isSearchEnabled}
-                  setIsSearchEnabled={setIsSearchEnabled}
-                  isSimpleMode={isSimpleMode}
-                  setIsSimpleMode={setIsSimpleMode}
-                  meetings={meetings}
-                  updateMeetings={updateMeetings}
-                  isSavingMeetings={isSavingMeetings}
-                  loadMeetings={loadMeetings}
-                  events={events}
-                  updateEvents={updateEvents}
-                  isParsingCalendar={isParsingCalendar}
-                  parseCalendarFile={parseCalendarFile}
-                  uploadAndParseCalendar={uploadAndParseCalendar}
-                  birthdays={birthdays}
-                  updateBirthdays={updateBirthdays}
-                  smartBriefing={smartBriefing}
-                  isGeneratingBriefing={isGeneratingBriefing}
-                  generateSmartBriefing={generateSmartBriefing}
-                  memberCount={memberCount}
-                  onlineCount={onlineCount}
-                  visitCount={visitCount}
-                  draftingRules={draftingRules}
-                  addDraftingRule={addDraftingRule}
-                  toggleDraftingRule={toggleDraftingRule}
-                  deleteDraftingRule={deleteDraftingRule}
-                  updateDraftingRule={updateDraftingRule}
-                  showToast={showToast}
-                  navigateTo={navigateTo}
-                  setHasUnsavedChanges={setHasUnsavedChanges}
-                  config={config}
-                  isCompactMode={preferences.isCompactMode}
-                  pendingAIItems={pendingAIItems}
-                  isReviewingAI={isReviewingAI}
-                  setIsReviewingAI={setIsReviewingAI}
-                  confirmAIItems={confirmAIItems}
-                  discardAIItems={discardAIItems}
-                  onStartFocus={(task: Task) => setFocusTask(task)}
-                />
-              </ErrorBoundary>
+                    currentTab={currentTab}
+                    navigationParams={navigationParams}
+                    navigateTo={navigateTo}
+                    setHasUnsavedChanges={setHasUnsavedChanges}
+                    onStartFocus={(task: Task) => setFocusTask(task)}
+                  />
+                </ErrorBoundary>
               </motion.div>
             </AnimatePresence>
           </Suspense>
@@ -587,7 +364,7 @@ function AuthenticatedApp() {
 
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-blue-950/40 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-blue-900/10 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -653,6 +430,13 @@ function AuthenticatedApp() {
             }}
           />
         )}
+        <EliteCommandCenter 
+          isOpen={isCommandCenterOpen}
+          onClose={() => setIsCommandCenterOpen(false)}
+          onNavigate={navigateTo}
+          aiKnowledge={aiKnowledge}
+          tasks={tasks}
+        />
       </AnimatePresence>
 
       <AdminLoginNotifier />
