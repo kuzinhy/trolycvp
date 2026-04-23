@@ -136,8 +136,8 @@ const SUGGESTED_TAGS = [
 
 export const ToxicInfoDetection: React.FC = () => {
   // Input states
-  const [latitude, setLatitude] = useState<string>('10.9806'); // Default to Thủ Dầu Một
-  const [longitude, setLongitude] = useState<string>('106.6519');
+  const [latitude, setLatitude] = useState<string>('10.8231'); // Default to TP.HCM
+  const [longitude, setLongitude] = useState<string>('106.6297');
   const [customQuery, setCustomQuery] = useState<string>('');
   const [timeRange, setTimeRange] = useState<string>('7d');
   const [maxResults, setMaxResults] = useState<number>(20);

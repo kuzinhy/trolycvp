@@ -507,9 +507,7 @@ export const WARDS_BY_PROVINCE: Record<string, string[]> = {
     'Xã Châu Thành', 'Xã Bến Cầu', 'Xã Gò Dầu'
   ],
   'Tỉnh Bình Dương': [
-    'Phường Hiệp Thành', 'Phường Phú Lợi', 'Phường Phú Cường', 'Phường Phú Hoà', 'Phường Phú Thọ',
-    'Phường Chánh Nghĩa', 'Phường Định Hoà', 'Phường Hoà Phú', 'Phường Phú Tân', 'Phường Chánh Mỹ',
-    'Phường Tương Bình Hiệp', 'Phường Tân An', 'Phường Hiệp An', 'Phường Phú Mỹ', 'Phường Lái Thiêu',
+    'Phường Lái Thiêu',
     'Phường An Thạnh', 'Phường Vĩnh Phú', 'Phường Bình Hoà', 'Phường Bình Nhâm', 'Phường Thuận Giao',
     'Phường An Phú', 'Phường Bình Chuẩn', 'Phường Hưng Định', 'Phường Dĩ An', 'Phường An Bình',
     'Phường Bình An', 'Phường Bình Thắng', 'Phường Đông Hoà', 'Phường Tân Bình', 'Phường Tân Đông Hiệp',
@@ -595,7 +593,7 @@ export const WARDS_BY_PROVINCE: Record<string, string[]> = {
     'Phường Tăng Nhơn Phú B', 'Phường Long Trường', 'Phường Trường Thạnh', 'Phường Phước Long A', 'Phường Phước Long B',
     'Phường Phước Bình', 'Phường Long Phước', 'Phường Long Thạnh Mỹ', 'Phường Tân Phú', 'Phường Linh Xuân',
     'Phường Linh Trung', 'Phường Linh Chiểu', 'Phường Linh Tây', 'Phường Linh Đông', 'Phường Tam Phú',
-    'Phường Tam Bình', 'Phường Bình Chiểu', 'Phường Hiệp Bình Phước', 'Phường Hiệp Bình Chánh', 'Xã Củ Chi',
+    'Phường Tam Bình', 'Phường Bình Chiểu', 'Phường Hiệp Bình Phước', 'Phường Hiệp Bình Chánh', 'Phường Thủ Dầu Một', 'Xã Củ Chi',
     'Xã Hóc Môn', 'Xã Bình Chánh', 'Xã Nhà Bè', 'Xã Cần Giờ'
   ],
   'Tỉnh Long An': [

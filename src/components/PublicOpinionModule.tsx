@@ -55,7 +55,7 @@ export const PublicOpinionModule: React.FC = () => {
         {
           id: '2',
           source: 'Báo chí',
-          location: 'Thành phố Thủ Dầu Một',
+          location: 'Phường Thủ Dầu Một, TP.HCM',
           content: 'Phản ánh tình trạng rác thải ùn ứ tại một số điểm tập kết vào giờ cao điểm.',
           sentiment: 'negative',
           date: '2026-03-30',

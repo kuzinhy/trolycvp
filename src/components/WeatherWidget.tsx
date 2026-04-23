@@ -9,7 +9,7 @@ export const WeatherWidget: React.FC<{ variant?: 'pill' | 'card' }> = ({ variant
   useEffect(() => {
     const fetchWeather = async (lat?: number, lon?: number, retryCount = 0) => {
       try {
-        const query = lat && lon ? `${lat},${lon}` : 'Thu Dau Mot';
+        const query = lat && lon ? `${lat},${lon}` : 'Thu Dau Mot, Ho Chi Minh City';
         const res = await fetch(`/api/weather?query=${encodeURIComponent(query)}`);
         
         if (!res.ok) throw new Error(`Status: ${res.status}`);

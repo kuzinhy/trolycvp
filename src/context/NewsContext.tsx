@@ -25,9 +25,6 @@ export const NEWS_SOURCES = [
   { id: 'baochinhphu', label: 'Báo Chính phủ', url: 'https://baochinhphu.vn', category: 'Chính thống' },
   { id: 'nhandan', label: 'Báo Nhân Dân', url: 'https://nhandan.vn', category: 'Chính thống' },
   { id: 'qdnd', label: 'Báo Quân đội Nhân dân', url: 'https://qdnd.vn', category: 'Chính thống' },
-  { id: 'binhduong', label: 'Báo Bình Dương', url: 'https://baobinhduong.vn', category: 'Địa phương' },
-  { id: 'binhduong_portal', label: 'Cổng TTĐT Bình Dương', url: 'https://binhduong.gov.vn', category: 'Địa phương' },
-  { id: 'thudaumot', label: 'Cổng TTĐT Thủ Dầu Một', url: 'https://thudaumot.binhduong.gov.vn', category: 'Địa phương' },
   { id: 'tphcm', label: 'Cổng TTĐT TP.HCM', url: 'https://hochiminhcity.gov.vn', category: 'Địa phương' },
   { id: 'hanoimoi', label: 'Báo Hà Nội Mới', url: 'https://hanoimoi.com.vn', category: 'Địa phương' }
 ];
@@ -85,7 +82,7 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [locationError, setLocationError] = useState<string | null>(null);
   const [newsTopics, setNewsTopics] = useState<string[]>(() => {
     const saved = localStorage.getItem('news_topics');
-    return saved ? JSON.parse(saved) : ['Chuyển đổi số', 'Cải cách hành chính', 'An ninh trật tự', 'Phát triển kinh tế', 'Thủ Dầu Một'];
+    return saved ? JSON.parse(saved) : ['Chuyển đổi số', 'Cải cách hành chính', 'An ninh trật tự', 'Phát triển kinh tế', 'Phường Thủ Dầu Một, TP.HCM'];
   });
 
   // Persist news topics
@@ -141,13 +138,15 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .filter(s => activeSources.includes(s.id))
         .map(s => s.url);
 
-      const prompt = `Bạn là một chuyên gia phân tích tin tức thông minh và cố vấn truyền thông. Hãy quét và tổng hợp các tin tức MỚI NHẤT TRONG 7 NGÀY GẦN ĐÂY từ TẤT CẢ các nguồn báo online được cung cấp liên quan đến yêu cầu tìm kiếm: "${activeQuery}".
+      const prompt = `Bạn là một chuyên gia phân tích tin tức thông minh và cố vấn truyền thông cấp cao.
+      NHIỆM VỤ: Sử dụng GOOGLE SEARCH để tổng hợp tin tức THỰC TẾ, CÓ THẬT liên quan đến: "${activeQuery}".
+      NGUYÊN TẮC: TUYỆT ĐỐI KHÔNG BỊA CHUYỆN. Mọi tin tức phải có URL thật từ báo chí chính thống.
       
       Yêu cầu đặc biệt:
       - QUÉT TOÀN BỘ các nguồn sau để không bỏ sót thông tin: ${selectedUrls.join(', ')}.
-      - CHỈ LẤY TIN TỨC TRONG 7 NGÀY GẦN ĐÂY (từ ngày ${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN')} đến nay).
-      - Phân tích ngữ cảnh của câu hỏi (ví dụ: "tuần này", "tháng này", "chuyển đổi số", "an ninh").
-      - Ưu tiên các tin tức có tính thời sự và liên quan trực tiếp đến địa phương Thủ Dầu Một, Bình Dương.
+      - CHỈ LẤY TIN TỨC THỰC TẾ TRONG 7 NGÀY GẦN ĐÂY (từ ngày ${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN')} đến nay).
+      - ĐỐI SOÁT NGUỒN TIN: Mỗi tin bài phải có URL thực dẫn đến bài báo gốc trên các trang báo chính thống.
+      - Ưu tiên tin bài về Thành phố Hồ Chí Minh và Phường Thủ Dầu Một.
       ${userLocation ? `- Vị trí hiện tại của người dùng: Vĩ độ ${userLocation.lat}, Kinh độ ${userLocation.lng}. Hãy đặc biệt ưu tiên các tin tức xảy ra trong bán kính 20km từ tọa độ này.` : ''}
       
       PHÂN TÍCH NÂNG CAO:
@@ -159,9 +158,10 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
       Hãy trả về danh sách các tin tức tiêu biểu (khoảng 8-12 tin). 
       Với mỗi tin, hãy cung cấp:
       1. Tiêu đề tin tức (Title)
-      2. Tóm tắt ngắn gọn (Summary - 2-3 câu)
-      3. Nguồn tin (Source)
-      4. Ngày đăng (Date - định dạng DD/MM/YYYY)
+      2. Tóm tắt ngắn gọn (Summary)
+      3. Nguồn tin trích dẫn (Source - phải là báo thật)
+      4. URL bài viết gốc (Url - bắt buộc phải là đường dẫn thật)
+      5. Ngày đăng (Date)
       5. Đánh giá mức độ liên quan đến địa phương (Relevance: Thấp/Trung bình/Cao)
       6. URL hình ảnh minh họa (ImageUrl: picsum.photos/seed/{keyword}/800/450)
       7. Nội dung chi tiết của tin tức (FullContent: 200-300 từ)
@@ -177,7 +177,7 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         model: 'gemini-3-flash-preview',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
-          tools: [{ urlContext: {} }],
+          tools: [{ googleSearch: {} }],
           responseMimeType: "application/json"
         }
       });
