@@ -18,6 +18,7 @@ import {
   Plus,
   StickyNote,
   Terminal,
+  FileSignature,
   Cpu,
   Shield,
   Briefcase
@@ -119,10 +120,16 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
                   <Sparkles size={14} className="mr-2" /> Trò chuyện AI
                 </button>
                 <button 
-                  onClick={() => navigateTo('drafting')}
+                  onClick={() => navigateTo('drafting-pro')}
                   className="os-btn os-btn-outline"
                 >
                   <Terminal size={14} className="mr-2" /> Lệnh Soạn thảo
+                </button>
+                <button 
+                  onClick={() => navigateTo('conclusion-creator')}
+                  className="os-btn os-btn-outline border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                >
+                  <FileSignature size={14} className="mr-2" /> Tạo kết luận họp
                 </button>
               </div>
             </div>
@@ -141,8 +148,8 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
               action={<button onClick={() => navigateTo('tasks')} className="p-2 text-slate-500 hover:text-blue-400"><ChevronRight size={18} /></button>}
             >
               <div className="space-y-3">
-                {tasks?.slice(0, 5).map((task: any) => (
-                  <div key={task.id} className="flex items-center gap-4 p-3 bg-slate-800/30 rounded-xl border border-white/5 hover:border-blue-500/20 transition-all cursor-pointer group">
+                {tasks?.slice(0, 5).map((task: any, i: number) => (
+                  <div key={task.id || `task-${i}`} className="flex items-center gap-4 p-3 bg-slate-800/30 rounded-xl border border-white/5 hover:border-blue-500/20 transition-all cursor-pointer group">
                     <div className={cn(
                       "w-1 h-8 rounded-full",
                       task.priority === 'High' ? 'bg-rose-500' : 'bg-blue-500'
@@ -171,8 +178,8 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
               action={<button onClick={() => navigateTo('dashboard')} className="p-2 text-slate-500 hover:text-blue-400"><Plus size={18} /></button>}
             >
               <div className="space-y-3">
-                {meetings?.slice(0, 5).map((meeting: any) => (
-                  <div key={meeting.id} className="p-4 bg-slate-800/30 rounded-2xl border border-white/5 hover:bg-slate-800/50 transition-all cursor-pointer">
+                {meetings?.slice(0, 5).map((meeting: any, i: number) => (
+                  <div key={meeting.id || `meeting-${i}`} className="p-4 bg-slate-800/30 rounded-2xl border border-white/5 hover:bg-slate-800/50 transition-all cursor-pointer">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="p-2 bg-slate-900 rounded-lg text-rose-400">
                         <Clock size={12} />

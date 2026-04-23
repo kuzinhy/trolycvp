@@ -281,7 +281,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                 className="grid grid-cols-1 lg:grid-cols-12 gap-3 h-full min-h-0"
               >
                 {/* Left Column: Input and Suggestions */}
-                <div className="lg:col-span-8 flex flex-col gap-3 h-full overflow-hidden">
+                <div className="lg:col-span-8 flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar pr-2">
                   
                   {/* Strategic Linking Bar */}
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -322,6 +322,55 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                     </div>
                   </div>
                   
+                  {/* Raw Input Card */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/40 flex flex-col">
+                    <div className="p-3 border-b border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest font-mono">Ý tưởng tập trung</span>
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-400 font-mono italic">Nhập nội dung thô bên dưới</span>
+                    </div>
+                    <textarea 
+                      value={currentRawText}
+                      onChange={(e) => setCurrentRawText(e.target.value)}
+                      placeholder="Nhập nội dung ý kiến, chỉ đạo thô tại đây... Ví dụ: 'Cần đẩy mạnh giải quyết thủ tục hành chính cho dân nhanh hơn, tránh gây phiền hà'."
+                      className="w-full h-24 p-4 text-slate-700 placeholder:text-slate-300 focus:outline-none resize-none bg-transparent font-medium leading-relaxed text-sm"
+                    />
+                    <div className="p-3 bg-slate-50/50 rounded-b-2xl border-t border-slate-100 flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <span className="text-[9px] font-bold text-slate-400 font-mono ml-2">{currentRawText.length} kí tự</span>
+                        <button 
+                          onClick={() => setIsConcise(!isConcise)}
+                          className={cn(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-all border",
+                            isConcise 
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20" 
+                              : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-1.5 h-1.5 rounded-full",
+                            isConcise ? "bg-white animate-pulse" : "bg-slate-300"
+                          )} />
+                          Ngắn gọn
+                        </button>
+                      </div>
+                      <button 
+                        onClick={handleGenerate}
+                        disabled={isGenerating || !currentRawText.trim()}
+                        className={cn(
+                          "flex items-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase shadow-2xl shadow-blue-500/40 hover:bg-blue-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative overflow-hidden group",
+                          currentRawText.trim() && !isGenerating && "animate-pulse"
+                        )}
+                      >
+                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                        {isGenerating ? <Sparkles size={18} className="animate-spin relative z-10" /> : <Sparkles size={18} className="relative z-10" />}
+                        <span className="relative z-10">Tạo nội dung kết luận (Gợi ý)</span>
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Dàn ý AI - Strategic Core */}
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col shrink-0">
                     <div className="p-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -354,51 +403,6 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                     />
                   </div>
 
-                    {/* Raw Input Card */}
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/40 flex flex-col">
-                      <div className="p-3 border-b border-slate-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest font-mono">Ý tưởng tập trung</span>
-                        </div>
-                        <span className="text-[9px] font-bold text-slate-400 font-mono italic">Nhập nội dung thô bên dưới</span>
-                      </div>
-                      <textarea 
-                        value={currentRawText}
-                        onChange={(e) => setCurrentRawText(e.target.value)}
-                        placeholder="Nhập nội dung ý kiến, chỉ đạo thô tại đây... Ví dụ: 'Cần đẩy mạnh giải quyết thủ tục hành chính cho dân nhanh hơn, tránh gây phiền hà'."
-                        className="w-full h-24 p-4 text-slate-700 placeholder:text-slate-300 focus:outline-none resize-none bg-transparent font-medium leading-relaxed text-sm"
-                      />
-                      <div className="p-3 bg-slate-50/50 rounded-b-2xl border-t border-slate-100 flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                          <span className="text-[9px] font-bold text-slate-400 font-mono ml-2">{currentRawText.length} kí tự</span>
-                          <button 
-                            onClick={() => setIsConcise(!isConcise)}
-                            className={cn(
-                              "flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase transition-all border",
-                              isConcise 
-                                ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20" 
-                                : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
-                            )}
-                          >
-                            <div className={cn(
-                              "w-1.5 h-1.5 rounded-full",
-                              isConcise ? "bg-white animate-pulse" : "bg-slate-300"
-                            )} />
-                            Ngắn gọn
-                          </button>
-                        </div>
-                        <button 
-                          onClick={handleGenerate}
-                          disabled={isGenerating || !currentRawText.trim()}
-                          className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/30 hover:bg-blue-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                          {isGenerating ? <Sparkles size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                          Phân tích ngay
-                        </button>
-                      </div>
-                    </div>
-
                   {/* Suggestions List */}
                   <div className="flex-1 overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between mb-2">
@@ -420,8 +424,8 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                       <AnimatePresence>
                         {isGenerating ? (
                           <div className="space-y-3">
-                            {[1].map(i => (
-                              <div key={i} className="bg-white/50 border border-slate-100 rounded-2xl p-4 animate-pulse">
+                            {[1, 2, 3].map(i => (
+                              <div key={`skeleton-suggestion-${i}`} className="bg-white/50 border border-slate-100 rounded-2xl p-4 animate-pulse">
                                 <div className="h-4 w-1/3 bg-slate-200 rounded mb-3" />
                                 <div className="h-3 w-full bg-slate-100 rounded" />
                               </div>
@@ -430,7 +434,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                         ) : suggestions.length > 0 ? (
                             suggestions.slice(0, 3).map((version, idx) => (
                               <motion.div 
-                                key={version.id}
+                                key={`inline-suggestion-${version.id}-${idx}`}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.1 }}
@@ -501,7 +505,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                 </div>
 
                 {/* Right Side: Collected Segments */}
-                <div className="lg:col-span-4 flex flex-col gap-4 h-full overflow-hidden">
+                <div className="lg:col-span-4 flex flex-col gap-4 h-full overflow-y-auto custom-scrollbar-dark pr-1">
                   <div className="bg-slate-900 rounded-[2rem] p-4 flex flex-col h-full shadow-2xl shadow-slate-900/40 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl -translate-y-1/2 translate-x-1/2 rounded-full" />
                     
@@ -521,7 +525,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                       <AnimatePresence initial={false}>
                         {segments.map((segment, idx) => (
                           <motion.div 
-                            key={segment.id}
+                            key={`${segment.id}-${idx}`}
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9, x: 20 }}
@@ -853,7 +857,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {suggestions.map((version, idx) => (
                       <motion.div 
-                        key={version.id}
+                        key={`modal-suggestion-${version.id}-${idx}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
@@ -993,12 +997,12 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
 
               <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
                 {aiKnowledge
-                  .filter(k => k.title.toLowerCase().includes(referenceSearch.toLowerCase()))
+                  .filter(k => (k.title || '').toLowerCase().includes((referenceSearch || '').toLowerCase()))
                   .map(k => {
                     const isSelected = referencedKnowledgeIds.includes(k.id);
                     return (
                       <button 
-                        key={k.id}
+                        key={`ref-item-${k.id}-${idx}`}
                         onClick={() => {
                           if (isSelected) {
                             setReferencedKnowledgeIds(prev => prev.filter(id => id !== k.id));
@@ -1021,7 +1025,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-sm truncate">{k.title}</h4>
-                          <p className="text-[10px] opacity-60 truncate mt-0.5">{k.content.substring(0, 100)}...</p>
+                          <p className="text-[10px] opacity-60 truncate mt-0.5">{(k.content || '').substring(0, 100)}...</p>
                         </div>
                         <div className={cn(
                           "w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all",
@@ -1038,7 +1042,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                     <Database size={48} className="mx-auto mb-4 opacity-10" />
                     <p className="text-sm font-bold uppercase tracking-widest italic">Kho tri thức đang trống</p>
                   </div>
-                ) || aiKnowledge.filter(k => k.title.toLowerCase().includes(referenceSearch.toLowerCase())).length === 0 && (
+                ) || aiKnowledge.filter(k => (k.title || '').toLowerCase().includes((referenceSearch || '').toLowerCase())).length === 0 && (
                   <div className="text-center py-12 text-slate-300">
                     <Search size={48} className="mx-auto mb-4 opacity-10" />
                     <p className="text-sm font-bold uppercase tracking-widest italic">Không tìm thấy tài liệu phù hợp</p>

@@ -625,9 +625,9 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
   // --- Memos ---
   const filteredOfficers = useMemo(() => {
     return officers.filter(o => 
-      o.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.unitId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.position.toLowerCase().includes(searchTerm.toLowerCase())
+      (o.name || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+      (o.unitId || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+      (o.position || '').toLowerCase().includes((searchTerm || '').toLowerCase())
     );
   }, [officers, searchTerm]);
 
