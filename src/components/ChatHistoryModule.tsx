@@ -117,12 +117,6 @@ export const ChatHistoryModule: React.FC<ChatHistoryModuleProps> = ({
     });
   }, [chatHistory, searchTerm, filterRole, dateFilter]);
 
-  console.log("ChatHistoryModule render:", { 
-    historyLength: chatHistory?.length, 
-    isHistoryLoading,
-    filteredLength: filteredHistory.length 
-  });
-
   // Group by date
   const groupedHistory = useMemo(() => {
     const groups: Record<string, any[]> = {};

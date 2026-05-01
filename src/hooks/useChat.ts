@@ -253,6 +253,8 @@ LƯU Ý QUAN TRỌNG:
 2. BỎ QUA mọi thông tin về lịch trình, ngày giờ, sự kiện đã xuất hiện trong các tin nhắn trước đó nếu chúng không có trong dữ liệu thực tế ở trên.
 3. Nếu người dùng hỏi về lịch trình mà không có trong dữ liệu này, hãy báo là "Hiện tại không có thông tin chính thức về nội dung này trong hệ thống".
 4. Luôn ưu tiên độ chính xác tuyệt đối về thời gian và nội dung.
+5. NẾU người dùng yêu cầu "Thêm vào việc cần làm" hoặc "Tạo task" hoặc tương tự, hãy phân tích yêu cầu đó và chèn đúng định dạng sau vào CÚỐI câu trả lời của bạn: \`[ADD_TASK]{"title":"Tên nhiệm vụ","description":"Mô tả chi tiết"}[/ADD_TASK]\`. Tuyệt đối đảm bảo chuỗi trong ngoặc là JSON hợp lệ.
+6. NẾU người dùng yêu cầu "Lưu vào sổ tay", "Lưu vào sổ tay thống kê" hoặc tương tự, hãy chèn đúng định dạng sau vào CUỐI câu trả lời của bạn: \`[ADD_JOURNAL]{"content":"Nội dung tóm tắt","deadline":"Thời gian hoàn thành (nếu có)","assignee":"Người phụ trách (nếu có)"}[/ADD_JOURNAL]\`. Tuyệt đối đảm bảo chuỗi trong ngoặc là JSON hợp lệ.
 `;
       
       // Dynamic system instruction based on user context
@@ -309,6 +311,71 @@ LƯU Ý QUAN TRỌNG:
         setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, content: aiText } : m));
       }
       
+      // Process auto-actions for TODO / Journal
+      let cleanedText = aiText;
+      const taskMatch = cleanedText.match(/\[ADD_TASK\]([\s\S]*?)\[\/ADD_TASK\]/);
+      if (taskMatch && taskMatch[1]) {
+        try {
+          const taskData = JSON.parse(taskMatch[1]);
+          if (user) {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            await addDoc(collection(db, 'tasks'), {
+              title: taskData.title,
+              description: taskData.description || '',
+              deadline: tomorrow.toISOString(),
+              priority: 'medium',
+              status: 'Pending',
+              progress: 0,
+              userId: user.uid,
+              unitId: unitId || '',
+            });
+            showToast('Đã tự động lưu nhiệm vụ vào Việc Cần Làm', 'success');
+          }
+        } catch (err) {
+          console.error("Parse task err", err);
+        }
+        cleanedText = cleanedText.replace(/\[ADD_TASK\][\s\S]*?\[\/ADD_TASK\]/, '').trim();
+      }
+
+      const journalMatch = cleanedText.match(/\[ADD_JOURNAL\]([\s\S]*?)\[\/ADD_JOURNAL\]/);
+      if (journalMatch && journalMatch[1]) {
+        try {
+          const journalData = JSON.parse(journalMatch[1]);
+          if (user) {
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1;
+            const currentQuarter = Math.ceil(currentMonth / 3);
+            await addDoc(collection(db, 'task_journals'), {
+              categoryId: 'unit_task',
+              content: journalData.content,
+              implementingDoc: '',
+              assignee: journalData.assignee || user.displayName || user.email || '',
+              deadline: journalData.deadline || '',
+              progress: 'Đang triển khai',
+              results: '',
+              authorUid: user.uid,
+              unitId: unitId || '',
+              year: currentYear,
+              quarter: currentQuarter,
+              month: currentMonth,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            });
+            showToast('Đã tự động lưu vào Sổ tay Thống kê', 'success');
+          }
+        } catch (err) {
+          console.error("Parse journal err", err);
+        }
+        cleanedText = cleanedText.replace(/\[ADD_JOURNAL\][\s\S]*?\[\/ADD_JOURNAL\]/, '').trim();
+      }
+
+      if (cleanedText !== aiText) {
+        aiText = cleanedText;
+        setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, content: aiText } : m));
+      }
+
       const finalTitle = generateAITitle(aiText);
       setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, title: finalTitle } : m));
       

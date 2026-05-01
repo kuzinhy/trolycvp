@@ -375,21 +375,22 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
             {!isSearchEnabled && <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Search AI</span>}
           </button>
 
-          <button 
-            onClick={() => setIsHistorySidebarOpen(true)}
-            className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200"
-            title="Lịch sử hội thoại"
-          >
-            <Database size={18} />
-          </button>
-
-          <button 
-            onClick={onClearChat}
-            className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-200"
-            title="Xóa hội thoại"
-          >
-            <Trash2 size={18} />
-          </button>
+          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-100">
+            <button 
+              onClick={() => setIsHistorySidebarOpen(true)}
+              className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200"
+              title="Lịch sử hội thoại"
+            >
+              <Database size={18} />
+            </button>
+            <button 
+              onClick={onClearChat}
+              className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-200"
+              title="Làm mới hội thoại"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -486,45 +487,22 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col min-w-0 relative">
-          {/* Header Controls */}
-          <div className="absolute top-4 right-8 z-30 flex items-center gap-3">
-             <button 
-               onClick={() => setIsHistorySidebarOpen(true)}
-               className="p-3 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl text-slate-500 hover:text-indigo-600 hover:border-indigo-200 shadow-xl shadow-slate-200/20 transition-all flex items-center gap-2"
-               title="Lịch sử"
-             >
-               <History size={18} />
-               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Lịch sử</span>
-             </button>
-             
-             <button 
-               onClick={() => {
-                 onClearChat();
-               }}
-               className="p-3 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl text-slate-400 hover:text-rose-600 hover:border-rose-200 shadow-xl shadow-slate-200/20 transition-all flex items-center gap-2"
-               title="Xóa hội thoại"
-             >
-               <Trash2 size={18} />
-               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Làm mới</span>
-             </button>
-          </div>
-
           {/* Messages Area */}
           <div 
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto px-4 py-8 space-y-8 custom-scrollbar scroll-smooth"
+            className="flex-1 overflow-y-auto px-4 md:px-12 py-10 space-y-10 custom-scrollbar scroll-smooth"
           >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto py-20">
-            <div className="w-20 h-20 rounded-3xl bg-blue-600 shadow-xl shadow-blue-500/20 flex items-center justify-center mb-6 animate-bounce-slow border border-white/20">
-              <BrainCircuit size={40} className="text-white" />
+            <div className="w-24 h-24 rounded-3xl bg-blue-600 shadow-2xl shadow-blue-500/20 flex items-center justify-center mb-8 animate-bounce-slow border border-white/20">
+              <BrainCircuit size={48} className="text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2 uppercase tracking-tighter italic">Trung tâm Chỉ huy Elite v8.0</h3>
-            <p className="text-sm text-slate-400 leading-relaxed font-bold max-w-md uppercase tracking-wide">
+            <h3 className="text-3xl font-black text-slate-900 mb-3 uppercase tracking-tighter italic">Trung tâm Chỉ huy Elite v8.0</h3>
+            <p className="text-sm text-slate-500 leading-relaxed font-bold max-w-lg uppercase tracking-wide">
               Hệ thống đã sẵn sàng cho các tác vụ tham mưu và chỉ huy chiến lược.
             </p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-12 w-full max-w-3xl">
               {TASK_TYPES.map((task) => (
                 <button 
                   key={task.id}
@@ -532,25 +510,25 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                     setInput(task.promptPrefix);
                     inputRef.current?.focus();
                   }}
-                  className="p-5 bg-white border border-slate-200 rounded-2xl text-left hover:border-blue-500 hover:shadow-xl hover:-translate-y-1 transition-all group shadow-sm"
+                  className="p-6 bg-white border border-slate-200 rounded-2xl text-left hover:border-blue-500 hover:shadow-2xl hover:-translate-y-1 transition-all group shadow-sm"
                 >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                      <Sparkles size={16} />
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <Sparkles size={18} />
                     </div>
-                    <span className="text-xs font-black text-slate-900 uppercase tracking-wider">{task.label}</span>
+                    <span className="text-sm font-black text-slate-900 uppercase tracking-wider">{task.label}</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 font-medium">{task.description}</p>
+                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-medium">{task.description}</p>
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto space-y-8">
+          <div className="max-w-5xl mx-auto space-y-10">
             <AnimatePresence mode="popLayout">
               {filteredMessages.map((msg, idx) => (
                 <motion.div
-                  key={msg.id || `msg-${idx}`}
+                  key={msg.id ? `msg-${msg.id}` : `msg-idx-${idx}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={cn(
@@ -581,17 +559,17 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                       <div 
                         onClick={() => toggleExpand(msg.id || `msg-${idx}`)}
                         className={cn(
-                          "px-6 py-5 rounded-3xl text-[13px] leading-relaxed shadow-sm relative transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer break-words border",
+                          "px-6 py-5 rounded-3xl text-[14px] leading-relaxed shadow-sm relative transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer break-words border",
                           msg.role === 'user' 
-                            ? "bg-blue-600 text-white border-blue-500 rounded-tr-none shadow-blue-500/10" 
-                            : "bg-white text-slate-700 border-slate-200 rounded-tl-none ring-1 ring-blue-500/5",
+                            ? "bg-slate-900 text-white border-slate-800 rounded-tr-none shadow-xl shadow-slate-200" 
+                            : "bg-white text-slate-900 border-slate-200 rounded-tl-none ring-1 ring-slate-200/50 shadow-sm",
                           expandedMessages.has(msg.id || `msg-${idx}`) && "border-blue-500/30 ring-4 ring-blue-500/5 shadow-2xl"
                         )}
                       >
                         {msg.title && (
                           <div className="mb-3 pb-3 border-b border-slate-100/50 flex items-center gap-2">
-                            <Sparkles size={14} className="text-blue-500" />
-                            <h4 className="font-black text-slate-900 uppercase tracking-tight text-xs">{msg.title}</h4>
+                            <Sparkles size={14} className={cn(msg.role === 'user' ? "text-blue-200" : "text-blue-500")} />
+                            <h4 className={cn("font-black uppercase tracking-tight text-xs", msg.role === 'user' ? "text-white" : "text-slate-900")}>{msg.title}</h4>
                           </div>
                         )}
                         <div className="markdown-body max-w-none break-words leading-relaxed font-medium">
@@ -607,7 +585,8 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                                   <div className="relative group/code my-4">
                                     <div className="absolute right-3 top-3 z-10 opacity-0 group-hover/code:opacity-100 transition-opacity">
                                       <button
-                                        onClick={() => {
+                                        onClick={(e) => {
+                                          e.stopPropagation();
                                           navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
                                           if (showToast) showToast("Đã sao chép mã nguồn", "success");
                                         }}
@@ -639,7 +618,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                               },
                               table({ children }) {
                                 return (
-                                  <div className="overflow-x-auto my-6 rounded-2xl border border-slate-200 shadow-sm bg-white">
+                                  <div className="overflow-x-auto my-6 rounded-2xl border border-slate-200 shadow-sm bg-white text-slate-900">
                                     <table className="min-w-full divide-y divide-slate-200">
                                       {children}
                                     </table>
@@ -656,18 +635,20 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                                 return <td className="px-4 py-3 text-sm text-slate-600 border-b border-slate-100">{children}</td>;
                               },
                               blockquote({ children }) {
-                                return <blockquote className="border-l-4 border-blue-500 bg-blue-50/50 px-6 py-4 italic text-slate-700 my-6 rounded-r-2xl shadow-sm relative overflow-hidden">
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/20"></div>
+                                return <blockquote className={cn(
+                                  "border-l-4 px-6 py-4 italic my-6 rounded-r-2xl shadow-sm relative overflow-hidden",
+                                  msg.role === 'user' ? "border-blue-300 bg-white/10 text-blue-50" : "border-blue-500 bg-blue-50/50 text-slate-700"
+                                )}>
                                   {children}
                                 </blockquote>;
                               },
-                              h1({ children }) { return <h1 className="text-xl font-bold text-slate-900 mt-8 mb-4 pb-2 border-b border-slate-100 tracking-tight break-words">{children}</h1>; },
-                              h2({ children }) { return <h2 className="text-lg font-bold text-slate-900 mt-6 mb-3 tracking-tight break-words">{children}</h2>; },
-                              h3({ children }) { return <h3 className="text-base font-bold text-slate-900 mt-5 mb-2 tracking-tight break-words">{children}</h3>; },
+                              h1({ children }) { return <h1 className={cn("text-xl font-bold mt-8 mb-4 pb-2 border-b tracking-tight break-words", msg.role === 'user' ? "text-white border-white/20" : "text-slate-900 border-slate-100")}>{children}</h1>; },
+                              h2({ children }) { return <h2 className={cn("text-lg font-bold mt-6 mb-3 tracking-tight break-words", msg.role === 'user' ? "text-white" : "text-slate-900")}>{children}</h2>; },
+                              h3({ children }) { return <h3 className={cn("text-base font-bold mt-5 mb-2 tracking-tight break-words", msg.role === 'user' ? "text-white" : "text-slate-900")}>{children}</h3>; },
                               ul({ children }) { return <ul className="list-disc pl-5 space-y-2 my-4 break-words">{children}</ul>; },
                               ol({ children }) { return <ol className="list-decimal pl-5 space-y-2 my-4 break-words">{children}</ol>; },
-                              li({ children }) { return <li className="text-slate-700 leading-relaxed break-words">{children}</li>; },
-                              p({ children }) { return <p className="mb-4 last:mb-0 leading-relaxed text-slate-700 break-words">{children}</p>; }
+                              li({ children }) { return <li className="leading-relaxed break-words text-inherit">{children}</li>; },
+                              p({ children }) { return <p className="mb-4 last:mb-0 leading-relaxed text-inherit break-words">{children}</p>; }
                             }}
                           >
                             {msg.content}
@@ -887,7 +868,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                         }
                       }}
                       placeholder={attachedFile ? "Nhập yêu cầu phân tích tệp..." : "Viết nội dung cần cố vấn hoặc chỉ huy..."}
-                      className="w-full pl-6 pr-36 py-5 bg-transparent border-none focus:ring-0 text-[14px] text-slate-700 placeholder:text-slate-400 resize-none min-h-[64px] max-h-48 custom-scrollbar leading-relaxed"
+                      className="w-full pl-6 pr-36 py-5 bg-white border-none focus:ring-0 text-[15px] font-medium text-slate-900 placeholder:text-slate-400 resize-none min-h-[64px] max-h-48 custom-scrollbar leading-relaxed"
                       rows={1}
                     />
                     
@@ -966,7 +947,8 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                     Tham mưu chiến lược
                   </button>
                 </div>
-                <div className="hidden sm:flex items-center gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] pointer-events-none opacity-50">
+
+                <div className="hidden lg:flex items-center gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] pointer-events-none opacity-50">
                   <span className="flex items-center gap-1"><ArrowUpRight size={10} /> Enter gửi tin</span>
                   <span className="flex items-center gap-1"><ChevronDown size={10} /> Shift+Enter xuống dòng</span>
                 </div>

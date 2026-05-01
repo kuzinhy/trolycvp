@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, CheckCircle2, Circle, Timer, AlertCircle, Clock, ArrowDown, Edit2, Check, X, Calendar as CalendarIcon, Percent, Search, Filter, LayoutGrid, List, Sparkles, ChevronRight, Zap } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, Timer, AlertCircle, Clock, ArrowDown, Edit2, Check, X, Calendar as CalendarIcon, Percent, Search, Filter, LayoutGrid, List, Sparkles, ChevronRight, Zap, BookOpen } from 'lucide-react';
 import { Task } from '../constants';
 import { ToastType } from './ui/Toast';
 import { cn } from '../lib/utils';
 import { QuickNotes } from './QuickNotes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
 interface TodoAssistantProps {
   tasks: Task[];
@@ -381,12 +385,13 @@ const TaskDetailModal = ({
   );
 };
 
-const StickyNote = ({ 
+const StickyNote = React.memo(({ 
   task, 
   onUpdate, 
   onDelete,
   onViewDetails,
   onStartFocus,
+  onSaveToJournal,
   allTasks
 }: { 
   task: Task; 
@@ -394,6 +399,7 @@ const StickyNote = ({
   onDelete: (id: string) => void;
   onViewDetails: (task: Task) => void;
   onStartFocus: (task: Task) => void;
+  onSaveToJournal: (task: Task) => void;
   allTasks: Task[];
 }) => {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -479,34 +485,41 @@ const StickyNote = ({
 
       <div className="flex-1 p-3 flex flex-col justify-center relative">
         {/* Absolute Action Buttons */}
-        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
+        <div className="absolute top-2 right-2 flex flex-wrap justify-end items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all z-10 bg-white/90 backdrop-blur-sm rounded-lg p-0.5 shadow-sm border border-slate-200">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onSaveToJournal(task); }}
+            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all active:scale-95"
+            title="Lưu vào Sổ tay Thống kê"
+          >
+            <BookOpen size={16} />
+          </button>
           <button 
             onClick={(e) => { e.stopPropagation(); onStartFocus(task); }}
-            className="p-1.5 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
+            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all active:scale-95"
             title="Chế độ tập trung"
           >
-            <Zap size={14} />
+            <Zap size={16} />
           </button>
           <button 
             onClick={cyclePriority}
-            className="p-1.5 text-slate-300 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
+            className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-all active:scale-95"
             title="Đổi mức độ ưu tiên"
           >
-            <AlertCircle size={14} />
+            <AlertCircle size={16} />
           </button>
           <button 
             onClick={cycleStatus}
-            className="p-1.5 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all"
+            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-all active:scale-95"
             title="Đổi trạng thái"
           >
-            <Timer size={14} />
+            <Timer size={16} />
           </button>
           <button 
             onClick={handleDeleteClick}
-            className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+            className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-all active:scale-95"
             title="Xóa"
           >
-            <Trash2 size={14} />
+            <Trash2 size={16} />
           </button>
         </div>
 
@@ -599,7 +612,7 @@ const StickyNote = ({
       </div>
     </motion.div>
   );
-};
+});
 
 export const TodoAssistant: React.FC<TodoAssistantProps> = ({
   tasks,
@@ -607,12 +620,15 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
   showToast,
   onStartFocus
 }) => {
+  const { user, unitId } = useAuth();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'completed' | 'personal'>('all');
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [sidebarFilter, setSidebarFilter] = useState<'all' | 'pending' | 'completed' | 'overdue'>('all');
   const [showSmartSearch, setShowSmartSearch] = useState(false);
   const [isAddingQuickNote, setIsAddingQuickNote] = useState(false);
+  const [taskToJournal, setTaskToJournal] = useState<Task | null>(null);
+  const [journalCategory, setJournalCategory] = useState<'upper_level' | 'unit_task' | 'arising_task'>('unit_task');
 
   const filteredSidebarTasks = tasks.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(sidebarSearch.toLowerCase()) || 
@@ -638,6 +654,85 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
   const { preferences } = useUserPreferences();
   const reminderSettings = preferences?.reminderSettings;
 
+  const handleInitiateSaveToJournal = React.useCallback((task: Task) => {
+    setTaskToJournal(task);
+    setJournalCategory('unit_task'); // default category
+  }, []);
+
+  const [isSavingJournal, setIsSavingJournal] = useState(false);
+
+  const confirmSaveToJournal = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      alert("Lỗi: Không tìm thấy thông tin phiên đăng nhập.");
+      return;
+    }
+    
+    if (!taskToJournal) {
+      alert("Lỗi: Không tìm thấy thông tin nhiệm vụ.");
+      return;
+    }
+    
+    try {
+      setIsSavingJournal(true);
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+      const currentQuarter = Math.ceil(currentMonth / 3);
+
+      const dTitle = taskToJournal.title || 'Không có tiêu đề';
+      const dDesc = taskToJournal.description ? `\n\n${taskToJournal.description}` : '';
+      
+      let safeDeadlineStr = '';
+      if (taskToJournal.deadline) {
+        const parsedDeadline = new Date(taskToJournal.deadline);
+        if (!isNaN(parsedDeadline.getTime())) {
+          safeDeadlineStr = parsedDeadline.toLocaleDateString('vi-VN');
+        }
+      }
+
+      const payload = {
+        categoryId: journalCategory || 'unit_task',
+        content: String(dTitle) + String(dDesc),
+        implementingDoc: '',
+        assignee: user.displayName || user.email || 'Chưa xác định',
+        deadline: safeDeadlineStr,
+        progress: taskToJournal.status === 'Completed' ? 'Hoàn thành 100%' : 'Đang triển khai',
+        results: '',
+        authorUid: user.uid,
+        unitId: unitId || 'vp-dang-uy',
+        year: currentYear,
+        quarter: currentQuarter,
+        month: currentMonth,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      // Ensure no undefined values are in the payload before sending to Firestore
+      Object.keys(payload).forEach(key => {
+        if ((payload as any)[key] === undefined) {
+          (payload as any)[key] = null;
+        }
+      });
+
+      console.log('Saving payload to task_journals:', payload);
+      await addDoc(collection(db, 'task_journals'), payload);
+      
+      setIsSavingJournal(false);
+      setTaskToJournal(null);
+      if (showToast) {
+        showToast('Đã lưu nhiệm vụ vào Sổ tay Thống kê', 'success');
+      } else {
+        alert('Đã lưu nhiệm vụ vào Sổ tay Thống kê');
+      }
+    } catch (error: any) {
+      console.error('Save to journal failed:', error);
+      setIsSavingJournal(false);
+      alert(`Lỗi khi lưu vào Sổ tay: ${error.message || 'Vui lòng kiểm tra kết nối mạng và quyền Firestore.'}`);
+    }
+  };
+
   const handleAddNote = () => {
     if (activeFilter === 'personal') {
       setIsAddingQuickNote(true);
@@ -661,7 +756,7 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
     setSelectedTask(newTask);
   };
 
-  const handleUpdateTask = (id: string, updates: Partial<Task>) => {
+  const handleUpdateTask = React.useCallback((id: string, updates: Partial<Task>) => {
     updateTasks(prev => {
       const updated = prev.map(t => t.id === id ? { ...t, ...updates } : t);
       return updated;
@@ -669,13 +764,13 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
     if (selectedTask?.id === id) {
       setSelectedTask(prev => prev ? { ...prev, ...updates } : null);
     }
-  };
+  }, [updateTasks, selectedTask?.id]);
 
-  const handleDeleteTask = (id: string) => {
+  const handleDeleteTask = React.useCallback((id: string) => {
     updateTasks(prev => prev.filter(t => t.id !== id));
     showToast("Đã xóa ghi chú", "success");
     if (selectedTask?.id === id) setSelectedTask(null);
-  };
+  }, [updateTasks, showToast, selectedTask?.id]);
 
   return (
     <div className="flex flex-col h-full bg-slate-50/50 overflow-hidden relative">
@@ -764,6 +859,7 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
                       onDelete={handleDeleteTask} 
                       onViewDetails={setSelectedTask}
                       onStartFocus={onStartFocus}
+                      onSaveToJournal={handleInitiateSaveToJournal}
                       allTasks={tasks}
                     />
                   ))}
@@ -1010,6 +1106,111 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
             onUpdate={handleUpdateTask}
             onDelete={handleDeleteTask}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {taskToJournal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setTaskToJournal(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6"
+            >
+              <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <BookOpen size={24} className="text-emerald-500" />
+                Lưu vào Sổ tay Thống kê
+              </h3>
+              
+              <div className="mb-6">
+                <p className="text-sm text-slate-600 mb-3">
+                  Chọn mục (nhóm nhiệm vụ) để lưu nhiệm vụ <strong>"{taskToJournal.title}"</strong>:
+                </p>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      name="journalCategory" 
+                      value="upper_level" 
+                      checked={journalCategory === 'upper_level'}
+                      onChange={() => setJournalCategory('upper_level')}
+                      className="mt-1 flex-shrink-0"
+                    />
+                    <div>
+                      <div className="font-semibold text-slate-800 text-sm">Mục I</div>
+                      <div className="text-xs text-slate-500">Thực hiện theo Chương trình/Kế hoạch/Nghị quyết của cấp trên</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      name="journalCategory" 
+                      value="unit_task" 
+                      checked={journalCategory === 'unit_task'}
+                      onChange={() => setJournalCategory('unit_task')}
+                      className="mt-1 flex-shrink-0"
+                    />
+                    <div>
+                      <div className="font-semibold text-slate-800 text-sm">Mục II</div>
+                      <div className="text-xs text-slate-500">Nhiệm vụ công tác của đơn vị</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      name="journalCategory" 
+                      value="arising_task" 
+                      checked={journalCategory === 'arising_task'}
+                      onChange={() => setJournalCategory('arising_task')}
+                      className="mt-1 flex-shrink-0"
+                    />
+                    <div>
+                      <div className="font-semibold text-slate-800 text-sm">Mục III</div>
+                      <div className="text-xs text-slate-500">Nhiệm vụ phát sinh theo chỉ đạo của cấp trên/đơn vị</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTaskToJournal(null); }}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmSaveToJournal}
+                  disabled={isSavingJournal}
+                  className={cn(
+                    "px-4 py-2 text-sm font-bold text-white bg-emerald-600 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2",
+                    isSavingJournal ? "opacity-70 cursor-not-allowed" : "hover:bg-emerald-700"
+                  )}
+                >
+                  {isSavingJournal ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Đang lưu...
+                    </>
+                  ) : (
+                    "Lưu vào Sổ tay"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

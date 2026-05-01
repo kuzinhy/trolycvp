@@ -6,15 +6,9 @@ import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+import firebaseConfigData from '../../firebase-applet-config.json';
 const firebaseConfig = {
-  apiKey: "AIzaSyCXg8zV7UBYAwWxmUfSiaUlNLHmUbl_qP0",
-  authDomain: "trolycvp.firebaseapp.com",
-  databaseURL: "https://trolycvp-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "trolycvp",
-  storageBucket: "trolycvp.firebasestorage.app",
-  messagingSenderId: "476536748991",
-  appId: "1:476536748991:web:54db9f7960a9a79ef3bf0a",
-  measurementId: "G-KCXREEVDC8"
+  ...firebaseConfigData
 };
 
 let app: FirebaseApp;
@@ -26,7 +20,7 @@ try {
   // Initialize Firebase
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
-  db = getFirestore(app);
+  db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
   
   // Enable offline persistence
   enableIndexedDbPersistence(db).catch((err) => {

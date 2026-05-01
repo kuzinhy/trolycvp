@@ -1,0 +1,332 @@
+src/components/StaffBirthdayReminder.tsx:60:      id: `b-${Date.now()}`,
+src/components/SmartDataExtractor.tsx:96:                { id: 'table', label: 'Bảng (Table)' },
+src/components/SmartDataExtractor.tsx:97:                { id: 'json', label: 'JSON' },
+src/components/SmartDataExtractor.tsx:98:                { id: 'list', label: 'Danh sách' }
+src/components/QuickNotes.tsx:9:  id: string;
+src/components/QuickNotes.tsx:60:      id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+src/components/QuickNotes.tsx:71:  const handleDelete = (id: string) => {
+src/components/QuickNotes.tsx:77:  const handleEdit = (id: string, content: string, colorIndex?: number) => {
+src/components/QuickNotes.tsx:83:  const handleSaveEdit = (id: string) => {
+src/components/SmartTranslator.tsx:94:                { id: 'en', label: 'Tiếng Anh' },
+src/components/SmartTranslator.tsx:95:                { id: 'vi', label: 'Tiếng Việt' },
+src/components/SmartTranslator.tsx:96:                { id: 'zh', label: 'Tiếng Trung' },
+src/components/SmartTranslator.tsx:97:                { id: 'ja', label: 'Tiếng Nhật' },
+src/components/SmartTranslator.tsx:98:                { id: 'fr', label: 'Tiếng Pháp' }
+src/components/SmartTranslator.tsx:119:                { id: 'formal', label: 'Trang trọng' },
+src/components/SmartTranslator.tsx:120:                { id: 'casual', label: 'Tự nhiên' },
+src/components/SmartTranslator.tsx:121:                { id: 'technical', label: 'Chuyên ngành' },
+src/components/SmartTranslator.tsx:122:                { id: 'legal', label: 'Pháp lý' }
+src/components/admin/SendDepartmentNotification.tsx:25:      const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+src/components/EnglishLearningWidget.tsx:7:  id: string;
+src/components/EnglishLearningWidget.tsx:18:    id: '1',
+src/components/EnglishLearningWidget.tsx:27:    id: '2',
+src/components/EnglishLearningWidget.tsx:36:    id: '3',
+src/components/EnglishLearningWidget.tsx:45:    id: '4',
+src/components/EnglishLearningWidget.tsx:54:    id: '5',
+src/components/EnglishLearningWidget.tsx:63:    id: '6',
+src/components/EnglishLearningWidget.tsx:72:    id: '7',
+src/components/EnglishLearningWidget.tsx:81:    id: '8',
+src/components/EnglishLearningWidget.tsx:90:    id: '9',
+src/components/EnglishLearningWidget.tsx:99:    id: '10',
+src/components/EnglishLearningWidget.tsx:108:    id: '11',
+src/components/EnglishLearningWidget.tsx:117:    id: '12',
+src/components/EnglishLearningWidget.tsx:126:    id: '13',
+src/components/EnglishLearningWidget.tsx:135:    id: '14',
+src/components/EnglishLearningWidget.tsx:144:    id: '15',
+src/components/EnglishLearningWidget.tsx:153:    id: '16',
+src/components/EnglishLearningWidget.tsx:162:    id: '17',
+src/components/EnglishLearningWidget.tsx:171:    id: '18',
+src/components/EnglishLearningWidget.tsx:180:    id: '19',
+src/components/EnglishLearningWidget.tsx:189:    id: '20',
+src/components/EarlyWarningSystem.tsx:9:  id: string;
+src/components/UtilitiesModule.tsx:25:    toggleRule: (id: string) => void;
+src/components/UtilitiesModule.tsx:26:    deleteRule: (id: string) => void;
+src/components/UtilitiesModule.tsx:27:    updateRule: (id: string, content: string) => void;
+src/components/UtilitiesModule.tsx:42:  id: TabId;
+src/components/UtilitiesModule.tsx:48:  { id: 'drafting', label: 'Soạn thảo văn bản', color: 'text-blue-600' },
+src/components/UtilitiesModule.tsx:49:  { id: 'speech', label: 'Soạn bài phát biểu', color: 'text-purple-600' },
+src/components/UtilitiesModule.tsx:50:  { id: 'bulk-review', label: 'Kiểm tra văn bản', color: 'text-rose-600' },
+src/components/UtilitiesModule.tsx:51:  { id: 'reporting', label: 'Phân tích và tạo báo cáo', color: 'text-emerald-600' },
+src/components/UtilitiesModule.tsx:52:  { id: 'meeting', label: 'Trợ lý họp thông minh', color: 'text-indigo-600' },
+src/components/UtilitiesModule.tsx:53:  { id: 'data-extractor', label: 'Trích xuất Dữ liệu AI', color: 'text-amber-600' },
+src/components/UtilitiesModule.tsx:54:  { id: 'pdf-reader', label: 'Đọc tài liệu', color: 'text-rose-600' },
+src/components/KnowledgeGraph.tsx:11:  id: string;
+src/components/KnowledgeGraph.tsx:28:      id: item.id || `node-${idx}`,
+src/components/PublicOpinionModule.tsx:23:  id: string;
+src/components/PublicOpinionModule.tsx:47:          id: '1',
+src/components/PublicOpinionModule.tsx:56:          id: '2',
+src/components/PublicOpinionModule.tsx:65:          id: '3',
+src/components/PublicOpinionModule.tsx:74:          id: '4',
+src/components/OptimizedScheduleView.tsx:252:          id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+src/components/OptimizedScheduleView.tsx:283:  const handleDeleteMeeting = async (id: string) => {
+src/components/OptimizedScheduleView.tsx:287:  const handleDeleteTask = async (id: string) => {
+src/components/OptimizedScheduleView.tsx:291:  const handleDeleteEvent = async (id: string) => {
+src/components/OptimizedScheduleView.tsx:330:            id: Math.random().toString(36).substr(2, 9),
+src/components/OptimizedScheduleView.tsx:413:      await updateMeetings(prev => [...prev, ...parsedData.meetings.map((m: any) => ({ ...m, id: Math.random().toString(36).substr(2, 9) }))]);
+src/components/OptimizedScheduleView.tsx:416:      await updateTasks(prev => [...prev, ...parsedData.tasks.map((t: any) => ({ ...t, id: Math.random().toString(36).substr(2, 9) }))]);
+src/components/OptimizedScheduleView.tsx:419:      await updateEvents(prev => [...prev, ...parsedData.events.map((e: any) => ({ ...e, id: Math.random().toString(36).substr(2, 9) }))]);
+src/components/ChatModule.tsx:53:  copyToClipboard: (text: string, id: number) => void;
+src/components/ChatModule.tsx:138:  const toggleExpand = (id: string) => {
+src/components/ChatModule.tsx:248:      { id: 'plan', label: 'Lập kế hoạch', icon: Calendar, keywords: ['kế hoạch', 'lập lịch', 'thời gian', 'nhiệm vụ'] },
+src/components/ChatModule.tsx:249:      { id: 'summary', label: 'Tóm tắt', icon: Brain, keywords: ['tóm tắt', 'nội dung chính', 'cốt lõi', 'tổng hợp'] },
+src/components/ChatModule.tsx:250:      { id: 'draft', label: 'Soạn thảo', icon: FileText, keywords: ['soạn thảo', 'văn bản', 'tờ trình', 'báo cáo', 'nghị quyết'] },
+src/components/ChatModule.tsx:251:      { id: 'advise', label: 'Tham mưu', icon: MessageSquare, keywords: ['tham mưu', 'đề xuất', 'giải pháp', 'chỉ đạo'] },
+src/components/ChatModule.tsx:252:      { id: 'save', label: 'Lưu vào bộ nhớ', icon: Database, keywords: ['định nghĩa', 'khái niệm', 'thuật ngữ', 'là gì', 'nghĩa là', 'giải thích'] },
+src/components/AdminLoginNotifier.tsx:9:  uid: string;
+src/components/AssignmentTracking.tsx:47:  id: string;
+src/components/AssignmentTracking.tsx:55:  id: string;
+src/components/AssignmentTracking.tsx:160:      const allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ViceChiefTask[];
+src/components/AssignmentTracking.tsx:169:        assignments[doc.id] = { id: doc.id, ...doc.data() } as ViceChiefAssignment;
+src/components/AssignmentTracking.tsx:172:      setViceChief1Info(assignments['vice_chief_1'] || { id: 'vice_chief_1', userId: 'default_1', displayName: 'Lê Thị Kiều Oanh', photoURL: '' });
+src/components/AssignmentTracking.tsx:173:      setViceChief2Info(assignments['vice_chief_2'] || { id: 'vice_chief_2', userId: 'default_2', displayName: 'Trần Quốc Bảo', photoURL: '' });
+src/components/AssignmentTracking.tsx:177:      const usersList = snapshotUsers.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserInfo[];
+src/components/AssignmentTracking.tsx:205:      if (viceChiefId === 1) setViceChief1Info({ id: assignmentId, ...assignmentData });
+src/components/AssignmentTracking.tsx:206:      else setViceChief2Info({ id: assignmentId, ...assignmentData });
+src/components/AssignmentTracking.tsx:249:  const deleteViceTask = async (id: string) => {
+src/components/AssignmentTracking.tsx:259:  const updateViceTask = async (id: string, updates: Partial<ViceChiefTask>) => {
+src/components/GenZDecoder.tsx:60:        id: doc.id,
+src/components/GenZDecoder.tsx:80:        const trending = trendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GenZTerm[];
+src/components/GenZDecoder.tsx:220:  const handleDeleteTerm = async (id: string) => {
+src/components/GenZDecoder.tsx:309:          authorUid: user.uid,
+src/components/GenZDecoder.tsx:361:    { id: 'all', label: 'Tất cả', icon: BookOpen },
+src/components/GenZDecoder.tsx:362:    { id: 'new', label: 'Mới nhất', icon: Sparkles },
+src/components/GenZDecoder.tsx:363:    { id: 'learned', label: 'Đã học', icon: Brain },
+src/components/GenZDecoder.tsx:364:    { id: 'unlearned', label: 'Chưa học', icon: Quote },
+src/components/QuickLinks.tsx:7:  id: string;
+src/components/QuickLinks.tsx:14:  { id: '1', title: 'Cổng TTĐT Chính phủ', url: 'https://chinhphu.vn' },
+src/components/QuickLinks.tsx:15:  { id: '2', title: 'Hệ thống Quản lý Văn bản', url: '#' },
+src/components/QuickLinks.tsx:16:  { id: '3', title: 'Lịch công tác Tuần', url: '#' },
+src/components/QuickLinks.tsx:52:        id: `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+src/components/QuickLinks.tsx:71:  const handleDelete = (id: string) => {
+src/components/KnowledgeModule.tsx:116:  updateKnowledge: (id: string, data: any) => void;
+src/components/KnowledgeModule.tsx:117:  deleteKnowledge: (id: string) => void;
+src/components/KnowledgeModule.tsx:126:  deletePendingKnowledge: (id: string) => void;
+src/components/KnowledgeModule.tsx:127:  updatePendingKnowledge: (id: string, name: string) => void;
+src/components/TaskManagement.tsx:53:  const toggleSelectTask = (id: string) => {
+src/components/TaskManagement.tsx:204:      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+src/components/TaskManagement.tsx:249:  const handleDelete = (id: string) => {
+src/components/TaskManagement.tsx:290:  const handleDragStart = (e: React.DragEvent, id: string) => {
+src/components/TaskManagement.tsx:300:  const handleDragEnd = (e: React.DragEvent, id: string) => {
+src/components/EliteCommandCenter.tsx:55:        { id: 'chat', label: 'Bắt đầu hội thoại AI', icon: <MessageSquare size={16} />, tab: 'chat' },
+src/components/EliteCommandCenter.tsx:56:        { id: 'task', label: 'Quản lý nhiệm vụ', icon: <CheckCircle size={16} />, tab: 'tasks' },
+src/components/EliteCommandCenter.tsx:57:        { id: 'calendar', label: 'Lịch công tác tuần', icon: <Calendar size={16} />, tab: 'calendar' },
+src/components/EliteCommandCenter.tsx:58:        { id: 'knowledge', label: 'Tra cứu tri thức/Văn bản', icon: <Book size={16} />, tab: 'knowledge' },
+src/components/EliteCommandCenter.tsx:59:        { id: 'utilities', label: 'Tiện ích Trợ lý (AI Apps)', icon: <Zap size={16} />, tab: 'utilities' },
+src/components/EliteCommandCenter.tsx:65:        { id: 'forecast', label: 'Dự báo chiến lược', icon: <TrendingUp size={16} />, tab: 'forecasting' },
+src/components/EliteCommandCenter.tsx:66:        { id: 'reporting', label: 'Báo cáo thông minh', icon: <LayoutGrid size={16} />, tab: 'reporting' },
+src/components/EliteCommandCenter.tsx:67:        { id: 'drafting', label: 'Soạn thảo văn bản Elite', icon: <FilePlus size={16} />, tab: 'drafting-pro' },
+src/components/EliteCommandCenter.tsx:73:        { id: 'user', label: 'Quản lý quân số', icon: <ShieldCheck size={16} />, tab: 'users' },
+src/components/EliteCommandCenter.tsx:74:        { id: 'settings', label: 'Cài đặt hệ thống', icon: <Settings size={16} />, action: 'settings' },
+src/components/SpeechAssistant.tsx:16:  { id: 'formal', label: 'Trang trọng', icon: <Target size={14} /> },
+src/components/SpeechAssistant.tsx:17:  { id: 'inspiring', label: 'Truyền cảm hứng', icon: <Sparkles size={14} /> },
+src/components/SpeechAssistant.tsx:18:  { id: 'direct', label: 'Quyết liệt', icon: <Target size={14} /> },
+src/components/SpeechAssistant.tsx:19:  { id: 'emotional', label: 'Chân thành', icon: <MessageSquare size={14} /> },
+src/components/SpeechAssistant.tsx:23:  { id: 'standard', label: 'Chuẩn mực Đảng' },
+src/components/SpeechAssistant.tsx:24:  { id: 'modern', label: 'Hiện đại, đổi mới' },
+src/components/SpeechAssistant.tsx:25:  { id: 'traditional', label: 'Truyền thống' },
+src/components/SpeechAssistant.tsx:29:  { id: 'classic', label: '3 phần truyền thống' },
+src/components/SpeechAssistant.tsx:30:  { id: 'problem', label: 'Vấn đề - Giải pháp' },
+src/components/SpeechAssistant.tsx:31:  { id: 'story', label: 'Kể chuyện dẫn dắt' },
+src/components/SpeechAssistant.tsx:35:  { id: 'results', label: 'Thành tích, số liệu' },
+src/components/SpeechAssistant.tsx:36:  { id: 'people', label: 'Con người, đoàn kết' },
+src/components/SpeechAssistant.tsx:37:  { id: 'future', label: 'Tầm nhìn, nhiệm vụ' },
+src/components/SpeechAssistant.tsx:41:  { id: 'party', label: 'Cán bộ, Đảng viên' },
+src/components/SpeechAssistant.tsx:42:  { id: 'general', label: 'Quần chúng nhân dân' },
+src/components/SpeechAssistant.tsx:43:  { id: 'youth', label: 'Thanh niên' },
+src/components/SpeechAssistant.tsx:44:  { id: 'business', label: 'Doanh nghiệp' },
+src/components/SpeechAssistant.tsx:48:  { id: 'short', label: '3-5 phút' },
+src/components/SpeechAssistant.tsx:49:  { id: 'medium', label: '10-15 phút' },
+src/components/SpeechAssistant.tsx:50:  { id: 'long', label: '20+ phút' },
+src/components/SpeechAssistant.tsx:360:                          { id: 'upgradeStyle', label: 'Nâng cấp văn phong' },
+src/components/SpeechAssistant.tsx:361:                          { id: 'keepMainPoints', label: 'Bám sát ý chính' },
+src/components/SpeechAssistant.tsx:362:                          { id: 'refineLanguage', label: 'Chuẩn hóa ngôn từ' },
+src/components/SpeechAssistant.tsx:363:                          { id: 'addQuotes', label: 'Thêm trích dẫn' },
+src/components/SpeechAssistant.tsx:364:                          { id: 'useLocalContext', label: 'Lồng ghép thực tế' },
+src/components/SpeechAssistant.tsx:365:                          { id: 'useInternetSearch', label: 'Tra cứu Internet' },
+src/components/ToxicInfoDetection.tsx:46:  event_id: string;
+src/components/ToxicInfoDetection.tsx:88:  { id: 'all', label: 'Tất cả chủ đề' },
+src/components/ToxicInfoDetection.tsx:89:  { id: 'an_ninh_trat_tu', label: 'An ninh trật tự' },
+src/components/ToxicInfoDetection.tsx:90:  { id: 'tai_nan', label: 'Tai nạn' },
+src/components/ToxicInfoDetection.tsx:91:  { id: 'chay_no', label: 'Cháy nổ' },
+src/components/ToxicInfoDetection.tsx:92:  { id: 'khieu_nai_to_cao', label: 'Khiếu nại tố cáo' },
+src/components/ToxicInfoDetection.tsx:93:  { id: 'ha_tang_dan_sinh', label: 'Hạ tầng dân sinh' },
+src/components/ToxicInfoDetection.tsx:94:  { id: 'moi_truong', label: 'Môi trường' },
+src/components/ToxicInfoDetection.tsx:95:  { id: 'y_te', label: 'Y tế' },
+src/components/ToxicInfoDetection.tsx:96:  { id: 'giao_duc', label: 'Giáo dục' },
+src/components/ToxicInfoDetection.tsx:97:  { id: 'du_luan_xa_hoi', label: 'Dư luận xã hội' },
+src/components/ToxicInfoDetection.tsx:98:  { id: 'tin_gia_hoac_chua_kiem_chung', label: 'Tin giả/Chưa kiểm chứng' },
+src/components/ToxicInfoDetection.tsx:102:  { id: 'all', label: 'Tất cả mức độ' },
+src/components/ToxicInfoDetection.tsx:103:  { id: 'critical', label: 'Đặc biệt nghiêm trọng', color: 'bg-rose-600' },
+src/components/ToxicInfoDetection.tsx:104:  { id: 'high', label: 'Nghiêm trọng', color: 'bg-orange-500' },
+src/components/ToxicInfoDetection.tsx:105:  { id: 'medium', label: 'Trung bình', color: 'bg-yellow-500' },
+src/components/ToxicInfoDetection.tsx:106:  { id: 'low', label: 'Thấp', color: 'bg-blue-500' },
+src/components/ToxicInfoDetection.tsx:110:  { id: 'all', label: 'Tất cả nguồn' },
+src/components/ToxicInfoDetection.tsx:111:  { id: 'official', label: 'Chính thống' },
+src/components/ToxicInfoDetection.tsx:112:  { id: 'news_mainstream', label: 'Báo chí' },
+src/components/ToxicInfoDetection.tsx:113:  { id: 'social_public', label: 'Mạng xã hội' },
+src/components/ToxicInfoDetection.tsx:114:  { id: 'forum_blog', label: 'Diễn đàn/Blog' },
+src/components/ToxicInfoDetection.tsx:118:  { id: 'all', label: 'Tất cả trạng thái' },
+src/components/ToxicInfoDetection.tsx:119:  { id: 'verified', label: 'Đã kiểm chứng' },
+src/components/ToxicInfoDetection.tsx:120:  { id: 'partially_verified', label: 'Kiểm chứng một phần' },
+src/components/ToxicInfoDetection.tsx:121:  { id: 'unverified', label: 'Chưa kiểm chứng' },
+src/components/ToxicInfoDetection.tsx:610:                { id: 'alerts', label: 'Cảnh báo an ninh', count: scanResult?.alerts.length, color: 'bg-rose-500' },
+src/components/ToxicInfoDetection.tsx:611:                { id: 'watchlist', label: 'Đối tượng theo dõi', count: scanResult?.watchlist.length, color: 'bg-orange-500' },
+src/components/ToxicInfoDetection.tsx:612:                { id: 'ignored', label: 'Dữ liệu loại bỏ', count: null, color: 'bg-slate-400' }
+src/components/TodoAssistant.tsx:46:  onUpdate: (id: string, updates: Partial<Task>) => void;
+src/components/TodoAssistant.tsx:47:  onDelete: (id: string) => void;
+src/components/TodoAssistant.tsx:393:  onUpdate: (id: string, updates: Partial<Task>) => void; 
+src/components/TodoAssistant.tsx:394:  onDelete: (id: string) => void;
+src/components/TodoAssistant.tsx:648:      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+src/components/TodoAssistant.tsx:664:  const handleUpdateTask = (id: string, updates: Partial<Task>) => {
+src/components/TodoAssistant.tsx:674:  const handleDeleteTask = (id: string) => {
+src/components/TodoAssistant.tsx:703:              { id: 'all', label: 'Nhiệm vụ', icon: LayoutGrid },
+src/components/TodoAssistant.tsx:704:              { id: 'personal', label: 'Sổ tay cá nhân', icon: Sparkles },
+src/components/UserList.tsx:10:  uid: string;
+src/components/UserList.tsx:37:        uid: doc.id,
+src/components/NotificationPopup.tsx:11:  onDismiss?: (id: string) => void;
+src/components/DirectiveTracking.tsx:6:  id: string;
+src/components/DirectiveTracking.tsx:14:    { id: '1', title: 'Triển khai Nghị quyết số 05', deadline: '2026-04-01', status: 'in-progress' },
+src/components/DirectiveTracking.tsx:15:    { id: '2', title: 'Hoàn thành báo cáo quý I', deadline: '2026-03-25', status: 'pending' },
+src/components/TaskReminder.tsx:23:        id: Date.now().toString() + Math.random(), 
+src/components/TaskReminder.tsx:37:  const handleStatusChange = (id: string, status: 'Pending' | 'In Progress' | 'Completed') => {
+src/components/TaskReminder.tsx:42:  const handleDelete = (id: string) => {
+src/components/BulkReview.tsx:35:  id: string;
+src/components/BulkReview.tsx:70:      id: Math.random().toString(36).substr(2, 9),
+src/components/BulkReview.tsx:80:  const removeFile = (id: string) => {
+src/components/EventReminder.tsx:35:        id: newId, 
+src/components/DashboardModule.tsx:109:  updateKnowledge: (id: string, data: any) => void;
+src/components/DashboardModule.tsx:110:  deleteKnowledge: (id: string) => void;
+src/components/DashboardModule.tsx:119:  deletePendingKnowledge: (id: string) => void;
+src/components/DashboardModule.tsx:120:  updatePendingKnowledge: (id: string, name: string) => void;
+src/components/NewsScannerModule.tsx:129:  const toggleSource = (id: string) => {
+src/components/EvaluationModule.tsx:59:  id: string;
+src/components/EvaluationModule.tsx:66:  authorUid: string;
+src/components/EvaluationModule.tsx:71:  id: string;
+src/components/EvaluationModule.tsx:77:  authorUid: string;
+src/components/EvaluationModule.tsx:94:  onDelete: (id: string) => void,
+src/components/EvaluationModule.tsx:290:      const allEvals = allEvalsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Evaluation));
+src/components/EvaluationModule.tsx:422:        let loadedOfficers = snap.docs.map(d => ({ id: d.id, ...d.data() } as Officer));
+src/components/EvaluationModule.tsx:443:        const allEvals = snap.docs.map(d => ({ id: d.id, ...d.data() } as Evaluation));
+src/components/EvaluationModule.tsx:515:            authorUid: user.uid,
+src/components/EvaluationModule.tsx:543:          authorUid: user.uid,
+src/components/EvaluationModule.tsx:566:  const confirmDelete = useCallback((id: string) => {
+src/components/EvaluationModule.tsx:603:          authorUid: user.uid,
+src/components/EvaluationModule.tsx:620:  const handleDeleteOfficerClick = useCallback((id: string) => {
+src/components/ComposePro.tsx:35:  id: string;
+src/components/ComposePro.tsx:96:      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as DraftingDocument));
+src/components/ComposePro.tsx:222:      setCurrentDoc({ id: docRef.id, ...newDoc } as any);
+src/components/ComposePro.tsx:229:  const handleDeleteDoc = async (id: string, e: React.MouseEvent) => {
+src/components/ComposePro.tsx:482:                      { id: 'general', label: 'Chung' },
+src/components/ComposePro.tsx:483:                      { id: 'resolution', label: 'Nghị quyết' },
+src/components/ComposePro.tsx:484:                      { id: 'report', label: 'Báo cáo' },
+src/components/ComposePro.tsx:485:                      { id: 'proposal', label: 'Tờ trình' },
+src/components/ComposePro.tsx:527:                      { id: 'rewrite', label: 'Viết lại', icon: <Wand2 size={18} /> },
+src/components/ComposePro.tsx:528:                      { id: 'shorten', label: 'Rút gọn', icon: <ChevronLeft size={18} /> },
+src/components/ComposePro.tsx:529:                      { id: 'expand', label: 'Mở rộng', icon: <ChevronRight size={18} /> },
+src/components/ComposePro.tsx:530:                      { id: 'spellcheck', label: 'Chính tả', icon: <CheckCircle2 size={18} /> },
+src/components/ComposePro.tsx:586:                  { id: 'nghi_quyet', label: 'Nghị quyết', desc: 'Mẫu nghị quyết Đảng ủy' },
+src/components/ComposePro.tsx:587:                  { id: 'chi_thi', label: 'Chỉ thị', desc: 'Mẫu chỉ thị công tác' },
+src/components/ComposePro.tsx:588:                  { id: 'to_trinh', label: 'Tờ trình', desc: 'Mẫu tờ trình phê duyệt' },
+src/components/ComposePro.tsx:589:                  { id: 'bao_cao', label: 'Báo cáo', desc: 'Mẫu báo cáo tổng kết' },
+src/components/StrategicForecastingView.tsx:12:  { id: 'internet', label: 'Internet (Google Search)', icon: Globe },
+src/components/StrategicForecastingView.tsx:13:  { id: 'knowledge', label: 'Kho tri thức nội bộ', icon: BookOpen },
+src/components/StrategicForecastingView.tsx:14:  { id: 'news', label: 'Tin tức thời sự', icon: Newspaper }
+src/components/StrategicForecastingView.tsx:44:  const toggleSource = (id: string) => {
+src/components/StrategicForecastingView.tsx:50:  const toggleWebSource = (id: string) => {
+src/components/NotificationDropdown.tsx:10:  onMarkAsRead: (id: string) => void;
+src/components/WorkLogModule.tsx:139:        const targetLog = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as any;
+src/components/WorkLogModule.tsx:327:          setLastLog({ id: docRef.id, ...logData });
+src/components/CommandFocusMode.tsx:10:  onComplete: (id: string) => void;
+src/components/SettingsModal.tsx:121:  const handleDeleteSnapshot = async (id: string) => {
+src/components/SettingsModal.tsx:209:                { id: 'ui', label: 'Giao diện', icon: Layout, desc: 'Màu sắc & Bố cục' },
+src/components/SettingsModal.tsx:210:                { id: 'account', label: 'Tài khoản', icon: User, desc: 'Thông tin cá nhân' },
+src/components/SettingsModal.tsx:211:                { id: 'notifications', label: 'Thông báo', icon: Bell, desc: 'Âm thanh & Đẩy' },
+src/components/SettingsModal.tsx:212:                { id: 'backup', label: 'Sao lưu & Phục hồi', icon: Database, desc: 'Bảo mật dữ liệu' },
+src/components/SettingsModal.tsx:287:                        { id: 'light', label: 'Giao diện Sáng', icon: Sun, color: 'text-amber-500' },
+src/components/SettingsModal.tsx:288:                        { id: 'dark', label: 'Giao diện Tối', icon: Moon, color: 'text-indigo-500' },
+src/components/SettingsModal.tsx:289:                        { id: 'system', label: 'Theo hệ thống', icon: Monitor, color: 'text-slate-500' },
+src/components/SettingsModal.tsx:323:                        { id: 'left', label: 'Cố định bên trái', icon: AlignLeft },
+src/components/SettingsModal.tsx:324:                        { id: 'right', label: 'Cố định bên phải', icon: AlignRight },
+src/components/SettingsModal.tsx:483:                        { id: 'email', label: 'Thông báo qua Email', desc: 'Nhận cập nhật quan trọng qua hòm thư cá nhân', icon: User },
+src/components/SettingsModal.tsx:484:                        { id: 'push', label: 'Thông báo đẩy (Push)', desc: 'Nhận thông báo trực tiếp trên trình duyệt web', icon: Bell },
+src/components/SettingsModal.tsx:485:                        { id: 'sound', label: 'Âm thanh hệ thống', desc: 'Phát âm thanh khi có tin nhắn hoặc nhắc nhở', icon: Monitor },
+src/components/RoadmapModule.tsx:18:  id: string;
+src/components/RoadmapModule.tsx:30:    id: '1',
+src/components/RoadmapModule.tsx:40:    id: '2',
+src/components/RoadmapModule.tsx:50:    id: '3',
+src/components/RoadmapModule.tsx:60:    id: '4',
+src/components/RoadmapModule.tsx:70:    id: '5',
+src/components/RoadmapModule.tsx:80:    id: '6',
+src/components/MeetingReminder.tsx:33:    updateMeetings(prev => [...prev, { ...newMeeting, id: newId }]);
+src/components/MeetingReminder.tsx:47:  const deleteMeeting = (id: string) => {
+src/components/UserManagementModule.tsx:204:        const users = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+src/components/UserManagementModule.tsx:243:          id: doc.id, 
+src/components/WorkScheduleCreator.tsx:82:  id: string;
+src/components/WorkScheduleCreator.tsx:290:  onDelete: (id: string) => void;
+src/components/WorkScheduleCreator.tsx:302:  } = useSortable({ id: item.id });
+src/components/WorkScheduleCreator.tsx:450:${JSON.stringify(items.map(i => ({ id: i.id, date: i.date, time: i.time, endTime: i.endTime, content: i.content, chairperson: i.chairperson, location: i.location })), null, 2)}
+src/components/WorkScheduleCreator.tsx:500:        id: initialItem.id || Math.random().toString(36).substr(2, 9),
+src/components/WorkScheduleCreator.tsx:547:          id: item.id || (Date.now().toString() + Math.random().toString(36).substring(2, 9)),
+src/components/WorkScheduleCreator.tsx:662:          id: Math.random().toString(36).substr(2, 9),
+src/components/WorkScheduleCreator.tsx:743:      id: Math.random().toString(36).substr(2, 9),
+src/components/WorkScheduleCreator.tsx:880:  const deleteItem = useCallback((id: string) => {
+src/components/WorkScheduleCreator.tsx:981:          id: Math.random().toString(36).substr(2, 9),
+src/components/WorkScheduleCreator.tsx:1040:  id: i.id,
+src/components/WorkScheduleCreator.tsx:1669:                      { id: 'time', label: 'Thời gian', icon: Clock },
+src/components/WorkScheduleCreator.tsx:1670:                      { id: 'chairperson', label: 'Chủ trì', icon: Users },
+src/components/WorkScheduleCreator.tsx:1671:                      { id: 'location', label: 'Địa điểm', icon: MapPin },
+src/components/WorkScheduleCreator.tsx:1672:                      { id: 'participants', label: 'Thành phần', icon: Users },
+src/components/WorkScheduleCreator.tsx:1673:                      { id: 'type', label: 'Loại hình', icon: Briefcase },
+src/components/WorkScheduleCreator.tsx:1674:                      { id: 'preparingUnit', label: 'Chuẩn bị', icon: FolderOpen },
+src/components/SmartErrorCorrectionCenter.tsx:35:  id: string;
+src/components/SmartErrorCorrectionCenter.tsx:74:          id: doc.id,
+src/components/Sidebar.tsx:65:  onMarkAsRead: (id: string) => void;
+src/components/PendingKnowledgeList.tsx:10:  onReject: (id: string) => Promise<void>;
+src/components/DraftingModule.tsx:25:  toggleRule: (id: string) => void;
+src/components/DraftingModule.tsx:26:  deleteRule: (id: string) => void;
+src/components/DraftingModule.tsx:27:  updateRule: (id: string, content: string) => void;
+src/components/DraftingModule.tsx:264:  const saveEdit = (id: string) => {
+src/components/DraftingModule.tsx:308:              { id: 'compose', label: 'Soạn thảo Pro', icon: <PenTool size={14} /> },
+src/components/DraftingModule.tsx:309:              { id: 'review', label: 'Kiểm tra văn bản', icon: <FileCheck size={14} /> },
+src/components/DraftingModule.tsx:310:              { id: 'email', label: 'Soạn Email', icon: <Send size={14} /> },
+src/components/DraftingModule.tsx:311:              { id: 'speech', label: 'Bài phát biểu', icon: <Mic size={14} /> },
+src/components/DraftingModule.tsx:312:              { id: 'party-docs', label: 'Văn bản Đảng', icon: <UserCheck size={14} /> },
+src/components/ResolutionTracker.tsx:23:  id: string;
+src/components/ResolutionTracker.tsx:88:      setTasks(data.tasks.map((t: any, i: number) => ({ ...t, id: `task-${i}`, status: 'pending' })) || []);
+src/components/SmartTaskManager.tsx:138:      id: `t-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+src/components/SmartTaskManager.tsx:154:  const toggleTask = (id: string) => {
+src/components/SmartTaskManager.tsx:162:  const deleteTask = (id: string) => {
+src/components/SmartTaskManager.tsx:180:  const toggleSelectTask = (id: string) => {
+src/components/KanbanView.tsx:33:const KanbanCard = ({ task, onUpdate }: { task: Task, onUpdate: (id: string, updates: Partial<Task>) => void }) => {
+src/components/KanbanView.tsx:46:  } = useSortable({ id: task.id });
+src/components/KanbanView.tsx:164:  const columns: { id: Task['status'], label: string, color: string }[] = [
+src/components/KanbanView.tsx:165:    { id: 'Pending', label: 'Chờ thực hiện', color: 'bg-slate-100' },
+src/components/KanbanView.tsx:166:    { id: 'In Progress', label: 'Đang triển khai', color: 'bg-indigo-50' },
+src/components/KanbanView.tsx:167:    { id: 'Completed', label: 'Đã hoàn thành', color: 'bg-emerald-50' }
+src/components/KanbanView.tsx:227:  const handleUpdateTask = (id: string, updates: Partial<Task>) => {
+src/components/DocumentManagementModule.tsx:33:  id: string;
+src/components/DocumentManagementModule.tsx:42:  id: string;
+src/components/DocumentManagementModule.tsx:58:  id: string;
+src/components/DocumentManagementModule.tsx:70:    id: 'DOC-001',
+src/components/DocumentManagementModule.tsx:82:      { id: 's1', role: 'Chuyên viên soạn thảo', user: 'Nguyễn Khánh Linh', status: 'approved', timestamp: '2026-03-15T08:45:00Z' },
+src/components/DocumentManagementModule.tsx:83:      { id: 's2', role: 'Phó Chánh Văn phòng thẩm định', user: 'Lê Thị Kiều Oanh', status: 'pending', comment: 'Đang rà soát số liệu kinh tế' },
+src/components/DocumentManagementModule.tsx:84:      { id: 's3', role: 'Chánh Văn phòng phê duyệt', user: 'Nguyễn Minh Huy', status: 'pending' },
+src/components/DocumentManagementModule.tsx:85:      { id: 's4', role: 'Thường trực Đảng ủy ký ban hành', user: 'Bí thư Đảng ủy', status: 'pending' }
+src/components/DocumentManagementModule.tsx:90:    id: 'DOC-002',
+src/components/DocumentManagementModule.tsx:102:      { id: 's1', role: 'Chuyên viên soạn thảo', user: 'Lê Hồng Quân', status: 'approved', timestamp: '2026-03-18T14:30:00Z' },
+src/components/DocumentManagementModule.tsx:103:      { id: 's2', role: 'Phó Chánh Văn phòng thẩm định', user: 'Trần Quốc Bảo', status: 'approved', timestamp: '2026-03-19T10:00:00Z' },
+src/components/DocumentManagementModule.tsx:104:      { id: 's3', role: 'Chánh Văn phòng phê duyệt', user: 'Nguyễn Minh Huy', status: 'approved', timestamp: '2026-03-20T15:00:00Z' },
+src/components/DocumentManagementModule.tsx:105:      { id: 's4', role: 'Thường trực Đảng ủy ký ban hành', user: 'Bí thư Đảng ủy', status: 'approved', timestamp: '2026-03-21T09:00:00Z' }
+src/components/DocumentManagementModule.tsx:110:    id: 'DOC-003',
+src/components/DocumentManagementModule.tsx:122:      { id: 's1', role: 'Người soạn thảo', user: 'Nguyễn Minh Huy', status: 'pending' },
+src/components/DocumentManagementModule.tsx:123:      { id: 's2', role: 'Thường trực Đảng ủy xem xét', user: 'Bí thư Đảng ủy', status: 'pending' }
+src/components/DocumentManagementModule.tsx:130:  { id: 'L001', docId: 'DOC-002', docTitle: 'Công văn v/v triển khai học tập Nghị quyết Trung ương', user: 'Nguyễn Thị Thanh Loan', timestamp: '2026-03-21T09:15:00Z', type: 'seal', purpose: 'Đóng dấu ban hành' },
+src/components/DocumentManagementModule.tsx:131:  { id: 'L002', docId: 'DOC-002', docTitle: 'Công văn v/v triển khai học tập Nghị quyết Trung ương', user: 'Bí thư Đảng ủy', timestamp: '2026-03-21T09:00:00Z', type: 'signature', purpose: 'Ký ban hành' }
+src/components/DocumentManagementModule.tsx:230:            { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
+src/components/DocumentManagementModule.tsx:231:            { id: 'documents', label: 'Văn bản', icon: Files },
+src/components/DocumentManagementModule.tsx:232:            { id: 'logs', label: 'Nhật ký', icon: Activity },
+src/components/DocumentManagementModule.tsx:233:            { id: 'local', label: 'Laptop Link', icon: HardDrive }
+src/components/PartyDocumentChecker.tsx:35:  id: string;
+src/components/TeamChatModule.tsx:12:  id: string;
+src/components/TeamChatModule.tsx:86:        messagesMap.set(doc.id, { id: doc.id, ...data, recipientId: data.recipientId || null } as TeamMessage);
+src/components/TeamChatModule.tsx:96:        messagesMap.set(doc.id, { id: doc.id, ...data, recipientId: data.recipientId || null } as TeamMessage);

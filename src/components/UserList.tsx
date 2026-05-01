@@ -28,10 +28,8 @@ export const UserList: React.FC<UserListProps> = ({ onSelectUser, selectedUser, 
     let q;
     if (isSuperAdmin) {
       q = query(collection(db, 'users'));
-    } else if (isAdmin) {
-      q = query(collection(db, 'users'), where('unitId', '==', unitId || ''));
     } else {
-      q = query(collection(db, 'users_public'), where('unitId', '==', unitId || ''));
+      q = query(collection(db, 'users'), where('unitId', '==', unitId || ''));
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -41,7 +39,7 @@ export const UserList: React.FC<UserListProps> = ({ onSelectUser, selectedUser, 
       })) as User[];
       setUsers(loadedUsers);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, isAdmin ? 'users' : 'users_public');
+      handleFirestoreError(error, OperationType.GET, 'users');
     });
     return () => unsubscribe();
   }, [unitId, isSuperAdmin, isAdmin]);
@@ -101,9 +99,9 @@ export const UserList: React.FC<UserListProps> = ({ onSelectUser, selectedUser, 
           </span>
         </h4>
         <div className="space-y-0.5">
-          {filteredUsers.map(user => (
+          {filteredUsers.map((user, idx) => (
             <button
-              key={user.uid}
+              key={`${user.uid}-${idx}`}
               onClick={() => onSelectUser?.(user)}
               title={user.isOnline ? 'Đang trực tuyến' : getFullLastSeen(user.lastSeen)}
               className={cn(

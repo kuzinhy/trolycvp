@@ -69,7 +69,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           // Fetch user profile from Firestore
           const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
+          let userDoc;
+          try {
+            userDoc = await getDoc(userDocRef);
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+            handleFirestoreError(error, OperationType.GET, `users/${currentUser.uid}`);
+            throw error; // stop execution if we can't even get
+          }
           
           if (userDoc.exists()) {
             const data = userDoc.data();
@@ -86,10 +93,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastLogin: data.lastLogin
             };
             setRole(mappedUserInfo.role);
-            setUnitId(mappedUserInfo.departmentId || null);
+            setUnitId(mappedUserInfo.unitId || mappedUserInfo.departmentId || null);
             setUserInfo(mappedUserInfo);
             
-            const targetUnitId = mappedUserInfo.departmentId || mappedUserInfo.unitId;
+            const targetUnitId = mappedUserInfo.unitId || mappedUserInfo.departmentId;
             if (targetUnitId) {
               const unitDoc = await getDoc(doc(db, 'units', targetUnitId));
               if (unitDoc.exists()) {
@@ -98,26 +105,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } else {
             // Create initial user profile if it doesn't exist
-            const initialRole: UserRole = currentUser.email === 'nguyenhuy.thudaumot@gmail.com' ? 'super_admin' : 'user';
+            const isFirstAdmin = currentUser.email === 'nguyenhuy.thudaumot@gmail.com';
+            const initialRole: UserRole = isFirstAdmin ? 'super_admin' : 'user';
             const initialData = {
               uid: currentUser.uid,
               id: currentUser.uid,
-              email: currentUser.email,
-              displayName: currentUser.displayName,
-              photoURL: currentUser.photoURL,
+              email: currentUser.email || '',
+              displayName: currentUser.displayName || '',
+              photoURL: currentUser.photoURL || null,
               role: initialRole,
-              departmentId: '',
-              unitId: '',
+              unitId: 'vp-dang-uy', // Mặc định vào VP Đảng ủy để thấy tri thức chung
+              departmentId: 'vp-dang-uy',
               createdAt: serverTimestamp(),
-              lastLogin: serverTimestamp()
+              lastLogin: serverTimestamp(),
+              updatedAt: serverTimestamp()
             };
-            await setDoc(userDocRef, initialData);
+            try {
+              await setDoc(userDocRef, initialData);
+            } catch (error) {
+              console.error("Error creating user data:", error);
+              handleFirestoreError(error, OperationType.WRITE, `users/${currentUser.uid}`);
+            }
             setRole(initialRole);
+            setUnitId(initialData.unitId);
             setUserInfo(initialData as UserInfo);
           }
         } catch (error) {
-          console.error("Error fetching user data:", error);
-          handleFirestoreError(error, OperationType.GET, `users/${currentUser.uid}`);
+          console.error("Error setting up user session:", error);
         }
       } else {
         setRole(null);

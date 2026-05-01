@@ -13,6 +13,7 @@ const SmartDataExtractor = lazy(() => import('./SmartDataExtractor').then(m => (
 const SmartTranslator = lazy(() => import('./SmartTranslator').then(m => ({ default: m.SmartTranslator })));
 const DocumentReaderModule = lazy(() => import('./DocumentReaderModule').then(m => ({ default: m.DocumentReaderModule })));
 const SpeechAssistant = lazy(() => import('./SpeechAssistant').then(m => ({ default: m.SpeechAssistant })));
+const KnowledgeLinker = lazy(() => import('./KnowledgeLinker').then(m => ({ default: m.KnowledgeLinker })));
 
 interface UtilitiesModuleProps {
   initialTab?: TabId;
@@ -36,7 +37,7 @@ interface UtilitiesModuleProps {
   knowledge?: any[];
 }
 
-type TabId = 'reporting' | 'meeting' | 'ai-report' | 'drafting' | 'speech' | 'translator' | 'data-extractor' | 'pdf-reader' | 'english' | 'bulk-review';
+type TabId = 'reporting' | 'meeting' | 'ai-report' | 'drafting' | 'speech' | 'translator' | 'data-extractor' | 'pdf-reader' | 'english' | 'bulk-review' | 'knowledge-linker';
 
 interface TabItem {
   id: TabId;
@@ -52,6 +53,7 @@ const INITIAL_TABS: TabItem[] = [
   { id: 'meeting', label: 'Trợ lý họp thông minh', color: 'text-indigo-600' },
   { id: 'data-extractor', label: 'Trích xuất Dữ liệu AI', color: 'text-amber-600' },
   { id: 'pdf-reader', label: 'Đọc tài liệu', color: 'text-rose-600' },
+  { id: 'knowledge-linker', label: 'Bản đồ Tri thức', color: 'text-fuchsia-600' }
 ];
 
 export const UtilitiesModule: React.FC<UtilitiesModuleProps> = ({ initialTab, initialMainTab, navigationParams, hideTabs, draftingProps, speechProps, tasks = [], knowledge = [] }) => {
@@ -213,6 +215,16 @@ export const UtilitiesModule: React.FC<UtilitiesModuleProps> = ({ initialTab, in
             exit={{ opacity: 0, x: -20 }}
           >
             <SpeechAssistant aiKnowledge={knowledge} />
+          </motion.div>
+        )}
+        {activeTab === 'knowledge-linker' && (
+          <motion.div
+            key="knowledge-linker"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <KnowledgeLinker knowledge={knowledge} />
           </motion.div>
         )}
         </Suspense>

@@ -45,32 +45,17 @@ export const TeamChatModule: React.FC<TeamChatModuleProps> = ({ isOpen, onClose 
   }, [input]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !user) return;
 
-    const q = query(
-      collection(db, 'team_messages'),
-      where('unitId', 'in', [unitId || '', 'system']),
-      limit(500)
-    );
+    const messagesMap = new Map<string, TeamMessage>();
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const loadedMessages = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          recipientId: data.recipientId || null
-        }
-      }) as TeamMessage[];
-      
-      // Filter messages on the client: 
-      // Show group messages (unitId matches or is system) AND private messages (sender or recipient is current user)
-      const visibleMessages = loadedMessages.filter(msg => 
+    const updateMessages = () => {
+      const allMessages = Array.from(messagesMap.values());
+      const visibleMessages = allMessages.filter(msg => 
         (msg.unitId === unitId || msg.unitId === 'system') || 
-        (msg.senderId === user?.uid || msg.recipientId === user?.uid)
+        (msg.senderId === user.uid || msg.recipientId === user.uid)
       );
       
-      // Sort in memory to avoid requiring composite indexes
       visibleMessages.sort((a, b) => {
         const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
         const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
@@ -81,11 +66,44 @@ export const TeamChatModule: React.FC<TeamChatModuleProps> = ({ isOpen, onClose 
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
+    };
+
+    const qGroup = query(
+      collection(db, 'team_messages'),
+      where('unitId', 'in', [unitId || '', 'system']),
+      limit(500)
+    );
+
+    const qPrivate = query(
+      collection(db, 'team_messages'),
+      where('recipientId', '==', user.uid),
+      limit(500)
+    );
+
+    const unsubscribeGroup = onSnapshot(qGroup, (snapshot) => {
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        messagesMap.set(doc.id, { id: doc.id, ...data, recipientId: data.recipientId || null } as TeamMessage);
+      });
+      updateMessages();
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'team_messages');
     });
 
-    return () => unsubscribe();
+    const unsubscribePrivate = onSnapshot(qPrivate, (snapshot) => {
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        messagesMap.set(doc.id, { id: doc.id, ...data, recipientId: data.recipientId || null } as TeamMessage);
+      });
+      updateMessages();
+    }, (error) => {
+      console.warn("Private messages listener error:", error);
+    });
+
+    return () => {
+      unsubscribeGroup();
+      unsubscribePrivate();
+    };
   }, [unitId, isOpen, user?.uid]);
 
   const filteredMessages = selectedUser 
@@ -256,7 +274,7 @@ export const TeamChatModule: React.FC<TeamChatModuleProps> = ({ isOpen, onClose 
                         : '';
 
                       return (
-                        <div key={msg.id} className={cn(
+                        <div key={`${msg.id}-${index}`} className={cn(
                           "flex gap-3 group",
                           isMe ? "flex-row-reverse" : "flex-row",
                           !showAvatar ? "mt-[-16px]" : ""

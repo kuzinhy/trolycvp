@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export type AppTab = 'chat' | 'dashboard' | 'knowledge' | 'tracking' | 'calendar' | 'tasks' | 'drafting' | 'users' | 'speech' | 'forecasting' | 'utilities' | 'history' | 'access-history' | 'drafting-pro' | 'invitation' | 'review' | 'email-assistant' | 'genz' | 'work-log' | 'documents' | 'drafting-pro-review' | 'drafting-pro-speech' | 'reporting' | 'document-assignment' | 'strategic' | 'party-advisory' | 'evaluation' | 'error-center' | 'assignment-tracking' | 'news' | 'resolution-tracking' | 'todo-assistant' | 'roadmap';
+export type AppTab = 'chat' | 'dashboard' | 'knowledge' | 'tracking' | 'calendar' | 'tasks' | 'drafting' | 'users' | 'speech' | 'forecasting' | 'utilities' | 'history' | 'access-history' | 'drafting-pro' | 'invitation' | 'review' | 'email-assistant' | 'genz' | 'work-log' | 'documents' | 'drafting-pro-review' | 'drafting-pro-speech' | 'reporting' | 'document-assignment' | 'strategic' | 'party-advisory' | 'evaluation' | 'error-center' | 'assignment-tracking' | 'news' | 'resolution-tracking' | 'todo-assistant' | 'roadmap' | 'task-journal';
 
 export function useAppNavigation() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);

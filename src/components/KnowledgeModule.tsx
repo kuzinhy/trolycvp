@@ -534,7 +534,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
                     >
                       {filteredKnowledge.map((item, index) => (
                         <KnowledgeItem 
-                          key={item.id || `knowledge-list-${index}`}
+                          key={item.id ? `knowledge-list-${item.id}` : `knowledge-list-idx-${index}`}
                           item={item}
                           isEditing={editingIndex === index}
                           onEdit={() => setSelectedKnowledge(item)}
@@ -549,7 +549,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {filteredKnowledge.map((item, index) => (
                         <motion.div
-                          key={item.id || `knowledge-grid-${index}`}
+                          key={item.id ? `knowledge-grid-${item.id}` : `knowledge-grid-idx-${index}`}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                           className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"

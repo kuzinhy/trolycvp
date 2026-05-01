@@ -74,27 +74,27 @@ const NavButton = memo(({ active, onClick, icon, label, collapsed, badge }: { ac
     onClick={onClick}
     title={collapsed ? label : ""}
     className={cn(
-      "w-full flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-300 font-bold text-sm group relative overflow-hidden",
+      "w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-xs group relative overflow-hidden",
       active 
-        ? "bg-blue-600 text-white shadow-[0_10px_20px_rgba(37,99,235,0.2)] border border-blue-600" 
-        : "text-slate-500 hover:bg-blue-50 hover:text-blue-600",
+        ? "bg-slate-900 text-white shadow-lg border border-slate-950" 
+        : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
       collapsed && "justify-center px-0"
     )}
   >
-    <div className="flex items-center gap-3 relative z-10">
+    <div className="flex items-center gap-3.5 relative z-10">
       <div className={cn(
         "transition-all duration-300 shrink-0",
-        active ? "text-white" : "text-slate-400 group-hover:text-blue-600 group-hover:scale-110"
+        active ? "text-white" : "text-slate-400 group-hover:text-slate-900"
       )}>
         {icon}
       </div>
-      {!collapsed && <span className={cn("tracking-tight truncate", active ? "font-black" : "font-bold")}>{label}</span>}
+      {!collapsed && <span className={cn("tracking-tight truncate", active ? "font-bold" : "font-medium")}>{label}</span>}
     </div>
     
     {!collapsed && badge && (
       <span className={cn(
-        "px-2 py-0.5 text-[8px] font-black uppercase rounded-md tracking-tighter relative z-10",
-        active ? "bg-white text-blue-600" : "bg-blue-600 text-white"
+        "px-2 py-0.5 text-[9px] font-black uppercase rounded-md tracking-tighter relative z-10",
+        active ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"
       )}>
         {badge}
       </span>
@@ -107,8 +107,8 @@ const NavButton = memo(({ active, onClick, icon, label, collapsed, badge }: { ac
     {active && !collapsed && (
       <motion.div 
         layoutId="sidebar-active-indicator"
-        className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.8)]"
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-lg"
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
       />
     )}
   </button>
@@ -141,7 +141,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
     'ai-assistant': true,
     'drafting-pro': currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'conclusion-creator',
     'management': currentTab === 'dashboard' || currentTab === 'resolution-tracking' || currentTab === 'evaluation',
-    'operations': currentTab === 'party-advisory' || currentTab === 'news' || currentTab === 'forecasting' || currentTab === 'knowledge' || currentTab === 'strategic'
+    'operations': currentTab === 'party-advisory' || currentTab === 'news' || currentTab === 'forecasting' || currentTab === 'knowledge' || currentTab === 'strategic',
+    'admin': currentTab === 'users' || currentTab === 'access-history' || currentTab === 'system-updates'
   });
 
   const toggleSection = (section: string) => {
@@ -400,6 +401,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       collapsed={isCollapsed}
                     />
                   )}
+                  {(!searchTerm || "sổ tay nhiệm vụ".includes(searchTerm.toLowerCase())) && (
+                    <NavButton 
+                      active={currentTab === 'task-journal'} 
+                      onClick={() => onNavigate('task-journal')} 
+                      icon={<FileText size={16} />} 
+                      label="Sổ tay Thống kê" 
+                      collapsed={isCollapsed}
+                    />
+                  )}
                   {(!searchTerm || "theo dõi phân công".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
                       active={currentTab === 'assignment-tracking'} 
@@ -515,6 +525,79 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       onClick={() => onNavigate('knowledge')} 
                       icon={<Database size={16} />} 
                       label="Knowledge Core" 
+                      collapsed={isCollapsed}
+                    />
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Nhóm Quản trị Hệ thống (Admin Only) */}
+        {isAdmin && (!searchTerm || [
+          "quản trị hệ thống", "quản lý quân số", "lịch sử truy cập", "cập nhật hệ thống"
+        ].some(s => s.includes(searchTerm.toLowerCase()))) && (
+          <div className="py-1">
+            <button 
+              onClick={() => toggleSection('admin')}
+              className={cn(
+                "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-300 group",
+                (expandedSections['admin'] || searchTerm) ? "bg-rose-50/80 text-rose-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                isCollapsed && "justify-center px-0"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "transition-all duration-300 shrink-0",
+                  (expandedSections['admin'] || searchTerm) ? "text-rose-600" : "text-slate-400 group-hover:text-slate-600"
+                )}>
+                  <ShieldCheck size={18} />
+                </div>
+                {!isCollapsed && <span className="font-bold tracking-tight truncate text-sm">Quản trị Hệ thống</span>}
+              </div>
+              {!isCollapsed && (
+                <div className={cn(
+                  "transition-transform duration-300",
+                  (expandedSections['admin'] || searchTerm) ? "rotate-180" : ""
+                )}>
+                  <ChevronDown size={14} className="text-slate-400" />
+                </div>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {(expandedSections['admin'] || searchTerm) && !isCollapsed && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden mt-1 ml-4 border-l border-slate-200/60 space-y-1 pl-2"
+                >
+                  {(!searchTerm || "quản lý quân số".includes(searchTerm.toLowerCase())) && (
+                    <NavButton 
+                      active={currentTab === 'users'} 
+                      onClick={() => onNavigate('users')} 
+                      icon={<Users size={16} />} 
+                      label="Quản lý quân số" 
+                      collapsed={isCollapsed}
+                    />
+                  )}
+                  {(!searchTerm || "lịch sử truy cập".includes(searchTerm.toLowerCase())) && (
+                    <NavButton 
+                      active={currentTab === 'access-history'} 
+                      onClick={() => onNavigate('access-history')} 
+                      icon={<History size={16} />} 
+                      label="Lịch sử truy cập" 
+                      collapsed={isCollapsed}
+                    />
+                  )}
+                  {(!searchTerm || "cập nhật hệ thống".includes(searchTerm.toLowerCase())) && (
+                    <NavButton 
+                      active={currentTab === 'system-updates'} 
+                      onClick={() => onNavigate('system-updates')} 
+                      icon={<Wrench size={16} />} 
+                      label="Cập nhật hệ thống" 
                       collapsed={isCollapsed}
                     />
                   )}

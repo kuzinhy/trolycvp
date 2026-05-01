@@ -29,13 +29,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setNotificationSettings
 }) => {
   const { preferences, updatePreference } = useUserPreferences();
-  const { unitId } = useAuth();
+  const { unitId, updateUserProfile, userInfo } = useAuth();
   const [activeTab, setActiveTab] = useState<'ui' | 'account' | 'notifications' | 'backup'>('ui');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [snapshots, setSnapshots] = useState<any[]>([]);
   const [isLoadingSnapshots, setIsLoadingSnapshots] = useState(false);
   const [snapshotLabel, setSnapshotLabel] = useState('');
+  
+  // Profile editing state
+  const [displayName, setDisplayName] = useState(userInfo?.displayName || user?.displayName || '');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  // Sync display name when user info changes
+  React.useEffect(() => {
+    if (userInfo?.displayName || user?.displayName) {
+      setDisplayName(userInfo?.displayName || user?.displayName || '');
+    }
+  }, [userInfo, user]);
+
+  const handleUpdateProfile = async () => {
+    if (!displayName.trim()) {
+      showToast("Tên không được để trống", "error");
+      return;
+    }
+    
+    setIsUpdatingProfile(true);
+    try {
+      await updateUserProfile({ displayName: displayName.trim() });
+      showToast("Đã cập nhật thông tin cá nhân thành công!", "success");
+    } catch (error) {
+      console.error("Update profile error:", error);
+      showToast("Lỗi khi cập nhật thông tin", "error");
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
 
   const fetchSnapshots = async () => {
     if (!user) return;
@@ -376,7 +405,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 gap-6">
+                    {/* Chỉnh sửa thông tin cá nhân */}
+                    <div className="p-8 bg-white dark:bg-slate-900 border-2 border-[hsl(var(--border))] rounded-[3rem] space-y-6 shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600">
+                          <User className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h5 className="font-black text-sm uppercase tracking-widest">Thông tin cá nhân</h5>
+                          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Cập nhật danh tính của bạn trên hệ thống</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))] ml-1">Họ và tên</label>
+                          <div className="flex gap-3">
+                            <input 
+                              type="text"
+                              placeholder="Nhập họ tên đầy đủ"
+                              value={displayName}
+                              onChange={(e) => setDisplayName(e.target.value)}
+                              className="flex-1 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[1.5rem] text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            />
+                            <button
+                              onClick={handleUpdateProfile}
+                              disabled={isUpdatingProfile || displayName === (userInfo?.displayName || user?.displayName)}
+                              className="px-8 bg-blue-600 text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest hover:bg-blue-500 disabled:opacity-50 shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                            >
+                              {isUpdatingProfile ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                              Lưu thay đổi
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-800/30">
+                          <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+                          <p className="text-[10px] text-amber-800/70 dark:text-amber-400/70 font-medium leading-tight">
+                            Tên hiển thị này sẽ xuất hiện trên các văn bản, báo cáo và hệ thống chỉ huy khi bạn thực hiện các thao tác tham mưu.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => {
                         onReloadKnowledge();

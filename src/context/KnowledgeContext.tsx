@@ -49,6 +49,9 @@ interface KnowledgeContextType {
   isAddingManual: boolean;
   isLearning: boolean;
   isSummarizing: boolean;
+  isAuditing: boolean;
+  isSyncingUnified: boolean;
+  isDeletingAll: boolean;
   summarizedContent: string | null;
   searchQuery: string;
   filterCategory: string;
@@ -383,16 +386,19 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!user || !currentUnitId) return;
     if (!window.confirm("Bạn có chắc chắn muốn xóa TOÀN BỘ tri thức?")) return;
 
-    setAiKnowledge([]);
+    setIsDeletingAll(true);
     try {
       const q = query(collection(db, 'party_documents'), where('unitId', '==', currentUnitId));
       const snapshot = await getDocs(q);
       const batch = writeBatch(db);
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
+      setAiKnowledge([]);
       showToast("Đã xóa toàn bộ tri thức thành công", "success");
     } catch (error) {
       showToast("Lỗi khi xóa toàn bộ tri thức", "error");
+    } finally {
+      setIsDeletingAll(false);
     }
   }, [user, unitId, isSuperAdmin, showToast]);
 
@@ -457,21 +463,55 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [user, unitId, discardAIItems, loadKnowledge, showToast]);
   const auditAndOptimizeKnowledge = useCallback(async () => {
     setIsAuditing(true);
+    showToast("Đang rà soát và tối ưu hóa kho tri thức...", "info");
     try {
+      // Find items without embeddings
       const itemsToAudit = aiKnowledge.filter(k => !k.embedding);
-      if (itemsToAudit.length === 0) return { optimizedCount: 0, issuesFound: 0 };
+      
+      // Also find duplicates
+      const titles = new Set();
+      const duplicates: string[] = [];
+      aiKnowledge.forEach(k => {
+        if (titles.has(k.title)) duplicates.push(k.id);
+        else titles.add(k.title);
+      });
+
+      if (itemsToAudit.length === 0 && duplicates.length === 0) {
+        showToast("Kho tri thức đã được tối ưu hóa hoàn toàn.", "success");
+        return { optimizedCount: 0, issuesFound: 0 };
+      }
       
       let optimizedCount = 0;
+      
+      // Fix missing embeddings
       for (const item of itemsToAudit) {
-        const embedding = await generateEmbedding(item.content);
-        await updateDoc(doc(db, 'party_documents', item.id), { embedding });
-        optimizedCount++;
+        try {
+          const embedding = await generateEmbedding(item.content);
+          await updateDoc(doc(db, 'party_documents', item.id), { embedding });
+          optimizedCount++;
+        } catch (e) {
+          console.error(`Error auditing item ${item.id}:`, e);
+        }
       }
-      return { optimizedCount, issuesFound: itemsToAudit.length };
+
+      // Remove duplicates if any
+      if (duplicates.length > 0) {
+        const batch = writeBatch(db);
+        duplicates.forEach(id => batch.delete(doc(db, 'party_documents', id)));
+        await batch.commit();
+      }
+
+      const totalFixed = optimizedCount + duplicates.length;
+      showToast(`Đã tối ưu hóa xong: Sửa ${optimizedCount} mục, xóa ${duplicates.length} mục trùng lặp.`, "success");
+      
+      return { optimizedCount, issuesFound: totalFixed };
+    } catch (err) {
+      showToast("Lỗi khi rà soát tri thức.", "error");
+      return { optimizedCount: 0, issuesFound: 0 };
     } finally {
       setIsAuditing(false);
     }
-  }, [aiKnowledge]);
+  }, [aiKnowledge, showToast]);
 
   const value = useMemo(() => ({
     aiKnowledge, pendingKnowledge, isMemoryLoading, isPendingLoading,
@@ -484,6 +524,9 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     handleReorderKnowledge, smartLearnFromText, learnFromFile,
     smartSummarizeKnowledge, deleteAllKnowledge, syncUnifiedStrategicKnowledge,
     auditAndOptimizeKnowledge,
+    isAuditing,
+    isSyncingUnified,
+    isDeletingAll,
     pendingAIItems, isReviewingAI, setIsReviewingAI, confirmAIItems, discardAIItems,
     formState, setFormState
   }), [
@@ -495,6 +538,9 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     handleReorderKnowledge, smartLearnFromText, learnFromFile,
     smartSummarizeKnowledge, deleteAllKnowledge, syncUnifiedStrategicKnowledge,
     auditAndOptimizeKnowledge,
+    isAuditing,
+    isSyncingUnified,
+    isDeletingAll,
     pendingAIItems, isReviewingAI, confirmAIItems, discardAIItems,
     formState
   ]);

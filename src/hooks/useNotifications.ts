@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Notification } from '../constants';
 import { db, auth } from '../lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, writeBatch, where, arrayUnion, getDocFromServer } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, writeBatch, where, arrayUnion, getDocFromServer, limit } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
 
@@ -40,26 +40,98 @@ export function useNotifications() {
   });
   const [ambientNotification, setAmbientNotification] = useState<{title: string, description: string} | null>(null);
   const lastProcessedId = useRef<string | null>(null);
+  const lastProcessedMessageId = useRef<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem('notification_settings', JSON.stringify(settings));
   }, [settings]);
 
-  // Test connection on mount - REMOVED (already handled in firebase.ts)
-  /*
   useEffect(() => {
-    async function testConnection() {
-      try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
-      } catch (error) {
-        if(error instanceof Error && error.message.includes('the client is offline')) {
-          console.error("Please check your Firebase configuration. The client is offline.");
+    if (!user || loading) return;
+
+    const qGroup = query(
+      collection(db, 'team_messages'),
+      where('unitId', 'in', [unitId || '', 'system']),
+      limit(5)
+    );
+
+    const qPrivate = query(
+      collection(db, 'team_messages'),
+      where('recipientId', '==', user.uid),
+      limit(5)
+    );
+
+    const unsubscribeGroup = onSnapshot(qGroup, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const data = change.doc.data();
+          const isMe = data.senderId === user.uid;
+          
+          const isVeryRecent = data.createdAt && (Date.now() - data.createdAt.toMillis()) < 10000;
+          
+          if (!isMe && isVeryRecent && change.doc.id !== lastProcessedMessageId.current) {
+            lastProcessedMessageId.current = change.doc.id;
+            
+            // Trigger ambient notification for chat
+            if (settings.ambientEnabled) {
+              setAmbientNotification({ 
+                title: `💬 Tin nhắn nhóm từ ${data.senderName}`, 
+                description: data.text 
+              });
+              setTimeout(() => setAmbientNotification(null), 8000);
+            }
+            
+            // Play sound if enabled
+            if (settings.soundEnabled) {
+              const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+              audio.volume = 0.4;
+              audio.play().catch(() => {});
+            }
+          }
         }
-      }
-    }
-    testConnection();
-  }, []);
-  */
+      });
+    }, (error) => {
+      console.warn("Group chat listener error:", error);
+    });
+
+    const unsubscribePrivate = onSnapshot(qPrivate, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const data = change.doc.data();
+          const isMe = data.senderId === user.uid;
+          
+          const isVeryRecent = data.createdAt && (Date.now() - data.createdAt.toMillis()) < 10000;
+          
+          if (!isMe && isVeryRecent && change.doc.id !== lastProcessedMessageId.current) {
+            lastProcessedMessageId.current = change.doc.id;
+            
+            // Trigger ambient notification for chat
+            if (settings.ambientEnabled) {
+              setAmbientNotification({ 
+                title: `💬 Tin nhắn riêng từ ${data.senderName}`, 
+                description: data.text 
+              });
+              setTimeout(() => setAmbientNotification(null), 8000);
+            }
+            
+            // Play sound if enabled
+            if (settings.soundEnabled) {
+              const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+              audio.volume = 0.4;
+              audio.play().catch(() => {});
+            }
+          }
+        }
+      });
+    }, (error) => {
+      console.warn("Private chat listener error:", error);
+    });
+
+    return () => {
+      unsubscribeGroup();
+      unsubscribePrivate();
+    };
+  }, [user, unitId, loading, settings.ambientEnabled, settings.soundEnabled]);
 
   useEffect(() => {
     if (!user || loading) {

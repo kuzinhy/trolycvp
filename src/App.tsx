@@ -27,7 +27,7 @@ const Sidebar = lazy(() => import('./components/Sidebar').then(m => ({ default: 
 const Header = lazy(() => import('./components/Header').then(m => ({ default: m.Header })));
 const SkillTipsBanner = lazy(() => import('./components/SkillTipsBanner').then(m => ({ default: m.SkillTipsBanner })));
 const AdminLoginNotifier = lazy(() => import('./components/AdminLoginNotifier').then(m => ({ default: m.AdminLoginNotifier })));
-const Login = lazy(() => import('./components/Login').then(m => ({ default: m.Login })));
+const Login = lazy(() => import('./components/Login'));
 const EmailVerification = lazy(() => import('./components/EmailVerification').then(m => ({ default: m.EmailVerification })));
 const AmbientNotification = lazy(() => import('./components/AmbientNotification').then(m => ({ default: m.AmbientNotification })));
 const ConfirmationModal = lazy(() => import('./components/ui/ConfirmationModal').then(m => ({ default: m.ConfirmationModal })));
@@ -81,16 +81,12 @@ import { useKnowledgeContext } from './context/KnowledgeContext';
 import { useChatContext } from './context/ChatContext';
 import { useDashboardContext } from './context/DashboardContext';
 
-import { seedEvaluationData } from './lib/seed-evaluation';
-
 import { TabContent } from './components/TabContent';
 
 import { UserPreferencesProvider } from './context/UserPreferencesContext';
 
 export default function App() {
   useEffect(() => {
-    seedEvaluationData().catch(console.error);
-    
     // Prefetch important modules
     import('./components/KnowledgeModule');
     import('./components/DashboardModule');
@@ -331,7 +327,7 @@ function AuthenticatedApp() {
 
         <div className={cn(
           "flex-1 overflow-y-auto relative custom-scrollbar",
-          preferences.isCompactMode ? "p-2" : "p-0"
+          preferences.isCompactMode ? "p-4" : "p-6"
         )}>
           <Suspense fallback={
             <div className="flex items-center justify-center h-full">

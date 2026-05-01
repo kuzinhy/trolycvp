@@ -9,6 +9,7 @@ import multer from "multer";
 import session from "express-session";
 import admin from "firebase-admin";
 const require = createRequire(import.meta.url);
+const webpush = require("web-push");
 const pdfParse = require('pdf-parse');
 import mammoth from 'mammoth';
 import Tesseract from 'tesseract.js';
@@ -35,6 +36,18 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY_JSON) {
   }
 }
 const dbAdmin = admin.apps.length ? admin.firestore() : null;
+
+// Configure web-push
+const vapidKeys = {
+  publicKey: process.env.VAPID_PUBLIC_KEY || "BF0hkAud_aIn48KRDyzW3E5dGnJaF9rVh7lsiYa-zU69TdcPQFSAIRcXcWK5zM3UB8MAZbX44aYboDrLqJfBjiQ",
+  privateKey: process.env.VAPID_PRIVATE_KEY || "UIyjoTNba8B0y4atgaxlNPiLZasOFVojrJRhKqXRknc"
+};
+
+webpush.setVapidDetails(
+  "mailto:nguyenhuy.thudaumot@gmail.com",
+  vapidKeys.publicKey,
+  vapidKeys.privateKey
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -767,6 +780,89 @@ app.get("/api/github/tasks", async (req, res) => {
   } catch (error: any) {
     console.error("GitHub API error:", error.message);
     res.status(500).json({ error: "Lỗi khi tải tasks từ GitHub" });
+  }
+});
+
+// --- PUSH NOTIFICATIONS API ---
+
+app.get("/api/notifications/vapid-key", (req, res) => {
+  res.json({ publicKey: vapidKeys.publicKey });
+});
+
+app.post("/api/notifications/subscribe", async (req, res) => {
+  const subscription = req.body;
+  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+  const GITHUB_OWNER = process.env.GITHUB_OWNER || "kuzinhy";
+  const GITHUB_REPO = process.env.GITHUB_REPO || "TroLyBiThu";
+  const GITHUB_BRANCH = process.env.GITHUB_BRANCH || "src";
+
+  if (!GITHUB_TOKEN) {
+    console.warn("[PUSH] GITHUB_TOKEN not configured. Subscriptions won't be saved permanently.");
+    return res.status(200).json({ success: true, message: "Subscription received (volatile mode)" });
+  }
+
+  try {
+    await modifyGitHubJsonFile(GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH, "data/subscriptions.json", GITHUB_TOKEN,
+      "Add new push subscription",
+      (data) => {
+        let subs = Array.isArray(data) ? data : [];
+        // Avoid duplicates
+        const exists = subs.find((s: any) => s.endpoint === subscription.endpoint);
+        if (!exists) {
+          subs.push(subscription);
+        }
+        return subs;
+      },
+      true
+    );
+    res.status(201).json({ success: true });
+  } catch (error: any) {
+    console.error("Error saving subscription:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/notifications/send", async (req, res) => {
+  const { title, body, url } = req.body;
+  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+  const GITHUB_OWNER = process.env.GITHUB_OWNER || "kuzinhy";
+  const GITHUB_REPO = process.env.GITHUB_REPO || "TroLyBiThu";
+  const GITHUB_BRANCH = process.env.GITHUB_BRANCH || "src";
+
+  if (!GITHUB_TOKEN) {
+    console.warn("[PUSH] GITHUB_TOKEN not configured. Cannot fetch subscriptions to send.");
+    return res.status(200).json({ success: false, error: "GITHUB_TOKEN missing." });
+  }
+
+  try {
+    const subscriptions = await fetchGitHubJsonFile(GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH, "data/subscriptions.json", GITHUB_TOKEN);
+    
+    if (!subscriptions || !Array.isArray(subscriptions)) {
+      return res.json({ success: true, message: "No subscriptions found." });
+    }
+
+    const payload = JSON.stringify({ title, body, url });
+    
+    const notifications = subscriptions.map((sub: any) => {
+      return webpush.sendNotification(sub, payload).catch(async (err: any) => {
+        console.error("Push failed for endpoint:", sub.endpoint, err.statusCode);
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          // Subscription expired or no longer valid, we should remove it
+          console.log("Removing invalid subscription:", sub.endpoint);
+          await modifyGitHubJsonFile(GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH, "data/subscriptions.json", GITHUB_TOKEN,
+            "Remove invalid subscription",
+            (data) => (Array.isArray(data) ? data.filter((s: any) => s.endpoint !== sub.endpoint) : []),
+            true
+          );
+        }
+      });
+    });
+
+    await Promise.all(notifications);
+    res.json({ success: true, count: subscriptions.length });
+  } catch (error: any) {
+    console.error("Error sending notifications:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 

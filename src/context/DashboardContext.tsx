@@ -153,7 +153,12 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         old.description !== n.description || 
         old.status !== n.status || 
         old.priority !== n.priority ||
-        old.deadline !== n.deadline
+        old.deadline !== n.deadline ||
+        old.time !== n.time ||
+        old.progress !== n.progress ||
+        JSON.stringify(old.dependencies) !== JSON.stringify(n.dependencies) ||
+        old.reminderType !== n.reminderType ||
+        old.reminderValue !== n.reminderValue
       );
     });
 

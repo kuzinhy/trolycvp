@@ -4,6 +4,7 @@ import { db } from '../lib/firebase';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
 import { Message, SYSTEM_INSTRUCTION } from '../constants';
 import { useAuth } from '../context/AuthContext';
+import { generateEmbedding, cosineSimilarity } from '../services/embeddingService';
 import { generateContentWithRetry, generateContentStreamWithRetry } from '../lib/ai-utils';
 import { cacheData, getCachedData } from '../lib/cache';
 import { useToast } from '../hooks/useToast';
@@ -95,31 +96,63 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const triggerAutoLearning = useCallback(async (history: Message[], isManual = false) => {
     if (isLearning || !user) return;
+    
+    // Check if user specifically requested to learn/save
+    const lastUserMessage = [...history].reverse().find(m => m.role === 'user')?.content || "";
+    const isExplicitRequest = /lưu vào bộ não|ghi nhớ cái này|cập nhật kiến thức|học thuộc cái này|save to brain/i.test(lastUserMessage);
+    
     setIsLearning(true);
     try {
       const response = await generateContentWithRetry({
         model: "gemini-3-flash-preview",
         contents: [{
           role: 'user',
-          parts: [{ text: `Dựa trên cuộc hội thoại sau, trích xuất kiến thức/quy định quan trọng để lưu vào Knowledge Core (max 2 ý). Trả về "NONE" nếu không có gì mới. Hội thoại: ${history.map(m => `${m.role}: ${m.content}`).join('\n')}` }]
+          parts: [{ text: `Bạn là Hệ thống Quản trị Tri thức Elite. ${isExplicitRequest ? 'Người dùng yêu cầu bạn ghi nhớ thông tin quan trọng.' : 'Phân tích hội thoại sau để trích xuất kiến thức quan trọng.'} 
+          
+Nhiệm vụ:
+1. Xác định các sự kiện, quy định, chỉ đạo hoặc kiến thức mới xuất hiện.
+2. Trình bày dưới dạng danh sách các đoạn văn bản độc lập.
+3. Nếu không có thông tin gì thực sự giá trị hoặc mới, chỉ trả về duy nhất từ "NONE".
+4. Nếu có, hãy trích xuất súc tích, đầy đủ ý nghĩa (max 3 ý).
+
+Hội thoại:
+${history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}` }]
         }],
       });
       const text = response?.text?.trim();
       if (text && !text.includes("NONE")) {
         const batch = writeBatch(db);
-        text.split('\n').filter(p => p.trim().length > 5).forEach(point => {
-          const content = `[Auto-Learned] ${point.replace(/^[0-9.-]+\s*/, '')}`;
+        const points = text.split('\n').filter(p => p.trim().length > 5);
+        
+        for (const point of points) {
+          const content = point.replace(/^[0-9.-]+\s*/, '').trim();
+          if (!content) continue;
+          
+          const embedding = await generateEmbedding(content).catch(() => null);
+          const title = content.substring(0, 100);
+          
           batch.set(doc(collection(db, "party_documents")), {
-            content, title: content.substring(0, 200), summary: content.substring(0, 200),
-            category: "Auto-Learned", tags: ["auto-learned"], isPublic: true,
-            createdAt: serverTimestamp(), updatedAt: serverTimestamp(), authorUid: user.uid,
-            unitId: unitId || 'all', type: 'document'
+            content, 
+            title, 
+            summary: content.substring(0, 200),
+            category: isExplicitRequest ? "Chỉ đạo trực tiếp" : "Auto-Learned", 
+            tags: [isExplicitRequest ? "direct-instruction" : "auto-learned", "chat-extraction"], 
+            isPublic: true,
+            createdAt: serverTimestamp(), 
+            updatedAt: serverTimestamp(), 
+            authorUid: user.uid,
+            unitId: unitId || 'all', 
+            type: 'document',
+            embedding: embedding
           });
-        });
+        }
+        
         await batch.commit();
         loadKnowledge();
-        if (isManual) showToast("Đã cập nhận kiến thức từ hội thoại.", "success");
-      } else if (isManual) showToast("Không có thông tin mới để lưu.", "info");
+        if (isManual || isExplicitRequest) showToast("Bộ não Elite đã ghi nhớ thông tin này.", "success");
+      } else if (isManual) showToast("Không tìm thấy thông tin mới để cập nhật.", "info");
+    } catch (err) {
+      console.error("Auto-learning error:", err);
     } finally {
       setIsLearning(false);
     }
@@ -149,7 +182,29 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
-      const knowledgeContext = aiKnowledge.slice(0, 5).map((k, i) => `${i+1}. ${k.content}`).join('\n');
+      // Semantic retrieval of knowledge
+      let relevantKnowledge = aiKnowledge.slice(0, 5); // Fallback
+      try {
+        if (aiKnowledge.length > 0) {
+          const inputEmbedding = await generateEmbedding(trimmedText);
+          const scoredKnowledge = aiKnowledge
+            .filter(k => k.embedding && Array.isArray(k.embedding))
+            .map(k => ({
+              ...k,
+              similarity: cosineSimilarity(inputEmbedding, k.embedding)
+            }))
+            .sort((a, b) => b.similarity - a.similarity);
+          
+          if (scoredKnowledge.length > 0) {
+            // Pick items with similarity > 0.6 or just top 5
+            relevantKnowledge = scoredKnowledge.slice(0, 7);
+          }
+        }
+      } catch (embErr) {
+        console.warn("Retreival error:", embErr);
+      }
+
+      const knowledgeContext = relevantKnowledge.map((k, i) => `${i+1}. [${k.category || 'Chung'}]: ${k.content}`).join('\n');
       const userName = user?.displayName || 'Đồng chí';
       const instruction = SYSTEM_INSTRUCTION.replace(/Anh Huy/g, userName);
 

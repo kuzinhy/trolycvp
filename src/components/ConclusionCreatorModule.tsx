@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   FileSignature, 
@@ -79,10 +79,47 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
   const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [showReferenceModal, setShowReferenceModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [referenceSearch, setReferenceSearch] = useState('');
   const [organization, setOrganization] = useState('Văn phòng Đảng uỷ phường Thủ Dầu Một');
   const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState('');
+
+  // Tự động lưu bản nháp vào localStorage
+  useEffect(() => {
+    const draftData = {
+      currentRawText,
+      meetingTitle,
+      meetingDate,
+      meetingType,
+      organization,
+    };
+    localStorage.setItem('conclusion_draft', JSON.stringify(draftData));
+  }, [currentRawText, meetingTitle, meetingDate, meetingType, organization]);
+
+  // Khôi phục bản nháp từ localStorage
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('conclusion_draft');
+    if (savedDraft) {
+      try {
+        const { currentRawText, meetingTitle, meetingDate, meetingType, organization } = JSON.parse(savedDraft);
+        if (currentRawText) setCurrentRawText(currentRawText);
+        if (meetingTitle) setMeetingTitle(meetingTitle);
+        if (meetingDate) setMeetingDate(meetingDate);
+        if (meetingType) setMeetingType(meetingType);
+        if (organization) setOrganization(organization);
+      } catch(e) {
+        console.error("Lỗi khi khôi phục bản nháp:", e);
+      }
+    }
+  }, []);
+
+  // Function to apply a template
+  const applyTemplate = (templateId: string) => {
+    // Logic to fetch/apply template. Placeholder for now.
+    showToast(`Đã áp dụng mẫu: ${templateId}`, "success");
+    setShowTemplateModal(false);
+  };
 
   const BAN_THUONG_VU = [
     "Bí thư Đảng ủy",
@@ -238,6 +275,13 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
             {selectedParticipants.length > 0 ? `${selectedParticipants.length} TV` : 'Chọn TV'}
           </button>
           <button 
+            onClick={() => setShowTemplateModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all font-bold text-[10px] uppercase"
+          >
+            <FileText size={14} />
+            Mẫu
+          </button>
+          <button 
             onClick={reset}
             className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
             title="Làm mới"
@@ -323,11 +367,11 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                   </div>
                   
                   {/* Raw Input Card */}
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/40 flex flex-col">
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/40 flex flex-col shrink-0">
                     <div className="p-3 border-b border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest font-mono">Ý tưởng tập trung</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest font-mono">Nội dung thô (Kết luận sơ bộ)</span>
                       </div>
                       <span className="text-[9px] font-bold text-slate-400 font-mono italic">Nhập nội dung thô bên dưới</span>
                     </div>
@@ -335,7 +379,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                       value={currentRawText}
                       onChange={(e) => setCurrentRawText(e.target.value)}
                       placeholder="Nhập nội dung ý kiến, chỉ đạo thô tại đây... Ví dụ: 'Cần đẩy mạnh giải quyết thủ tục hành chính cho dân nhanh hơn, tránh gây phiền hà'."
-                      className="w-full h-24 p-4 text-slate-700 placeholder:text-slate-300 focus:outline-none resize-none bg-transparent font-medium leading-relaxed text-sm"
+                      className="w-full h-48 p-4 text-slate-700 placeholder:text-slate-300 focus:outline-none resize-none bg-transparent font-medium leading-relaxed text-sm"
                     />
                     <div className="p-3 bg-slate-50/50 rounded-b-2xl border-t border-slate-100 flex justify-between items-center">
                       <div className="flex items-center gap-4">
@@ -369,38 +413,6 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                         <span className="relative z-10">Tạo nội dung kết luận (Gợi ý)</span>
                       </button>
                     </div>
-                  </div>
-
-                  {/* Dàn ý AI - Strategic Core */}
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col shrink-0">
-                    <div className="p-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                      <div className="flex items-center gap-2">
-                        <Layout size={14} className="text-blue-500" />
-                        <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest font-mono">Dàn ý & Định hướng chiến lược</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isConcise && (
-                          <div className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100">
-                             <Sparkles size={10} />
-                             <span className="text-[9px] font-black uppercase">Chế độ ngắn gọn</span>
-                          </div>
-                        )}
-                        <button 
-                          onClick={handleDraftInitial}
-                          disabled={isDraftingInitial}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase hover:bg-black transition-all disabled:opacity-50"
-                        >
-                          {isDraftingInitial ? <RotateCcw size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                          Gợi ý khung chỉ đạo
-                        </button>
-                      </div>
-                    </div>
-                    <textarea 
-                      value={initialDraft}
-                      onChange={(e) => setInitialDraft(e.target.value)}
-                      placeholder="AI sẽ gợi ý dàn ý tại đây. Bạn có thể chỉnh sửa trực tiếp..."
-                      className="w-full h-24 p-3 text-xs text-slate-700 leading-relaxed font-medium focus:outline-none resize-none bg-transparent"
-                    />
                   </div>
 
                   {/* Suggestions List */}
@@ -998,7 +1010,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
               <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
                 {aiKnowledge
                   .filter(k => (k.title || '').toLowerCase().includes((referenceSearch || '').toLowerCase()))
-                  .map(k => {
+                  .map((k, idx) => {
                     const isSelected = referencedKnowledgeIds.includes(k.id);
                     return (
                       <button 
@@ -1059,6 +1071,23 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                   Hoàn tất
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Template selection modal */}
+      <AnimatePresence>
+        {showTemplateModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTemplateModal(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden p-6 space-y-4">
+              <h2 className="text-sm font-black text-slate-900 uppercase">Chọn mẫu kết luận</h2>
+              <div className="space-y-2">
+                <button onClick={() => applyTemplate('ban_thuong_vu')} className="w-full text-left p-4 rounded-xl hover:bg-slate-100 font-bold text-slate-700">Thông báo kết luận BTV</button>
+                <button onClick={() => applyTemplate('thuong_truc')} className="w-full text-left p-4 rounded-xl hover:bg-slate-100 font-bold text-slate-700">Thông báo kết luận Thường trực</button>
+              </div>
+              <button onClick={() => setShowTemplateModal(false)} className="w-full py-2 bg-slate-900 text-white rounded-xl font-bold uppercase text-xs">Đóng</button>
             </motion.div>
           </div>
         )}

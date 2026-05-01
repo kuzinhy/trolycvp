@@ -43,8 +43,10 @@ const WorkScheduleCreator = lazy(() => import('./WorkScheduleCreator').then(m =>
 const DocumentAssignment = lazy(() => import('./DocumentAssignment').then(m => ({ default: m.DocumentAssignment })));
 const StrategicIntelligenceModule = lazy(() => import('./StrategicIntelligenceModule').then(m => ({ default: m.StrategicIntelligenceModule })));
 const TodoAssistant = lazy(() => import('./TodoAssistant').then(m => ({ default: m.TodoAssistant })));
+const TaskJournalModule = lazy(() => import('./TaskJournalModule').then(m => ({ default: m.TaskJournalModule })));
 const ConclusionCreatorModule = lazy(() => import('./ConclusionCreatorModule').then(m => ({ default: m.ConclusionCreatorModule })));
 const EliteDashboardHome = lazy(() => import('./EliteDashboardHome').then(m => ({ default: m.EliteDashboardHome })));
+const SystemUpdateModule = lazy(() => import('./admin/SystemUpdateModule').then(m => ({ default: m.SystemUpdateModule })));
 
 interface TabContentProps {
   currentTab: string;
@@ -87,6 +89,12 @@ export const TabContent = memo(({
         showToast={showToast}
         onStartFocus={onStartFocus}
       />
+    );
+  }
+
+  if (currentTab === 'task-journal') {
+    return (
+      <TaskJournalModule />
     );
   }
 
@@ -211,9 +219,9 @@ export const TabContent = memo(({
         removeDuplicates={() => {}}
         isRemovingDuplicates={false}
         auditAndOptimizeKnowledge={knowledge.auditAndOptimizeKnowledge}
-        isAuditing={false}
+        isAuditing={knowledge.isAuditing}
         deleteAllKnowledge={knowledge.deleteAllKnowledge}
-        isDeletingAll={false}
+        isDeletingAll={knowledge.isDeletingAll}
         isSyncingRemote={false}
         syncRemoteKnowledge={() => {}}
         smartSummarizeKnowledge={knowledge.smartSummarizeKnowledge}
@@ -221,7 +229,7 @@ export const TabContent = memo(({
         summarizedContent={knowledge.summarizedContent}
         setSummarizedContent={knowledge.setSummarizedContent}
         syncUnifiedStrategicKnowledge={knowledge.syncUnifiedStrategicKnowledge}
-        isSyncingUnified={false}
+        isSyncingUnified={knowledge.isSyncingUnified}
         showToast={showToast}
         pendingAIItems={[]}
         isReviewingAI={false}
@@ -383,6 +391,10 @@ export const TabContent = memo(({
 
   if (currentTab === 'users') {
     return <UserManagementModule showToast={showToast} addNotification={async () => {}} />;
+  }
+
+  if (currentTab === 'system-updates') {
+    return <SystemUpdateModule />;
   }
 
   if (currentTab === 'genz') {

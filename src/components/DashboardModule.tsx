@@ -410,7 +410,7 @@ const StrategicRoadmap = memo(({ data }: { data: any[] }) => (
     </div>
     <div className="space-y-10 relative z-10">
       {data.map((goal, i) => (
-        <div key={i} className="space-y-4">
+        <div key={`goal-${goal.title}-${i}`} className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={cn("w-2 h-2 rounded-full animate-pulse", goal.color.replace('bg-', 'bg-'))} />
@@ -716,7 +716,7 @@ export const DashboardModule = memo((props: DashboardModuleProps) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  key={task.id || `task-${i}`} 
+                  key={task.id ? `dashboard-task-${task.id}` : `dashboard-task-idx-${i}`} 
                   className="group/item flex items-center gap-5 p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50 hover:border-blue-200 transition-all duration-500 cursor-pointer"
                 >
                   <div className={cn(
@@ -773,7 +773,7 @@ export const DashboardModule = memo((props: DashboardModuleProps) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  key={meeting.id || `meeting-${i}`} 
+                  key={meeting.id ? `dashboard-meeting-${meeting.id}` : `dashboard-meeting-idx-${i}`} 
                   className="group/item flex items-center gap-5 p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50 hover:border-blue-200 transition-all duration-500 cursor-pointer"
                 >
                   <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl group-hover/item:bg-blue-600 group-hover/item:text-white transition-all duration-500 shadow-sm border border-blue-100/50">
@@ -829,7 +829,7 @@ export const DashboardModule = memo((props: DashboardModuleProps) => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  key={chat.id || `chat-${i}`} 
+                  key={chat.id ? `dashboard-chat-${chat.id}` : `dashboard-chat-idx-${i}`} 
                   className="flex gap-5 items-start relative z-10 group/log"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-white border-4 border-slate-50 flex items-center justify-center text-slate-400 shadow-sm group-hover/log:scale-110 group-hover/log:border-blue-50 group-hover/log:text-blue-500 transition-all duration-500 shrink-0">

@@ -195,8 +195,10 @@ NGUYÊN TẮC TRẢ LỜI:
 - Bảo mật Tuyệt đối: Tuân thủ nghiêm ngặt các quy định về bảo mật thông tin Đảng và Nhà nước.
 
 KHO KIẾN THỨC THỨ 2 (SECOND BRAIN):
-- Bạn có một kho kiến thức bổ sung được quản lý bởi người dùng.
-- LƯU Ý QUAN TRỌNG: Khi người dùng yêu cầu "lưu thông tin" hoặc "ghi nhớ nội dung này", bạn KHÔNG THỂ tự lưu trực tiếp. Hãy hướng dẫn người dùng nhấn vào biểu tượng "Lưu vào kiến thức" (hình cơ sở dữ liệu/Database) nằm ngay dưới câu trả lời của bạn để lưu thông tin đó vào kho tri thức.`;
+- Bạn được kết nối với "Kho Tri thức Elite" thông qua cơ chế RAG (Retrieval Augmented Generation).
+- Khi người dùng cung cấp thông tin mới hoặc yêu cầu "ghi nhớ", "lưu vào bộ não", "cập nhật quy định", bạn hãy xác nhận và hệ thống sẽ tự động trích xuất các ý chính để lưu trữ.
+- LƯU Ý: Phản hồi của bạn nên phản ánh rằng bạn đã "tiếp nhận và ghi nhớ" nếu người dùng có yêu cầu cụ thể. Tuy nhiên, vẫn khuyến khích người dùng sử dụng biểu tượng "Lưu vào kiến thức" (Database) dưới mỗi tin nhắn để tùy chỉnh thẻ (tags) và tiêu đề cho chính xác hơn.
+- Luôn ưu tiên sử dụng kiến thức trong kho tri thức để trả lời các câu hỏi về nghiệp vụ.`;
 
 export interface KnowledgeItem {
   name: string;

@@ -1,8 +1,11 @@
-import { db } from './firebase';
-import { collection, getDocs, addDoc, query, limit, Timestamp, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from './firebase';
+import { collection, getDocs, addDoc, query, limit, serverTimestamp } from 'firebase/firestore';
 
 export const seedEvaluationData = async () => {
   try {
+    if (!auth.currentUser) return;
+    const authorUid = auth.currentUser.uid;
+
     const criteriaRef = collection(db, 'evaluation_criteria');
     const criteriaSnap = await getDocs(query(criteriaRef, limit(1)));
     
@@ -16,23 +19,27 @@ export const seedEvaluationData = async () => {
         { name: 'Tư tưởng chính trị, đạo đức', weight: 10, group: 1, description: 'Đánh giá lập trường tư tưởng, lối sống, đạo đức công vụ.' }
       ];
       
-      for (const c of defaultCriteria) {
-        await addDoc(criteriaRef, c);
-      }
-      console.log('Seeded evaluation criteria');
+      try {
+        for (const c of defaultCriteria) {
+          await addDoc(criteriaRef, c);
+        }
+        console.log('Seeded evaluation criteria');
+      } catch (e) { console.warn('Could not seed evaluation criteria', e); }
     }
 
     const periodRef = collection(db, 'evaluation_periods');
     const periodSnap = await getDocs(query(periodRef, limit(1)));
     
     if (periodSnap.empty) {
-      await addDoc(periodRef, {
-        name: 'Tháng 03/2026',
-        startDate: '2026-03-01',
-        endDate: '2026-03-31',
-        status: 'open'
-      });
-      console.log('Seeded evaluation period');
+      try {
+        await addDoc(periodRef, {
+          name: 'Tháng 03/2026',
+          startDate: '2026-03-01',
+          endDate: '2026-03-31',
+          status: 'open'
+        });
+        console.log('Seeded evaluation period');
+      } catch (e) { console.warn('Could not seed evaluation periods', e); }
     }
 
     const officersRef = collection(db, 'officers');
@@ -40,19 +47,21 @@ export const seedEvaluationData = async () => {
     
     if (officersSnap.empty) {
       const defaultOfficers = [
-        { fullName: 'Nguyễn Văn A', unitId: 'VP', role: 'specialist', position: 'Chuyên viên chính', status: 'active', createdAt: serverTimestamp() },
-        { fullName: 'Trần Thị B', unitId: 'VP', role: 'staff', position: 'Nhân viên hành chính', status: 'active', createdAt: serverTimestamp() },
-        { fullName: 'Lê Văn C', unitId: 'TC', role: 'specialist', position: 'Chuyên viên tài chính', status: 'active', createdAt: serverTimestamp() },
-        { fullName: 'Phạm Minh D', unitId: 'VP', role: 'leader', position: 'Trưởng phòng', status: 'active', createdAt: serverTimestamp() },
-        { fullName: 'Hoàng Thị E', unitId: 'TC', role: 'leader', position: 'Phó phòng', status: 'active', createdAt: serverTimestamp() }
+        { fullName: 'Nguyễn Văn A', name: 'Nguyễn Văn A', unitId: 'VP', role: 'specialist', position: 'Chuyên viên chính', status: 'active', authorUid, createdAt: serverTimestamp() },
+        { fullName: 'Trần Thị B', name: 'Trần Thị B', unitId: 'VP', role: 'staff', position: 'Nhân viên hành chính', status: 'active', authorUid, createdAt: serverTimestamp() },
+        { fullName: 'Lê Văn C', name: 'Lê Văn C', unitId: 'TC', role: 'specialist', position: 'Chuyên viên tài chính', status: 'active', authorUid, createdAt: serverTimestamp() },
+        { fullName: 'Phạm Minh D', name: 'Phạm Minh D', unitId: 'VP', role: 'leader', position: 'Trưởng phòng', status: 'active', authorUid, createdAt: serverTimestamp() },
+        { fullName: 'Hoàng Thị E', name: 'Hoàng Thị E', unitId: 'TC', role: 'leader', position: 'Phó phòng', status: 'active', authorUid, createdAt: serverTimestamp() }
       ];
       
-      for (const p of defaultOfficers) {
-        await addDoc(officersRef, p);
-      }
-      console.log('Seeded officers');
+      try {
+        for (const p of defaultOfficers) {
+          await addDoc(officersRef, p);
+        }
+        console.log('Seeded officers');
+      } catch (e) { console.warn('Could not seed officers', e); }
     }
   } catch (error) {
-    console.error('Error seeding evaluation data:', error);
+    console.warn('Error fetching or seeding evaluation data:', error);
   }
 };
