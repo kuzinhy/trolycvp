@@ -6,7 +6,7 @@ import { ToastType } from './ui/Toast';
 import { DraftingRule } from '../hooks/useDraftingRules';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '../lib/utils';
-import { ComposePro } from './ComposePro';
+import { ComposeProV2 } from './ComposeProV2';
 import { PartyDocumentChecker } from './PartyDocumentChecker';
 import { SmartEmailAssistant } from './SmartEmailAssistant';
 import { SpeechAssistant } from './SpeechAssistant';
@@ -206,7 +206,7 @@ ${documentText}
 """`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.0-flash-exp',
         contents: [{ parts: [{ text: prompt }] }]
       });
 
@@ -286,7 +286,7 @@ ${documentText}
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      className="max-w-7xl mx-auto p-8 h-full flex flex-col"
+      className="max-w-[1800px] mx-auto p-4 md:p-8 h-full flex flex-col"
     >
       <ProgressPopup 
         isOpen={progress.isSimulating} 
@@ -330,9 +330,11 @@ ${documentText}
       </div>
 
       {mainTab === 'compose' ? (
-        <ComposePro showToast={showToast} aiKnowledge={aiKnowledge} />
+        <div className="flex-1 overflow-hidden -mx-8 -mb-8">
+          <ComposeProV2 showToast={showToast} aiKnowledge={aiKnowledge} />
+        </div>
       ) : mainTab === 'party-docs' ? (
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-hidden -mx-8 -mb-8">
           <PartyDocumentChecker />
         </div>
       ) : mainTab === 'email' ? (

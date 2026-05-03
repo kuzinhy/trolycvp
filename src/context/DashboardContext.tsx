@@ -30,7 +30,7 @@ interface DashboardContextType {
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
 export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, unitId, isSuperAdmin } = useAuth();
+  const { user, unitId, isSuperAdmin, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -44,14 +44,61 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
 
   const currentUnitId = useMemo(() => {
+    if (authLoading) return null;
     if (unitId && unitId.trim() !== '') return unitId;
     if (isSuperAdmin) return 'default_unit';
     if (user?.uid) return `personal_${user.uid}`;
     return null;
-  }, [user?.uid, unitId, isSuperAdmin]);
+  }, [user?.uid, unitId, isSuperAdmin, authLoading]);
+
+  const addToTaskJournal = useCallback(async (item: any, source: 'meeting' | 'event' | 'task') => {
+    if (!user || !currentUnitId) return;
+    
+    const contentText = (item.name || item.title || item.content || '').toLowerCase();
+    const isRelevant = contentText.includes('đảng ủy') || contentText.includes('văn phòng') || 
+                       contentText.includes('chi bộ') || contentText.includes('đại hội') || 
+                       contentText.includes('nghị quyết') || contentText.includes('chỉ thị') ||
+                       contentText.includes('chánh văn phòng');
+    
+    if (!isRelevant) return;
+
+    try {
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const journalCollection = collection(db, 'task_journals');
+      
+      // Kiểm tra xem đã tồn tại bản ghi này chưa để tránh trùng lặp khi import
+      const q = query(journalCollection, 
+        where('unitId', '==', currentUnitId), 
+        where('content', '==', `[Tự động từ Lịch] ${item.name || item.title || item.content}`),
+        limit(1)
+      );
+      const existing = await getDocs(q);
+      if (!existing.empty) return;
+
+      await addDoc(journalCollection, {
+        categoryId: 'unit_task',
+        content: `[Tự động từ Lịch] ${item.name || item.title || item.content}`,
+        implementingDoc: item.location || '',
+        assignee: item.chairperson || item.assignee || user.displayName || 'Chưa rõ',
+        deadline: item.date || item.deadline || '',
+        progress: 'Đang triển khai',
+        results: `Đã được hệ thống tự động ghi nhận từ lịch ${source === 'meeting' ? 'họp' : source === 'task' ? 'nhiệm vụ' : 'sự kiện'}.`,
+        authorUid: user.uid,
+        unitId: currentUnitId,
+        year: now.getFullYear(),
+        quarter: Math.ceil(month / 3),
+        month: month,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.error("Error linking to task journal:", e);
+    }
+  }, [user, currentUnitId]);
 
   useEffect(() => {
-    if (!user || !currentUnitId) return;
+    if (!user || !currentUnitId || authLoading) return;
 
     // Load Tasks
     setIsTasksLoading(true);
@@ -94,20 +141,18 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const addTask = useCallback(async (taskData: Omit<Task, 'id' | 'createdAt'> & { id?: string, createdAt?: number }) => {
     if (!user || !currentUnitId) return;
     try {
-      const id = taskData.id;
       const data = {
         ...taskData,
         unitId: currentUnitId,
         createdAt: taskData.createdAt || Date.now(),
         authorUid: user.uid
       };
-      
-      if (id) {
-        await setDoc(doc(db, 'tasks', id), data);
+      if (taskData.id) {
+        await setDoc(doc(db, 'tasks', taskData.id), data);
       } else {
         await addDoc(collection(db, 'tasks'), data);
       }
-      showToast("Đã thêm nhiệm vụ mới.", "success");
+      await addToTaskJournal(taskData, 'task');
     } catch (e) {
       console.error("Error adding task:", e);
       showToast("Lỗi khi thêm nhiệm vụ.", "error");
@@ -115,57 +160,144 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [user, currentUnitId, showToast]);
 
   const updateTask = useCallback(async (id: string, data: Partial<Task>) => {
+    if (!id) return;
     try {
-      await updateDoc(doc(db, 'tasks', id), {
-        ...data,
-        updatedAt: serverTimestamp()
-      });
+      await updateDoc(doc(db, 'tasks', id), { ...data, updatedAt: serverTimestamp() });
     } catch (e) {
       console.error("Error updating task:", e);
-      showToast("Lỗi khi cập nhật nhiệm vụ.", "error");
     }
-  }, [showToast]);
+  }, []);
 
   const deleteTask = useCallback(async (id: string) => {
+    if (!id) return;
     try {
       await deleteDoc(doc(db, 'tasks', id));
-      showToast("Đã xóa nhiệm vụ.", "success");
     } catch (e) {
       console.error("Error deleting task:", e);
-      showToast("Lỗi khi xóa nhiệm vụ.", "error");
     }
-  }, [showToast]);
+  }, []);
+
+  // Persistent Meeting Handlers
+  const addMeeting = useCallback(async (data: Omit<Meeting, 'id'> & { id?: string }) => {
+    if (!user || !currentUnitId) return;
+    try {
+      const payload = { ...data, unitId: currentUnitId, authorUid: user.uid, createdAt: serverTimestamp() };
+      if (data.id) {
+        await setDoc(doc(db, 'meetings', data.id), payload);
+      } else {
+        await addDoc(collection(db, 'meetings'), payload);
+      }
+      await addToTaskJournal(data, 'meeting');
+    } catch (e) {
+      console.error("Error adding meeting:", e);
+    }
+  }, [user, currentUnitId, addToTaskJournal]);
+
+  const updateMeeting = useCallback(async (id: string, data: Partial<Meeting>) => {
+    if (!id) return;
+    try {
+      await updateDoc(doc(db, 'meetings', id), { ...data, updatedAt: serverTimestamp() });
+    } catch (e) {
+      console.error("Error updating meeting:", e);
+    }
+  }, []);
+
+  const deleteMeeting = useCallback(async (id: string) => {
+    if (!id) return;
+    try {
+      await deleteDoc(doc(db, 'meetings', id));
+    } catch (e) {
+      console.error("Error deleting meeting:", e);
+    }
+  }, []);
+
+  // Persistent Event Handlers
+  const addEvent = useCallback(async (data: Omit<Event, 'id'> & { id?: string }) => {
+    if (!user || !currentUnitId) return;
+    try {
+      const payload = { ...data, unitId: currentUnitId, authorUid: user.uid, createdAt: serverTimestamp() };
+      if (data.id) {
+        await setDoc(doc(db, 'events', data.id), payload);
+      } else {
+        await addDoc(collection(db, 'events'), payload);
+      }
+      await addToTaskJournal(data, 'event');
+    } catch (e) {
+      console.error("Error adding event:", e);
+    }
+  }, [user, currentUnitId, addToTaskJournal]);
+
+  const updateEvent = useCallback(async (id: string, data: Partial<Event>) => {
+    if (!id) return;
+    try {
+      await updateDoc(doc(db, 'events', id), { ...data, updatedAt: serverTimestamp() });
+    } catch (e) {
+      console.error("Error updating event:", e);
+    }
+  }, []);
+
+  const deleteEvent = useCallback(async (id: string) => {
+    if (!id) return;
+    try {
+      await deleteDoc(doc(db, 'events', id));
+    } catch (e) {
+      console.error("Error deleting event:", e);
+    }
+  }, []);
 
   const persistentUpdateTasks = useCallback((updater: Task[] | ((prev: Task[]) => Task[])) => {
     const prevTasks = tasks;
     const newTasks = typeof updater === 'function' ? updater(prevTasks) : updater;
-    
-    // Optimistic update
     setTasks(newTasks);
 
-    // Sync with Firestore
     const added = newTasks.filter(n => !prevTasks.some(o => o.id === n.id));
     const deleted = prevTasks.filter(o => !newTasks.some(n => n.id === o.id));
     const updated = newTasks.filter(n => {
       const old = prevTasks.find(o => o.id === n.id);
-      return old && (
-        old.title !== n.title || 
-        old.description !== n.description || 
-        old.status !== n.status || 
-        old.priority !== n.priority ||
-        old.deadline !== n.deadline ||
-        old.time !== n.time ||
-        old.progress !== n.progress ||
-        JSON.stringify(old.dependencies) !== JSON.stringify(n.dependencies) ||
-        old.reminderType !== n.reminderType ||
-        old.reminderValue !== n.reminderValue
-      );
+      return old && JSON.stringify(old) !== JSON.stringify(n);
     });
 
     added.forEach(t => addTask(t));
     deleted.forEach(t => deleteTask(t.id));
     updated.forEach(t => updateTask(t.id, t));
-  }, [tasks, addTask, updateTask, deleteTask]);
+    if (added.length > 0) showToast(`Đã lưu ${added.length} nhiệm vụ mới.`, "success");
+  }, [tasks, addTask, updateTask, deleteTask, showToast]);
+
+  const persistentUpdateMeetings = useCallback((updater: Meeting[] | ((prev: Meeting[]) => Meeting[])) => {
+    const prevMeetings = meetings;
+    const newMeetings = typeof updater === 'function' ? updater(prevMeetings) : updater;
+    setMeetings(newMeetings);
+
+    const added = newMeetings.filter(n => !prevMeetings.some(o => o.id === n.id));
+    const deleted = prevMeetings.filter(o => !newMeetings.some(n => n.id === o.id));
+    const updated = newMeetings.filter(n => {
+      const old = prevMeetings.find(o => o.id === n.id);
+      return old && JSON.stringify(old) !== JSON.stringify(n);
+    });
+
+    added.forEach(m => addMeeting(m));
+    deleted.forEach(m => deleteMeeting(m.id));
+    updated.forEach(m => updateMeeting(m.id, m));
+    if (added.length > 0) showToast(`Đã lưu ${added.length} lịch họp mới.`, "success");
+  }, [meetings, addMeeting, updateMeeting, deleteMeeting, showToast]);
+
+  const persistentUpdateEvents = useCallback((updater: Event[] | ((prev: Event[]) => Event[])) => {
+    const prevEvents = events;
+    const newEvents = typeof updater === 'function' ? updater(prevEvents) : updater;
+    setEvents(newEvents);
+
+    const added = newEvents.filter(n => !prevEvents.some(o => o.id === n.id));
+    const deleted = prevEvents.filter(o => !newEvents.some(n => n.id === o.id));
+    const updated = newEvents.filter(n => {
+      const old = prevEvents.find(o => o.id === n.id);
+      return old && JSON.stringify(old) !== JSON.stringify(n);
+    });
+
+    added.forEach(e => addEvent(e));
+    deleted.forEach(e => deleteEvent(e.id));
+    updated.forEach(e => updateEvent(e.id, e));
+    if (added.length > 0) showToast(`Đã lưu ${added.length} sự kiện mới.`, "success");
+  }, [events, addEvent, updateEvent, deleteEvent, showToast]);
 
   const generateSmartBriefing = useCallback(async () => {
     if (isGeneratingBriefing || !user) return;
@@ -195,12 +327,15 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     tasks, meetings, events, birthdays,
     isTasksLoading, isMeetingsLoading, isBirthdaysLoading,
     smartBriefing, isGeneratingBriefing,
-    updateTasks: persistentUpdateTasks, updateMeetings: setMeetings, updateBirthdays: setBirthdays,
-    updateEvents: setEvents,
+    updateTasks: persistentUpdateTasks, 
+    updateMeetings: persistentUpdateMeetings, 
+    updateEvents: persistentUpdateEvents,
+    updateBirthdays: setBirthdays,
     generateSmartBriefing, addTask, updateTask, deleteTask
   }), [
     tasks, meetings, events, birthdays, isTasksLoading, isMeetingsLoading,
     isBirthdaysLoading, smartBriefing, isGeneratingBriefing,
+    persistentUpdateTasks, persistentUpdateMeetings, persistentUpdateEvents,
     generateSmartBriefing, addTask, updateTask, deleteTask
   ]);
 

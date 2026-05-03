@@ -203,7 +203,10 @@ function AuthenticatedApp() {
 
   useEffect(() => {
     if (user) {
-      const unsubscribe = trackPresence(() => {});
+      const unsubscribe = trackPresence({ 
+        uid: user.uid, 
+        displayName: user.displayName || user.email?.split('@')[0] 
+      });
       return () => {
         if (typeof unsubscribe === 'function') unsubscribe();
       };
@@ -277,6 +280,7 @@ function AuthenticatedApp() {
         preferences.sidebarPosition === 'right' && "flex-row-reverse"
       )}>
         <div className="os-scanline" />
+        <div className="os-noise" />
         
       <ConfirmationModal
         isOpen={pendingTab !== null}

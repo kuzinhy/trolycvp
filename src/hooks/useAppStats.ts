@@ -32,11 +32,9 @@ export function useAppStats() {
     // 3. Lắng nghe số lượng người online từ Realtime Database
     const presenceRef = ref(database, 'presence');
     const unsubscribeOnline = onValue(presenceRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setOnlineCount(Object.keys(snapshot.val()).length);
-      } else {
-        setOnlineCount(0);
-      }
+      const data = snapshot.val();
+      const count = data ? Object.keys(data).length : 0;
+      setOnlineCount(count);
     });
 
     return () => {

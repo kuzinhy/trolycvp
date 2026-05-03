@@ -34,6 +34,20 @@ const MOCK_KNOWLEDGE: any[] = [
     isPublic: true,
     createdAt: { toMillis: () => Date.now() },
     order: 1
+  },
+  {
+    id: 'mock-k-3',
+    title: 'AI-driven Strategic Analysis Framework',
+    content: 'The AI-driven Strategic Analysis Framework involves processing data from various sources (news, public opinion, internal reports) to identify key trends, predict risks, and suggest actionable directives for leadership. This framework utilizes Natural Language Processing (NLP) and machine learning models for data synthesis and threat assessment.',
+    summary: 'The AI-driven Strategic Analysis Framework involves processing data from various sources (news, public opinion, internal reports) to identify key trends, predict risks, and suggest actionable directives for leadership.',
+    category: 'AI Strategy',
+    tags: ['AI', 'Strategy', 'Analysis', 'Framework'],
+    isImportant: true,
+    isPublic: true,
+    priority: 'high',
+    status: 'Pending',
+    createdAt: { toMillis: () => Date.now() },
+    order: 2
   }
 ];
 

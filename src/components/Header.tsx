@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = memo(({
   }, [currentTab]);
 
   return (
-    <header className="h-20 bg-white/80 backdrop-blur-3xl border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-[50] sticky top-0 shadow-sm shadow-blue-500/5">
+    <header className="h-20 bg-white/90 backdrop-blur-3xl border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-[50] sticky top-0 shadow-xl shadow-slate-200/20">
       <div className="flex items-center gap-6">
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -102,14 +102,18 @@ export const Header: React.FC<HeaderProps> = memo(({
         </button>
         <div className="flex flex-col">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-black text-slate-900 tracking-tighter leading-none uppercase">{title}</h2>
+            <div className="flex flex-col">
+              <h2 className="text-xl font-black text-slate-900 tracking-tighter leading-none uppercase flex items-center gap-2">
+                <span className="text-blue-600">6.0</span> {title}
+              </h2>
+            </div>
             <div className="flex items-center gap-1">
-              <div className="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black rounded-md uppercase tracking-tighter shadow-sm shadow-blue-500/20">v8.0.0</div>
-              <div className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 text-[8px] font-black rounded-md uppercase tracking-tighter">Live System</div>
+              <div className="px-2 py-0.5 bg-slate-900 text-white text-[8px] font-black rounded-md uppercase tracking-tighter shadow-lg shadow-slate-900/20 border border-slate-800">STRATEGIC NODE</div>
+              <div className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 text-[8px] font-black rounded-md uppercase tracking-tighter">SECURE CHANNEL</div>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse"></div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">
               {subtitle}
             </p>
@@ -117,23 +121,47 @@ export const Header: React.FC<HeaderProps> = memo(({
         </div>
       </div>
 
-      <div className="hidden md:flex items-center flex-1" />
+      <div className="hidden lg:flex items-center gap-4 px-6 py-2 bg-slate-50/50 rounded-2xl border border-slate-100 mx-4">
+        <div className="flex flex-col items-center">
+          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Auth Level</span>
+          <span className="text-[10px] font-bold text-blue-600 font-mono">ENCRYPTED</span>
+        </div>
+        <div className="w-[1px] h-4 bg-slate-200" />
+        <div className="flex flex-col items-center">
+          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Latency</span>
+          <span className="text-[10px] font-bold text-emerald-600 font-mono">14ms</span>
+        </div>
+        <div className="w-[1px] h-4 bg-slate-200" />
+        <div className="flex flex-col items-center">
+          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">AI Link</span>
+          <span className="text-[10px] font-bold text-indigo-600 font-mono">ACTIVE</span>
+        </div>
+      </div>
 
       <div className="flex items-center gap-6">
-        <div className="flex items-center gap-4 bg-slate-50/50 px-4 py-2 rounded-2xl border border-slate-100">
-          <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider" title="Thành viên">
-            <Users size={14} className="text-blue-500" />
-            <span className="text-slate-900">{memberCount}</span>
+        <div className="flex items-center gap-4 bg-white px-5 py-2.5 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="flex flex-col gap-0.5" title="Thành viên">
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-tight">Thành viên</span>
+            <div className="flex items-center gap-1.5">
+              <Users size={12} className="text-blue-500" />
+              <span className="text-xs font-black text-slate-900 font-mono">{memberCount}</span>
+            </div>
           </div>
-          <div className="w-[1px] h-3 bg-slate-200" />
-          <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider" title="Đang trực tuyến">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-slate-900">{onlineCount}</span>
+          <div className="w-[1px] h-6 bg-slate-100" />
+          <div className="flex flex-col gap-0.5" title="Đang trực tuyến">
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-tight">Trực tuyến</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
+              <span className="text-xs font-black text-slate-900 font-mono">{onlineCount}</span>
+            </div>
           </div>
-          <div className="w-[1px] h-3 bg-slate-200" />
-          <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider" title="Lượt truy cập">
-            <TrendingUp size={14} className="text-indigo-500" />
-            <span className="text-slate-900">{visitCount}</span>
+          <div className="w-[1px] h-6 bg-slate-100" />
+          <div className="flex flex-col gap-0.5" title="Lượt truy cập">
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-tight">Truy cập</span>
+            <div className="flex items-center gap-1.5">
+              <TrendingUp size={12} className="text-indigo-500" />
+              <span className="text-xs font-black text-slate-900 font-mono">{visitCount}</span>
+            </div>
           </div>
         </div>
 

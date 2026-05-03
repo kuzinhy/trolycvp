@@ -111,37 +111,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ knowledge, chatHistory, on
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Top Bento Row: AI Summary + Time + Weather */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* AI Summary Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="lg:col-span-8 bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-3xl shadow-xl shadow-blue-500/20 relative overflow-hidden group flex flex-col justify-center min-h-[200px]"
+          className="lg:col-span-8 bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm relative overflow-hidden group flex flex-col justify-center min-h-[220px]"
         >
-          <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity duration-700 group-hover:rotate-12 group-hover:scale-110">
-            <Sparkles size={160} />
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity duration-700">
+            <Brain size={160} />
           </div>
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
-            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center text-white shrink-0 shadow-lg ring-4 ring-white/10">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-8">
+            <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center shrink-0 shadow-sm border border-blue-100">
               <Brain size={40} className="animate-pulse" />
             </div>
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-black text-blue-200 uppercase tracking-widest">AI Command Center</span>
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-300" />
-                <span className="text-xs font-black text-blue-300 uppercase tracking-widest">Smart Summary</span>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded">Trợ lý Chiến lược</span>
+                <div className="w-1 h-1 rounded-full bg-slate-300" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tóm tắt Thông minh</span>
               </div>
-              <h2 className="text-2xl font-black text-white tracking-tight mb-3">Tóm tắt hoạt động thông minh</h2>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-3">Hệ thống Chỉ huy Elite</h2>
               {isGeneratingSummary ? (
-                <div className="flex items-center gap-3 text-indigo-100">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <p className="text-base font-medium italic opacity-80">Đang phân tích dữ liệu hệ thống...</p>
+                <div className="flex items-center gap-3 text-slate-500">
+                  <div className="w-5 h-5 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+                  <p className="text-sm font-medium italic">Đang phân tích dữ liệu tham mưu...</p>
                 </div>
               ) : (
-                <p className="text-base text-blue-50 leading-relaxed font-medium">
+                <p className="text-sm text-slate-600 leading-relaxed font-medium max-w-2xl">
                   {aiSummary || "Hệ thống đã sẵn sàng. Hãy bắt đầu một ngày làm việc hiệu quả cùng Trợ lý AI."}
                 </p>
               )}
@@ -149,7 +149,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ knowledge, chatHistory, on
             <button 
               onClick={generateSummary}
               disabled={isGeneratingSummary}
-              className="px-6 py-4 bg-white text-blue-600 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-50 transition-all shadow-lg shadow-black/10 shrink-0 disabled:opacity-50 mt-4 md:mt-0"
+              className="px-6 py-3 bg-white text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all border border-slate-200 shrink-0 disabled:opacity-50 mt-4 md:mt-0 shadow-sm"
             >
               Làm mới
             </button>

@@ -260,6 +260,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
     if (onSaveTasks) onSaveTasks(updatedTasks);
     showToast("Đã xóa nhiệm vụ!", "success");
     setTaskToDelete(null);
+    setDeleteModalOpen(false);
   };
 
   const startEdit = (task: Task) => {
