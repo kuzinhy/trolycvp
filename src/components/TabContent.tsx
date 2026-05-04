@@ -40,7 +40,6 @@ const PartyDocumentChecker = lazy(() => import('./PartyDocumentChecker').then(m 
 const ResolutionTracker = lazy(() => import('./ResolutionTracker').then(m => ({ default: m.ResolutionTracker })));
 const PartyAdvisory = lazy(() => import('./PartyAdvisory').then(m => ({ default: m.PartyAdvisory })));
 const WorkScheduleCreator = lazy(() => import('./WorkScheduleCreator').then(m => ({ default: m.WorkScheduleCreator })));
-const DocumentAssignment = lazy(() => import('./DocumentAssignment').then(m => ({ default: m.DocumentAssignment })));
 const StrategicIntelligenceModule = lazy(() => import('./StrategicIntelligenceModule').then(m => ({ default: m.StrategicIntelligenceModule })));
 const TodoAssistant = lazy(() => import('./TodoAssistant').then(m => ({ default: m.TodoAssistant })));
 const TaskJournalModule = lazy(() => import('./TaskJournalModule').then(m => ({ default: m.TaskJournalModule })));
@@ -257,9 +256,6 @@ export const TabContent = memo(({
 
       case 'evaluation':
         return <EvaluationModule />;
-
-      case 'document-assignment':
-        return <DocumentAssignment />;
 
       case 'chat':
       default:

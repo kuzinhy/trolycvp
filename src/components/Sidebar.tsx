@@ -398,15 +398,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       collapsed={isCollapsed}
                     />
                   )}
-                  {(!searchTerm || "giao văn bản".includes(searchTerm.toLowerCase())) && (
-                    <NavButton 
-                      active={currentTab === 'document-assignment'} 
-                      onClick={() => onNavigate('document-assignment')} 
-                      icon={<FileCheck size={16} />} 
-                      label="Giao văn bản" 
-                      collapsed={isCollapsed}
-                    />
-                  )}
                   {(!searchTerm || "sổ tay nhiệm vụ".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
                       active={currentTab === 'task-journal'} 
