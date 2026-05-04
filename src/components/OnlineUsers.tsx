@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { trackPresence } from '../lib/presence';
+import { listenForPresenceCount } from '../lib/presence';
 import { useAuth } from '../context/AuthContext';
 
 export const OnlineUsers: React.FC = () => {
@@ -8,10 +8,7 @@ export const OnlineUsers: React.FC = () => {
   const { user } = useAuth();
   useEffect(() => {
     if (user) {
-      const unsubscribe = trackPresence({ 
-        uid: user.uid, 
-        displayName: user.displayName 
-      }, (count) => {
+      const unsubscribe = listenForPresenceCount((count) => {
         setOnlineCount(count);
       });
       return () => {

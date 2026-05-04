@@ -33,7 +33,7 @@ export function useAppStats() {
     const presenceRef = ref(database, 'presence');
     const unsubscribeOnline = onValue(presenceRef, (snapshot) => {
       const data = snapshot.val();
-      const count = data ? Object.keys(data).length : 0;
+      const count = data ? Object.values(data).filter((u: any) => u.online).length : 0;
       setOnlineCount(count);
     });
 

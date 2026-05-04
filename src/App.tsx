@@ -165,7 +165,7 @@ function AppContent() {
 // ...
 import { useUserPreferences } from './context/UserPreferencesContext';
 
-import { trackPresence } from './lib/presence';
+import { trackUserPresence } from './lib/presence';
 
 function AuthenticatedApp() {
   const { user, signOutUser, isAdmin } = useAuth();
@@ -203,7 +203,7 @@ function AuthenticatedApp() {
 
   useEffect(() => {
     if (user) {
-      const unsubscribe = trackPresence({ 
+      const unsubscribe = trackUserPresence({ 
         uid: user.uid, 
         displayName: user.displayName || user.email?.split('@')[0] 
       });

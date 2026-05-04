@@ -236,6 +236,9 @@ export const TabContent = memo(({
       case 'task-journal':
         return <TaskJournalModule />;
 
+      case 'access-history':
+        return <AccessHistoryModule />;
+
       case 'strategic':
         return <StrategicIntelligenceModule aiKnowledge={knowledge.aiKnowledge} showToast={showToast} />;
 
