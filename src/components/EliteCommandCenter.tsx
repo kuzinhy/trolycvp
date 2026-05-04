@@ -145,7 +145,7 @@ export const EliteCommandCenter: React.FC<EliteCommandCenterProps> = ({
                   className="flex-1 bg-transparent border-none text-lg font-bold text-slate-800 focus:outline-none placeholder:text-slate-400 placeholder:font-medium"
                 />
                 <div className="flex items-center gap-2">
-                  <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md text-[10px] font-black text-slate-500 uppercase">ESC</kbd>
+                  <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md text-xs font-semibold text-slate-500">ESC</kbd>
                 </div>
               </div>
 
@@ -153,7 +153,7 @@ export const EliteCommandCenter: React.FC<EliteCommandCenterProps> = ({
                 {filteredGroups.length > 0 ? (
                   filteredGroups.map((group, gIdx) => (
                     <div key={group.title} className="mb-8 last:mb-2">
-                      <h4 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">{group.title}</h4>
+                      <h4 className="px-4 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">{group.title}</h4>
                       <div className="space-y-1">
                         {group.items.map((item, iIdx) => {
                           // Calculate global index
@@ -182,7 +182,7 @@ export const EliteCommandCenter: React.FC<EliteCommandCenterProps> = ({
                                 )}>
                                   {item.icon}
                                 </div>
-                                <span className={cn("text-sm font-black tracking-tight", isActive ? "text-white" : "text-slate-700 font-bold")}>
+                                <span className={cn("text-sm font-semibold", isActive ? "text-white" : "text-slate-700 font-medium")}>
                                   {item.label}
                                 </span>
                               </div>
@@ -208,7 +208,7 @@ export const EliteCommandCenter: React.FC<EliteCommandCenterProps> = ({
                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                       <Target size={32} className="text-slate-200" />
                     </div>
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Không tìm thấy lệnh hoặc dữ liệu phù hợp</p>
+                    <p className="text-slate-400 font-medium text-sm">Không tìm thấy lệnh hoặc dữ liệu phù hợp</p>
                   </div>
                 )}
               </div>
@@ -217,14 +217,14 @@ export const EliteCommandCenter: React.FC<EliteCommandCenterProps> = ({
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <kbd className="px-1.5 py-1 bg-white border border-slate-200 rounded text-[9px] font-black text-slate-500">↑↓</kbd>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Di chuyển</span>
+                    <span className="text-xs font-medium text-slate-500">Di chuyển</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <kbd className="px-1.5 py-1 bg-white border border-slate-200 rounded text-[9px] font-black text-slate-500">Enter</kbd>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Chọn</span>
+                    <span className="text-xs font-medium text-slate-500">Chọn</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-indigo-600 font-black italic text-[10px] uppercase tracking-widest">
+                <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs uppercase tracking-wider">
                   <Sparkles size={12} />
                   Elite Command Center
                 </div>

@@ -165,7 +165,7 @@ ${aiKnowledge.slice(0, 5).map(k => `- ${k.title}: ${k.content}`).join('\n')}
 `;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-2.0-flash-exp',
+        model: 'gemini-3.1-pro-preview',
         contents: [{ parts: [{ text: prompt }] }]
       });
 

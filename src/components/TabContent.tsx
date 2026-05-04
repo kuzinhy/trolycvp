@@ -237,6 +237,30 @@ export const TabContent = memo(({
       case 'task-journal':
         return <TaskJournalModule />;
 
+      case 'strategic':
+        return <StrategicIntelligenceModule aiKnowledge={knowledge.aiKnowledge} showToast={showToast} />;
+
+      case 'party-advisory':
+        return <PartyAdvisory />;
+
+      case 'news':
+        return <NewsAndOpinionView />;
+
+      case 'forecasting':
+        return <StrategicForecastingView />;
+
+      case 'assignment-tracking':
+        return <AssignmentTracking tasks={dashboard.tasks} />;
+
+      case 'resolution-tracking':
+        return <ResolutionTracker />;
+
+      case 'evaluation':
+        return <EvaluationModule />;
+
+      case 'document-assignment':
+        return <DocumentAssignment />;
+
       case 'chat':
       default:
         return (

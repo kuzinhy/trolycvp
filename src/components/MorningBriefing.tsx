@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { generateContentWithRetry } from '../lib/ai-utils';
 import { cn } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 interface MorningBriefingProps {
   tasks: any[];
@@ -16,6 +17,7 @@ interface MorningBriefingProps {
 }
 
 export const MorningBriefing: React.FC<MorningBriefingProps> = ({ tasks, meetings, events, onClose }) => {
+  const { userInfo } = useAuth();
   const [briefing, setBriefing] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -41,7 +43,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({ tasks, meeting
         const pendingTasks = tasks.filter(t => t.status !== 'Completed');
         const overdueTasks = tasks.filter(t => t.status !== 'Completed' && t.deadline && new Date(t.deadline) < today);
 
-        const prompt = `Bạn là Trợ lý Chỉ huy Elite. Hãy viết một bản tin "Chào buổi sáng" (Morning Briefing) cực kỳ ngắn gọn (dưới 100 từ), chuyên nghiệp và sắc bén cho Anh Huy.
+        const prompt = `Bạn là Trợ lý Chỉ huy Elite. Hãy viết một bản tin "Chào buổi sáng" (Morning Briefing) cực kỳ ngắn gọn (dưới 100 từ), chuyên nghiệp và sắc bén cho ${userInfo?.displayName || 'Chỉ huy'}.
         
         Dữ liệu hôm nay (${format(today, 'EEEE, dd/MM/yyyy', { locale: vi })}):
         - Cuộc họp: ${todayMeetings.length}

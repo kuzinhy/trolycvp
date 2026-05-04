@@ -14,7 +14,7 @@ export function useDashboard(
   showToast?: (message: string, type?: ToastType) => void,
   updateTasks?: (updater: Task[] | ((prev: Task[]) => Task[])) => Promise<void>
 ) {
-  const { user } = useAuth();
+  const { user, userInfo } = useAuth();
   const queryClient = useQueryClient();
   
   const { data: birthdays = [], isLoading: isBirthdaysLoading, refetch: loadBirthdays } = useQuery({
@@ -87,7 +87,7 @@ export function useDashboard(
       - Chăm sóc nội bộ (Sinh nhật): ${JSON.stringify(upcomingBirthdays)}
       
       Yêu cầu bản tin (Dưới 180 từ):
-      1. Chào Anh Huy bằng văn phong chuyên nghiệp, tin cậy.
+      1. Chào ${userInfo?.displayName || 'Chỉ huy'} bằng văn phong chuyên nghiệp, tin cậy.
       2. Điểm tin: Tóm tắt 3 việc quan trọng nhất cần giải quyết ngay.
       3. Cảnh báo: Chỉ ra các rủi ro về tiến độ hoặc xung đột lịch (nếu có).
       4. Tham mưu: Đưa ra 1 hành động mang tính chiến lược để tối ưu hóa hiệu quả làm việc trong ngày.

@@ -87,7 +87,7 @@ export function useConclusionCreator() {
       `;
 
       const response = await generateContentWithRetry({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-3.1-pro-preview",
         contents: [{ role: 'user', parts: [{ text: prompt }] }]
       });
 
@@ -156,7 +156,7 @@ export function useConclusionCreator() {
       `;
 
       const response = await generateContentWithRetry({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-3.1-pro-preview",
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           responseMimeType: "application/json",
@@ -244,7 +244,7 @@ export function useConclusionCreator() {
       `;
 
       const response = await generateContentWithRetry({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-3.1-pro-preview",
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
 
