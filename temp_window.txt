@@ -1,0 +1,63 @@
+src/components/Calendar.tsx:52:    const title = window.prompt("New Event title");
+src/components/ComposePro.tsx:231:    if (!window.confirm('Bạn có chắc muốn xóa văn bản này?')) return;
+src/components/ComposePro.tsx:273:    window.print();
+src/components/ComposePro.tsx:758:                  const url = window.prompt('Nhập URL ảnh:');
+src/components/ErrorBoundary.tsx:30:    window.location.reload();
+src/components/NewsScannerModule.tsx:435:                  if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ danh sách theo dõi?')) {
+src/components/NewsScannerModule.tsx:691:                  onClick={() => window.print()}
+src/components/SmartErrorCorrectionCenter.tsx:333:    if (!window.confirm('Bạn có chắc chắn muốn xóa bản ghi lỗi này?')) return;
+src/components/SmartErrorCorrectionCenter.tsx:348:    if (!window.confirm(`Bạn có chắc chắn muốn dọn dẹp ${resolvedErrors.length} lỗi đã xử lý?`)) return;
+src/components/WorkScheduleCreator.tsx:688:    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+src/components/WorkScheduleCreator.tsx:1353:              if (window.confirm('Bạn có chắc chắn muốn ban hành lịch tuần này?')) {
+src/components/WorkScheduleCreator.tsx:1367:            onClick={() => window.print()}
+src/components/BulkReview.tsx:85:    if (window.confirm('Xóa tất cả danh sách file?')) {
+src/components/DraftingModule.tsx:278:    if (window.confirm('Bạn có chắc muốn xóa toàn bộ nội dung?')) {
+src/components/TaskManagement.tsx:73:    if (window.confirm(`Bạn có chắc chắn muốn xóa ${selectedTasks.size} nhiệm vụ đã chọn?`)) {
+src/components/GenZDecoder.tsx:221:    if (!window.confirm('Bạn có chắc chắn muốn xóa thuật ngữ này?')) return;
+src/components/GenZDecoder.tsx:406:                  window.scrollTo({ top: 0, behavior: 'smooth' });
+src/components/TaskJournalModule.tsx:205:    if (!window.confirm("Bạn có chắc chắn muốn xóa bản ghi này?")) return;
+src/components/DashboardModule.tsx:228:    if (!window.confirm("Bạn có chắc chắn muốn nạp lại dữ liệu mặc định? Thao tác này sẽ chỉ thêm các dữ liệu còn thiếu.")) return;
+src/components/MeetingReminder.tsx:53:    if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch công tác?")) {
+src/components/Header.tsx:53:    window.addEventListener('online', handleOnline);
+src/components/Header.tsx:54:    window.addEventListener('offline', handleOffline);
+src/components/Header.tsx:56:      window.removeEventListener('online', handleOnline);
+src/components/Header.tsx:57:      window.removeEventListener('offline', handleOffline);
+src/components/EnglishLearningWidget.tsx:261:    if ('speechSynthesis' in window) {
+src/components/EnglishLearningWidget.tsx:264:      window.speechSynthesis.speak(utterance);
+src/components/ChatHistoryModule.tsx:69:          url: window.location.href
+src/components/ChatHistoryModule.tsx:82:    if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử hội thoại? Hành động này không thể hoàn tác.')) {
+src/components/QuickNotes.tsx:72:    if (!window.confirm('Bạn có chắc chắn muốn xóa ghi chú này?')) return;
+src/components/WorkLogModule.tsx:267:    if (!window.confirm("Bạn có chắc chắn muốn xóa nhật ký ngày này?")) return;
+src/components/SettingsModal.tsx:106:    if (!window.confirm(`Bạn có chắc muốn khôi phục từ bản sao lưu "${snapshot.label}"? Toàn bộ dữ liệu hiện tại sẽ bị ghi đè.`)) return;
+src/components/SettingsModal.tsx:112:      setTimeout(() => window.location.reload(), 2000);
+src/components/SettingsModal.tsx:122:    if (!user || !window.confirm("Xóa bản sao lưu này?")) return;
+src/components/SettingsModal.tsx:157:    if (!window.confirm("CẢNH BÁO: Khôi phục sẽ ghi đè toàn bộ dữ liệu hiện tại. Bạn có chắc chắn muốn tiếp tục?")) {
+src/components/SettingsModal.tsx:175:        window.location.reload();
+src/components/MeetingAssistant.tsx:17:    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+src/components/MeetingAssistant.tsx:18:      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+src/context/AuthContext.tsx:158:        const domain = window.location.hostname;
+src/context/SessionTimeoutContext.tsx:92:        window.addEventListener(event, handleActivity);
+src/context/SessionTimeoutContext.tsx:98:          window.removeEventListener(event, handleActivity);
+src/context/KnowledgeContext.tsx:401:    if (!window.confirm("Bạn có chắc chắn muốn xóa TOÀN BỘ tri thức?")) return;
+src/context/UserPreferencesContext.tsx:77:    const root = window.document.documentElement;
+src/context/UserPreferencesContext.tsx:81:      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+src/context/UserPreferencesContext.tsx:89:    const root = window.document.documentElement;
+src/lib/localFs.ts:18:      return await window.showDirectoryPicker();
+src/lib/localFs.ts:21:      const [handle] = await window.showOpenFilePicker();
+src/lib/firebase.ts:36:  if (typeof window !== 'undefined') {
+src/hooks/useKnowledge.ts:464:    if (!window.confirm("Bạn có chắc chắn muốn xóa TOÀN BỘ tri thức? Hành động này không thể hoàn tác.")) return;
+src/hooks/useSpeechToText.ts:8:    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+src/hooks/useAppNavigation.ts:23:    if (window.innerWidth < 768) {
+src/hooks/useAppNavigation.ts:33:      if (window.innerWidth < 768) {
+src/services/notificationService.ts:19:    if (!('Notification' in window)) {
+src/services/notificationService.ts:64:        url: window.location.origin
+src/services/notificationService.ts:79:    const rawData = window.atob(base64);
+src/services/notificationService.ts:89:    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+src/sw.ts:61:    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+src/sw.ts:62:      // If a window client is already open, focus it
+src/sw.ts:68:      // Otherwise, open a new window
+src/App.tsx:95:    if (window.location.search.includes('origin=')) {
+src/App.tsx:96:      const url = new URL(window.location.href);
+src/App.tsx:98:      window.history.replaceState({}, document.title, url.toString());
+src/App.tsx:234:    window.addEventListener('keydown', handleKeyDown);
+src/App.tsx:235:    return () => window.removeEventListener('keydown', handleKeyDown);

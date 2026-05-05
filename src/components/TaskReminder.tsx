@@ -14,8 +14,11 @@ interface TaskReminderProps {
 export const TaskReminder: React.FC<TaskReminderProps> = ({ tasks, setTasks, showToast, onViewTasks }) => {
   const [title, setTitle] = useState('');
   const [deadline, setDeadline] = useState('');
+  const [time, setTime] = useState('09:00');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [isAdding, setIsAdding] = useState(false);
+  const [reminderType, setReminderType] = useState<'minutes' | 'hours' | 'days' | 'none'>('minutes');
+  const [reminderValue, setReminderValue] = useState(30);
 
   const handleAdd = () => {
     if (title && deadline) {
@@ -23,12 +26,16 @@ export const TaskReminder: React.FC<TaskReminderProps> = ({ tasks, setTasks, sho
         id: Date.now().toString() + Math.random(), 
         title, 
         deadline, 
+        time,
         priority, 
         status: 'Pending',
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        reminderType,
+        reminderValue
       }]);
       setTitle('');
       setDeadline('');
+      setTime('09:00');
       setIsAdding(false);
       showToast("Đã thêm công việc mới!", "success");
     }
@@ -96,6 +103,31 @@ export const TaskReminder: React.FC<TaskReminderProps> = ({ tasks, setTasks, sho
                 onChange={e => setDeadline(e.target.value)} 
                 className="flex-1 text-sm px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-600"
               />
+              <input 
+                type="time" 
+                value={time} 
+                onChange={e => setTime(e.target.value)} 
+                className="w-24 text-sm px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-600"
+              />
+            </div>
+            <div className="flex gap-2">
+              <input 
+                type="number"
+                min="1"
+                value={reminderValue}
+                onChange={e => setReminderValue(parseInt(e.target.value))}
+                className="w-20 text-sm px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              />
+              <select
+                value={reminderType}
+                onChange={e => setReminderType(e.target.value as any)}
+                className="flex-1 text-sm px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-600"
+              >
+                <option value="minutes">Phút trước</option>
+                <option value="hours">Giờ trước</option>
+                <option value="days">Ngày trước</option>
+                <option value="none">Không nhắc</option>
+              </select>
               <select 
                 value={priority} 
                 onChange={e => setPriority(e.target.value as any)} 
@@ -157,6 +189,11 @@ export const TaskReminder: React.FC<TaskReminderProps> = ({ tasks, setTasks, sho
                         {isOverdue && <AlertCircle size={10} />}
                         {isOverdue ? 'QUÁ HẠN: ' : 'HẠN: '}
                         {new Date(task.deadline).toLocaleDateString('vi-VN')}
+                        {task.reminderType && task.reminderType !== 'none' && (
+                          <span className="ml-1 text-[9px] font-medium text-indigo-500 bg-indigo-50 px-1 rounded truncate">
+                            • Nhắc: {task.reminderValue} {task.reminderType === 'minutes' ? 'p' : task.reminderType === 'hours' ? 'g' : 'n'}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>

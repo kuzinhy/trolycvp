@@ -3,10 +3,9 @@ import {createRoot} from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import './index.css';
-import { registerSW } from 'virtual:pwa-register';
-
+// import { registerSW } from 'virtual:pwa-register';
 // Register PWA Service Worker
-registerSW({ immediate: true });
+// registerSW({ immediate: true });
 
 const queryClient = new QueryClient();
 

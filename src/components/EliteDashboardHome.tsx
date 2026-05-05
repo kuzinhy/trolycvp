@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { notificationService } from '../services/notificationService';
+import { OnlineStatsModule } from './OnlineStatsModule';
 
 interface WidgetCardProps {
   title: string;
@@ -186,6 +187,8 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
           </motion.div>
         ))}
       </div>
+
+      <OnlineStatsModule />
 
       <div className="flex-1 grid grid-cols-1 xl:grid-cols-12 gap-6 min-h-0">
         {/* LEFT COLUMN - COMMAND FEED (xl:col-span-8) */}
