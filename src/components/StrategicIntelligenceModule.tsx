@@ -82,7 +82,7 @@ export const StrategicIntelligenceModule: React.FC<StrategicIntelligenceModulePr
             <BrainCircuit size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Strategic Intelligence</h1>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Trợ lý Văn phòng cấp ủy</h1>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Phân tích đa chiều & Tham mưu chiến lược AI</p>
           </div>
         </div>
@@ -274,7 +274,7 @@ export const StrategicIntelligenceModule: React.FC<StrategicIntelligenceModulePr
             
             <div className="flex items-center justify-between mb-10 relative z-10">
               <div>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Phân tích Chiến lược AI</h3>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Phân tích AI Văn phòng cấp ủy</h3>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 italic">Dựa trên tổng hợp Tin tức, Dư luận và Tình hình thực tế</p>
               </div>
               <div className="flex items-center gap-2">
