@@ -253,7 +253,7 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
                     initial={{ opacity: 0, x: -5 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    key={task.id ? 'elite-task-' + task.id : 'elite-task-idx-' + i} 
+                    key={`elite-task-${task.id || i}`} 
                     className="flex items-center gap-4 p-3.5 bg-white rounded-2xl border border-slate-100 hover:border-slate-300 transition-all cursor-pointer group shadow-sm hover:shadow-md"
                   >
                     <div className={cn(
@@ -288,7 +288,7 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: i * 0.05 }}
-                    key={meeting.id ? 'elite-meeting-' + meeting.id : 'elite-meeting-idx-' + i} 
+                    key={`elite-meeting-${meeting.id || i}`} 
                     className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:border-slate-300 hover:shadow-md transition-all cursor-pointer group"
                   >
                     <div className="flex items-center justify-between mb-2.5">

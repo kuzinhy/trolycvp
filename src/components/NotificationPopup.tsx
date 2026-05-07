@@ -57,7 +57,14 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ notificati
           exit={{ opacity: 0, x: 100, scale: 0.9, transition: { duration: 0.3 } }}
           className="fixed bottom-6 right-6 z-[130] w-full max-w-sm"
         >
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/40 overflow-hidden flex flex-col ring-1 ring-black/5">
+          <div 
+            className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/40 overflow-hidden flex flex-col ring-1 ring-black/5 cursor-pointer"
+            onClick={() => {
+              onView(notification.link);
+              setIsVisible(false);
+              setTimeout(onClose, 500);
+            }}
+          >
             <div className="p-5 flex gap-4">
               <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border", colorClass)}>
                 <Icon size={24} />
@@ -68,7 +75,8 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ notificati
                     {notification.type === 'warning' ? 'Nhắc nhở sự kiện' : 'Thông báo mới'}
                   </span>
                   <button 
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setIsVisible(false);
                       setTimeout(onClose, 500);
                     }}
@@ -83,7 +91,7 @@ export const NotificationPopup: React.FC<NotificationPopupProps> = ({ notificati
                 </p>
               </div>
             </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-2">
                 {onDismiss && (
                   <button
