@@ -55,10 +55,17 @@ export const QuickNotes: React.FC<{
   };
 
   const handleAdd = () => {
-    if (!newContent.trim()) return;
+    const trimmedContent = newContent.trim();
+    if (!trimmedContent) return;
+    
+    if (notes.some(n => n.content.trim() === trimmedContent)) {
+      showToast('Nội dung này đã có trong sổ tay thống kê!', 'warning');
+      return;
+    }
+
     const newNote: Note = {
       id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      content: newContent,
+      content: trimmedContent,
       timestamp: Date.now(),
       colorIndex: selectedColorIndex
     };

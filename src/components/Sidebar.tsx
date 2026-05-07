@@ -369,7 +369,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                 )}>
                   <LayoutDashboard size={18} />
                 </div>
-                {!isCollapsed && <span className="font-bold tracking-tight truncate text-sm">Quản trị & Điều hành</span>}
+                {!isCollapsed && <span className="font-bold tracking-tight truncate text-xs">Quản trị & Điều hành</span>}
               </div>
               {!isCollapsed && (
                 <div className={cn(
@@ -460,7 +460,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                 )}>
                   <Database size={18} />
                 </div>
-                {!isCollapsed && <span className="font-bold tracking-tight truncate text-sm">Nghiệp vụ & Dữ liệu</span>}
+                {!isCollapsed && <span className="font-bold tracking-tight truncate text-xs">Nghiệp vụ & Dữ liệu</span>}
               </div>
               {!isCollapsed && (
                 <div className={cn(
@@ -551,7 +551,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                 )}>
                   <ShieldCheck size={18} />
                 </div>
-                {!isCollapsed && <span className="font-bold tracking-tight truncate text-sm">Quản trị Hệ thống</span>}
+                {!isCollapsed && <span className="font-bold tracking-tight truncate text-xs">Quản trị Hệ thống</span>}
               </div>
               {!isCollapsed && (
                 <div className={cn(

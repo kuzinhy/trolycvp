@@ -199,7 +199,12 @@ Trả về kết quả dưới dạng JSON với định dạng:
       showToast("Vui lòng nhập đầy đủ thông tin!", "error");
       return;
     }
-    
+    // Kiểm tra trùng lặp
+    if (tasks.some(t => t.title.trim().toLowerCase() === formData.title.trim().toLowerCase())) {
+      showToast("Nhiệm vụ này đã tồn tại trong hệ thống!", "warning");
+      return;
+    }
+
     const newTask: Task = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       title: formData.title,
