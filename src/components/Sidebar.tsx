@@ -178,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <h1 className="font-black text-slate-900 text-base tracking-tighter truncate uppercase leading-none mb-1">STRATEGIC HUB</h1>
+              <h1 className="font-black text-slate-900 text-[10px] tracking-tighter truncate uppercase leading-none mb-1">Trợ lý Văn phòng cấp ủy</h1>
               <div className="flex items-center gap-1.5">
                 <span className="px-1.5 py-0.5 bg-blue-600 text-white text-[7px] font-black rounded uppercase">v6.0</span>
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-mono">SYSTEM READY</p>

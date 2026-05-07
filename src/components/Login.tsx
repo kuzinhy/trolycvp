@@ -30,12 +30,12 @@ export const Login: React.FC = () => {
         <div className="w-20 h-20 bg-white rounded-3xl mx-auto mb-6 flex items-center justify-center p-2 shadow-xl shadow-blue-500/10 border border-slate-50">
           <img 
             src="https://i.imgur.com/S9tvwYs.png" 
-            alt="Elite Strategic Hub" 
+            alt="Trợ lý Văn phòng cấp ủy" 
             className="w-full h-full object-contain"
             referrerPolicy="no-referrer"
           />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter uppercase">Elite Strategic Hub</h1>
+        <h1 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter uppercase">Trợ lý Văn phòng cấp ủy</h1>
         <p className="text-[10px] font-black text-slate-400 mb-8 uppercase tracking-[0.25em]">Trợ lý Chiến lược Đảng uỷ</p>
         
         {error && (

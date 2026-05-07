@@ -255,7 +255,7 @@ export const DashboardModule = memo((props: DashboardModuleProps) => {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Strategic Hub</h1>
+                <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Trợ lý Văn phòng cấp ủy</h1>
                 <span className="px-3 py-1 bg-blue-600 text-white text-[10px] font-black rounded-full shadow-lg shadow-blue-500/20">v8.0 ELITE</span>
               </div>
               <div className="flex items-center gap-3 mt-1">
