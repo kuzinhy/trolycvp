@@ -174,9 +174,17 @@ Thông tin bổ sung:
 - Cán bộ soạn thảo: ${author || 'Không xác định'}
 - Trạng thái văn bản: ${status}
 
+[VÍ DỤ VĂN BẢN MẪU/VĂN PHONG ĐẢNG (RẤT QUAN TRỌNG ĐỂ CẢI THIỆN ĐỀ XUẤT SỬA LỖI)]:
+- Mở đầu Nghị quyết: "Thực hiện Nghị quyết Đại hội đại biểu toàn quốc lần thứ XIII của Đảng; căn cứ Nghị quyết số XX-NQ/TU ngày XX/XX/XXXX của Tỉnh ủy về... Đảng ủy Khối ban hành Nghị quyết về việc..."
+- Chỉ đạo quyết liệt: "Cấp ủy, tổ chức đảng trực thuộc tập trung lãnh đạo, chỉ đạo khẩn trương triển khai thực hiện nghiêm túc, hiệu quả các nhiệm vụ trọng tâm sau:"
+- Lời văn Tờ trình: "Căn cứ Quy chế làm việc của Ban Chấp hành Đảng bộ Khối; căn cứ tình hình thực tiễn... Kính trình Ban Thường vụ Đảng ủy xem xét, quyết định..."
+- Báo cáo tình hình: "Nhìn chung, trong tháng qua, tình hình tư tưởng cán bộ, đảng viên cơ bản ổn định, tin tưởng vững chắc vào sự lãnh đạo của Đảng và điều hành của Nhà nước..."
+- Kết luận cuộc họp: "Sau khi nghe đồng chí... trình bày báo cáo và ý kiến thảo luận tham gia của các đại biểu dự họp, đồng chí Bí thư Đảng ủy kết luận như sau:"
+*Hãy học hỏi văn phong xúc tích, chặt chẽ, mang tính chính trị cao từ các ví dụ trên để đưa ra ĐỀ XUẤT SỬA phù hợp.*
+
 Nhiệm vụ chuyên gia của bạn:
 1. PHÁT HIỆN LỖI: Chỉ ra các lỗi vi phạm quy tắc, lỗi chính tả, ngữ pháp, hoặc văn phong không phù hợp. Trích dẫn đoạn văn bản bị lỗi.
-2. ĐỀ XUẤT SỬA: Đưa ra cách sửa lại cho đúng, chuẩn mực và chuyên nghiệp hơn theo văn phong Đảng.
+2. ĐỀ XUẤT SỬA: Đưa ra cách sửa lại cho đúng, chuẩn mực và chuyên nghiệp hơn theo văn phong Đảng (Ưu tiên tham khảo các VÍ DỤ ở trên).
 3. ĐỐI CHIẾU TRI THỨC: So sánh nội dung văn bản với các quy định và kiến thức trong bộ nhớ chung (nếu có bên dưới) để đảm bảo tính thống nhất.
 4. RÀ SOÁT CĂN CỨ VĂN BẢN: Kiểm tra các tên căn cứ văn bản (luật, nghị định, thông tư, quy định...) có đúng tên, số hiệu, ngày ban hành không? Có văn bản nào mới hơn thay thế các văn bản này không?
 5. ĐÁNH GIÁ CHUYÊN SÂU: Nhận xét về tính logic, tính thuyết phục và độ sắc bén của các luận điểm trong văn bản.

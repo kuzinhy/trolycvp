@@ -44,7 +44,24 @@ export const UserList: React.FC<UserListProps> = ({ onSelectUser, selectedUser, 
     return () => unsubscribe();
   }, [unitId, isSuperAdmin, isAdmin]);
 
-  const filteredUsers = users.filter(u => 
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getIsOnline = (user: User) => {
+    const cutoff = currentTime - 5 * 60 * 1000;
+    let isRecentlyActive = false;
+    if (user.lastSeen && user.lastSeen.toMillis) {
+      isRecentlyActive = user.lastSeen.toMillis() > cutoff;
+    }
+    return user.isOnline === true && isRecentlyActive;
+  };
+
+  const processedUsers = users.map(u => ({ ...u, isOnline: getIsOnline(u) }));
+
+  const filteredUsers = processedUsers.filter(u => 
     u.displayName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -95,7 +112,7 @@ export const UserList: React.FC<UserListProps> = ({ onSelectUser, selectedUser, 
         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center justify-between">
           <span>Thành viên</span>
           <span className="bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded text-[9px]">
-            {users.filter(u => u.isOnline).length}
+            {processedUsers.filter(u => u.isOnline).length}
           </span>
         </h4>
         <div className="space-y-0.5">

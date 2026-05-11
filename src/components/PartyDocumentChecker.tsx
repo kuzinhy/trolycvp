@@ -49,10 +49,11 @@ export const PartyDocumentChecker: React.FC = () => {
   const [score, setScore] = useState<number | null>(null);
   const [summary, setSummary] = useState<string>('');
   
-  const { rules, addRule, toggleRule, deleteRule } = usePartyReviewRules();
+  const { rules, addRule, toggleRule, deleteRule, updateRule } = usePartyReviewRules();
   const { showToast } = useToast();
   
   const [showRuleModal, setShowRuleModal] = useState(false);
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'review' | 'rules'>('review');
   const [newRule, setNewRule] = useState<{ title: string; description: string; content: string; category: 'party_rule' | 'grammar' | 'format' }>({ 
     title: '', 
@@ -84,12 +85,29 @@ export const PartyDocumentChecker: React.FC = () => {
     }
   };
 
-  const handleAddRule = () => {
+  const handleSaveRule = () => {
     if (!newRule.title || !newRule.content) return;
-    addRule(newRule);
+    if (editingRuleId) {
+      updateRule(editingRuleId, newRule);
+      showToast('Đã cập nhật quy tắc', 'success');
+    } else {
+      addRule(newRule);
+      showToast('Đã thêm quy tắc mới', 'success');
+    }
     setNewRule({ title: '', description: '', content: '', category: 'party_rule' });
+    setEditingRuleId(null);
     setShowRuleModal(false);
-    showToast('Đã thêm quy tắc mới', 'success');
+  };
+
+  const handleEditRule = (rule: any) => {
+    setNewRule({
+      title: rule.title,
+      description: rule.description,
+      content: rule.content,
+      category: rule.category
+    });
+    setEditingRuleId(rule.id);
+    setShowRuleModal(true);
   };
 
   const handleAnalyze = async () => {
@@ -109,6 +127,14 @@ export const PartyDocumentChecker: React.FC = () => {
       const prompt = `Bạn là một Chuyên gia Thư ký Đảng uỷ và Ngôn ngữ học chính trị, tuân thủ Quy định 66-QĐ/TW.
       NHIỆM VỤ: Rà soát và chỉnh lỗi văn bản Đảng dựa trên các quy tắc sau:
       ${activeRulesContent}
+
+      [BỘ VÍ DỤ CHUẨN MỰC VỀ TỪ VỰNG & VĂN PHONG ĐẢNG (RẤT QUAN TRỌNG ĐỂ THAM KHẢO KHI ĐỀ XUẤT SỬA LỖI)]:
+      - Sửa "đề nghị" thành "kính trình" hoặc "báo cáo" (khi cấp dưới gửi cấp trên).
+      - Sửa "yêu cầu" thành "đề nghị" (khi gửi cơ quan ngang cấp).
+      - Phân biệt "Đảng bộ Khối" (toàn bộ tổ chức, đảng viên) và "Đảng ủy Khối" (cơ quan lãnh đạo/chấp hành).
+      - Câu chữ phải trang trọng, chính luận, tránh dùng từ ngữ dân dã, văn nói hằng ngày.
+      - Ví dụ mở đầu chuẩn mực: "Thực hiện Quy định số XX-QĐ/TW ngày XX/XX/XXXX; căn cứ Quy chế làm việc của cấp ủy... Ban Thường vụ Đảng ủy ban hành..."
+      - Lời văn đánh giá: "Cấp ủy các cấp đã tập trung lãnh đạo, chỉ đạo cụ thể hóa và triển khai thực hiện có hiệu quả..." (trang trọng, đúng thuật ngữ chính trị).
 
       NỘI DUNG CẦN RÀ SOÁT:
       "${text}"
@@ -460,8 +486,16 @@ export const PartyDocumentChecker: React.FC = () => {
                                )} />
                              </button>
                              <button 
+                               onClick={() => handleEditRule(rule)}
+                               className="p-1.5 text-slate-300 hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                               title="Sửa quy tắc"
+                             >
+                               <Settings2 size={16} />
+                             </button>
+                             <button 
                                onClick={() => deleteRule(rule.id)}
                                className="p-1.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                               title="Xóa quy tắc"
                              >
                                <Trash2 size={16} />
                              </button>
@@ -493,7 +527,9 @@ export const PartyDocumentChecker: React.FC = () => {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8"
           >
-            <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-tight">Thêm quy tắc mới</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-tight">
+              {editingRuleId ? 'Cập nhật quy tắc' : 'Thêm quy tắc mới'}
+            </h3>
             <div className="space-y-5">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên quy tắc</label>
@@ -506,6 +542,18 @@ export const PartyDocumentChecker: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loại quy tắc</label>
+                <select 
+                  value={newRule.category}
+                  onChange={(e) => setNewRule({ ...newRule, category: e.target.value as any })}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#b33a30]/10"
+                >
+                  <option value="party_rule">Quy định Đảng</option>
+                  <option value="grammar">Ngữ pháp & Chính tả</option>
+                  <option value="format">Thể thức văn bản</option>
+                </select>
+              </div>
+              <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mô tả định hướng</label>
                 <textarea 
                   value={newRule.content}
@@ -516,8 +564,22 @@ export const PartyDocumentChecker: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-3 mt-8">
-              <button onClick={() => setShowRuleModal(false)} className="flex-1 py-4 text-slate-500 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-50 rounded-2xl">Hủy</button>
-              <button onClick={handleAddRule} className="flex-1 py-4 bg-[#b33a30] text-white font-bold text-[11px] uppercase tracking-widest rounded-2xl shadow-lg shadow-rose-900/20">Xác nhận</button>
+              <button 
+                onClick={() => {
+                  setShowRuleModal(false);
+                  setEditingRuleId(null);
+                  setNewRule({ title: '', description: '', content: '', category: 'party_rule' });
+                }} 
+                className="flex-1 py-4 text-slate-500 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-50 rounded-2xl"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={handleSaveRule} 
+                className="flex-1 py-4 bg-[#b33a30] text-white font-bold text-[11px] uppercase tracking-widest rounded-2xl shadow-lg shadow-rose-900/20"
+              >
+                Xác nhận
+              </button>
             </div>
           </motion.div>
         </div>

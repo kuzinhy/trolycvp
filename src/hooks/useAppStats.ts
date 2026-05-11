@@ -24,23 +24,32 @@ export function useAppStats() {
       }
     });
 
-    // 2. Lắng nghe số lượng thành viên từ Firestore
+    // 2 & 3. Lắng nghe số lượng thành viên và người online từ Firestore
     const unsubscribeMembers = onSnapshot(collection(db, 'users'), (snapshot) => {
       setMemberCount(snapshot.size);
-    });
+      let online = 0;
+      const now = Date.now();
+      const cutoff = now - 5 * 60 * 1000; // 5 phút
 
-    // 3. Lắng nghe số lượng người online từ Realtime Database
-    const presenceRef = ref(database, 'presence');
-    const unsubscribeOnline = onValue(presenceRef, (snapshot) => {
-      const data = snapshot.val();
-      const count = data ? Object.values(data).filter((u: any) => u.online).length : 0;
-      setOnlineCount(count);
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        let isRecentlyActive = false;
+        if (data.lastSeen && data.lastSeen.toMillis) {
+          isRecentlyActive = data.lastSeen.toMillis() > cutoff;
+        }
+        
+        // Đôi khi isOnline = true bị kẹt do tắt máy đột ngột,
+        // nên ta kết hợp với việc có hoạt động trong 5 phút gần đây.
+        if (data.isOnline === true && isRecentlyActive) {
+          online++;
+        }
+      });
+      setOnlineCount(online);
     });
 
     return () => {
       unsubscribeStats();
       unsubscribeMembers();
-      unsubscribeOnline();
     };
   }, [user?.uid, loading]);
 

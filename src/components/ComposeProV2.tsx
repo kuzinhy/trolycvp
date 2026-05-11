@@ -149,6 +149,12 @@ THÔNG TIN VĂN BẢN:
 - Cơ quan ban hành: ${metadata.coQuanBanHanh}
 - Định hướng nội dung: ${aiPrompt}
 
+[VÍ DỤ VỀ VĂN PHONG CHUẨN MỰC (QUAN TRỌNG: HÃY HỌC HỎI VÀ ÁP DỤNG)]:
+- Chỉ đạo quyết liệt: "Đề nghị các cấp ủy, tổ chức đảng khẩn trương triển khai, quán triệt và thực hiện nghiêm túc..."
+- Lời văn Tờ trình: "Kính trình Ban Thường vụ Đảng ủy xem xét, quyết định..."
+- Báo cáo tình hình: "Nhìn chung, trong thời gian qua, tình hình tư tưởng cán bộ, đảng viên cơ bản ổn định, tin tưởng tuyệt đối vào sự lãnh đạo của Đảng..."
+- Kết luận: "Trên cơ sở ý kiến thảo luận của các đồng chí Ủy viên Ban Thường vụ, đồng chí Bí thư Đảng ủy kết luận như sau:"
+
 ${learnedPreferences.length > 0 ? `PHONG CÁCH VĂN PHONG ƯU TIÊN (Đã học từ thói quen của Chánh văn phòng):
 ${learnedPreferences.map(p => `- ${p}`).join('\n')}` : ''}
 

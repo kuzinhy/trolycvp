@@ -67,6 +67,7 @@ interface SidebarProps {
   onToggleTeamChat: () => void;
   isTeamChatOpen: boolean;
   sidebarPosition?: 'left' | 'right';
+  onOpenNotebookModal?: () => void;
 }
 
 const NavButton = memo(({ active, onClick, icon, label, collapsed, badge }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, collapsed?: boolean, badge?: string }) => (
@@ -120,7 +121,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
   onMarkAllAsRead,
   onToggleTeamChat,
   isTeamChatOpen,
-  sidebarPosition = 'left'
+  sidebarPosition = 'left',
+  onOpenNotebookModal
 }) => {
   const { isAdmin, unitInfo } = useAuth();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
@@ -523,6 +525,16 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       icon={<Database size={16} />} 
                       label="Knowledge Core" 
                       collapsed={isCollapsed}
+                    />
+                  )}
+                  {(!searchTerm || "tra cứu thông tin".includes(searchTerm.toLowerCase())) && onOpenNotebookModal && (
+                    <NavButton 
+                      active={false} 
+                      onClick={onOpenNotebookModal} 
+                      icon={<Search size={16} />} 
+                      label="Tra cứu thông tin" 
+                      collapsed={isCollapsed}
+                      badge="AI"
                     />
                   )}
                 </motion.div>

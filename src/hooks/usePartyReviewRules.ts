@@ -90,10 +90,16 @@ export function usePartyReviewRules() {
     await deleteDoc(doc(db, 'users', user.uid, 'party_review_rules', id));
   }, [user]);
 
+  const updateRule = useCallback(async (id: string, updatedData: Partial<Omit<ReviewRule, 'id'>>) => {
+    if (!user) return;
+    await setDoc(doc(db, 'users', user.uid, 'party_review_rules', id), updatedData, { merge: true });
+  }, [user]);
+
   return {
     rules,
     addRule,
     toggleRule,
-    deleteRule
+    deleteRule,
+    updateRule
   };
 }

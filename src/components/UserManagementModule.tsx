@@ -163,8 +163,24 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [indexError, setIndexError] = useState<string | null>(null);
 
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const filteredUsers = useMemo(() => {
-    return usersList.filter(u => {
+    const cutoff = currentTime - 5 * 60 * 1000;
+    return usersList.map(u => {
+      let isRecentlyActive = false;
+      if (u.lastSeen && typeof u.lastSeen.toMillis === 'function') {
+        isRecentlyActive = u.lastSeen.toMillis() > cutoff;
+      }
+      return {
+        ...u,
+        isOnline: u.isOnline === true && isRecentlyActive
+      };
+    }).filter(u => {
       const matchesSearch = 
         u.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
         u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,16 +194,25 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
       
       return matchesSearch && matchesRole && matchesUnit && matchesStatus;
     });
-  }, [usersList, searchTerm, roleFilter, unitFilter, statusFilter]);
+  }, [usersList, searchTerm, roleFilter, unitFilter, statusFilter, currentTime]);
 
-  const stats = useMemo(() => ({
-    total: usersList.length,
-    active: usersList.filter(u => !u.disabled).length,
-    disabled: usersList.filter(u => u.disabled).length,
-    admins: usersList.filter(u => u.role === 'admin' || u.role === 'super_admin').length,
-    units: new Set(usersList.map(u => u.unitId).filter(Boolean)).size,
-    online: usersList.filter(u => u.isOnline).length
-  }), [usersList]);
+  const stats = useMemo(() => {
+    const cutoff = currentTime - 5 * 60 * 1000;
+    return {
+      total: usersList.length,
+      active: usersList.filter(u => !u.disabled).length,
+      disabled: usersList.filter(u => u.disabled).length,
+      admins: usersList.filter(u => u.role === 'admin' || u.role === 'super_admin').length,
+      units: new Set(usersList.map(u => u.unitId).filter(Boolean)).size,
+      online: usersList.filter(u => {
+        let isRecentlyActive = false;
+        if (u.lastSeen && typeof u.lastSeen.toMillis === 'function') {
+          isRecentlyActive = u.lastSeen.toMillis() > cutoff;
+        }
+        return u.isOnline === true && isRecentlyActive;
+      }).length
+    };
+  }, [usersList, currentTime]);
 
   const loadUsers = useCallback(() => {
     setIsLoading(true);

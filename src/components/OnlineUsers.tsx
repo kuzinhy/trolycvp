@@ -1,21 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { listenForPresenceCount } from '../lib/presence';
-import { useAuth } from '../context/AuthContext';
+import React from 'react';
+import { useAppStats } from '../hooks/useAppStats';
 
 export const OnlineUsers: React.FC = () => {
-  const [onlineCount, setOnlineCount] = useState(0);
-
-  const { user } = useAuth();
-  useEffect(() => {
-    if (user) {
-      const unsubscribe = listenForPresenceCount((count) => {
-        setOnlineCount(count);
-      });
-      return () => {
-        if (typeof unsubscribe === 'function') unsubscribe();
-      };
-    }
-  }, [user]);
+  const { onlineCount } = useAppStats();
 
   return (
     <div className="flex items-center gap-2 text-sm text-gray-600">

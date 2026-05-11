@@ -54,9 +54,15 @@ export const SmartEmailAssistant: React.FC<{ aiKnowledge: any[], showToast: (mes
                 
                 Yêu cầu:
                 1. Bao gồm tiêu đề email (Subject).
-                2. Nội dung email đầy đủ, chuyên nghiệp bằng tiếng Việt.
-                3. Sử dụng Markdown để định dạng.
-                4. Nếu là trang trọng, hãy sử dụng các đại từ xưng hô phù hợp trong môi trường công sở.`
+                2. Nội dung email đầy đủ, chuyên nghiệp bằng tiếng Việt, viết thẳng vào vấn đề.
+                3. Sử dụng Markdown để định dạng nhẹ nhàng (in đậm các ý chính).
+                4. Nếu là trang trọng, hãy sử dụng các đại từ xưng hô phù hợp trong môi trường công sở.
+
+                [MỘT SỐ VÍ DỤ/MẸO VỀ VĂN PHONG THAM KHẢO]:
+                - Khai đề rõ ràng: "Kính gửi [Tên], Tôi viết email này nhằm mục đích báo cáo/trao đổi về việc..."
+                - Nếu xin ý kiến: "Rất mong nhận được ý kiến chỉ đạo/góp ý của anh/chị trước ngày..."
+                - Kết thúc chuyên nghiệp: "Trân trọng kính chào. / Cảm ơn anh/chị đã quan tâm và hỗ trợ."
+                - Tuyệt đối không viết email trống rỗng hay không có kết luận rõ ràng.`
               }
             ]
           }

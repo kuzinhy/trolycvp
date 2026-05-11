@@ -7,6 +7,7 @@ import { ToastType } from '../components/ui/Toast';
 import { useAuth } from '../context/AuthContext';
 import { generateContentWithRetry, generateContentStreamWithRetry } from '../lib/ai-utils';
 import { cacheData, getCachedData } from '../lib/cache';
+import { buildGraphRagContext } from '../lib/graphrag-utils';
 
 function generateUserTitle(text: string): string | undefined {
   const trimmed = text.trim();
@@ -215,22 +216,12 @@ export function useChat(
         }).catch(err => handleFirestoreError(err, OperationType.CREATE, 'chat_history'));
       }
 
-      // Optimize knowledge context: prioritize important items and limit total characters
+      // GraphRAG: Dynamic Context Retrieval & Semantic Graph Traversal
       const knowledgeArray = Array.isArray(aiKnowledge) ? aiKnowledge : [];
-      const sortedKnowledge = [...knowledgeArray].sort((a, b) => (b.isImportant ? 1 : 0) - (a.isImportant ? 1 : 0));
-      let currentLength = 0;
-      const MAX_KNOWLEDGE_CHARS = 8000;
-      const prioritizedKnowledge = [];
-      
-      for (const k of sortedKnowledge) {
-        if (currentLength + (k.content?.length || 0) > MAX_KNOWLEDGE_CHARS) break;
-        prioritizedKnowledge.push(k.content);
-        currentLength += (k.content?.length || 0);
+      let knowledgeContext = "Chưa có dữ liệu tri thức đặc thù.";
+      if (knowledgeArray.length > 0) {
+         knowledgeContext = buildGraphRagContext(userMessage.content, knowledgeArray);
       }
-
-      const knowledgeContext = prioritizedKnowledge.length > 0 
-        ? prioritizedKnowledge.map((content, i) => `${i+1}. ${content}`).join('\n')
-        : "Chưa có dữ liệu tri thức đặc thù.";
 
       const userName = user?.displayName || user?.email?.split('@')[0] || 'Đồng chí';
       const userRole = isAdmin ? (isSuperAdmin ? 'Super Admin' : 'Admin') : 'Người dùng';

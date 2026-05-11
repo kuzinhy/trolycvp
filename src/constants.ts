@@ -59,6 +59,7 @@ export interface Event {
   time?: string; // HH:mm
   location?: string; // Added location
   description?: string; // Added description
+  category?: string; // Added category
   type: 'meeting' | 'anniversary' | 'holiday' | 'other' | 'founding_day_industry' | 'founding_day_party' | 'founding_day_mttq' | 'founding_day_union' | 'founding_day_party_building';
   reminderDays?: number;
   reminderMinutes?: number;
@@ -90,7 +91,7 @@ export interface Task {
   deadline: string; // Format: YYYY-MM-DD
   time?: string; // Format: HH:mm
   priority: 'low' | 'medium' | 'high';
-  status: 'Pending' | 'In Progress' | 'Completed';
+  status: 'Pending' | 'In Progress' | 'Completed' | 'On Hold' | 'In Review';
   progress?: number; // 0-100
   category?: string;
   estimatedTime?: string;

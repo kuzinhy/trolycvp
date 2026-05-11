@@ -57,6 +57,7 @@ const EvaluationModule = lazy(() => import('./components/EvaluationModule').then
 const MorningBriefing = lazy(() => import('./components/MorningBriefing').then(m => ({ default: m.MorningBriefing })));
 const CommandFocusMode = lazy(() => import('./components/CommandFocusMode').then(m => ({ default: m.CommandFocusMode })));
 const EliteCommandCenter = lazy(() => import('./components/EliteCommandCenter').then(m => ({ default: m.EliteCommandCenter })));
+const NotebookModal = lazy(() => import('./components/NotebookModal').then(m => ({ default: m.NotebookModal })));
 
 // Static-ish components
 const MemoizedSidebar = Sidebar;
@@ -199,6 +200,7 @@ function AuthenticatedApp() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
   const [showMorningBriefing, setShowMorningBriefing] = useState(false);
+  const [isNotebookModalOpen, setIsNotebookModalOpen] = useState(false);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
 
   useEffect(() => {
@@ -257,11 +259,20 @@ function AuthenticatedApp() {
       updateStatus(document.visibilityState !== 'hidden');
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Ping mỗi 2 phút nếu tab đang mở
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        updateStatus(true);
+      }
+    }, 2 * 60 * 1000);
+    
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(intervalId);
       updateStatus(false);
     };
-  }, [user?.uid]);
+  }, [user?.uid, user?.displayName, user?.email, user?.photoURL]);
 
   useEffect(() => {
     if (currentTab) {
@@ -307,6 +318,7 @@ function AuthenticatedApp() {
         onMarkAllAsRead={markAllAsRead}
         onToggleTeamChat={() => setIsTeamChatOpen(!isTeamChatOpen)}
         isTeamChatOpen={isTeamChatOpen}
+        onOpenNotebookModal={() => setIsNotebookModalOpen(true)}
         onQuickTask={() => {}}
         sidebarPosition={preferences.sidebarPosition}
       />
@@ -436,6 +448,10 @@ function AuthenticatedApp() {
           onNavigate={navigateTo}
           aiKnowledge={aiKnowledge}
           tasks={tasks}
+        />
+        <NotebookModal 
+          isOpen={isNotebookModalOpen}
+          onClose={() => setIsNotebookModalOpen(false)}
         />
       </AnimatePresence>
 

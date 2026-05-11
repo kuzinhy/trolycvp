@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
+import { buildGraphRagContext } from '../lib/graphrag-utils';
 
 export interface ConclusionSegment {
   id: string;
@@ -54,10 +55,8 @@ export function useConclusionCreator() {
     
     setIsDraftingInitial(true);
     try {
-      const knowledgeContext = aiKnowledge
-        .slice(0, 15)
-        .map(k => `- ${k.title}: ${k.content.substring(0, 400)}`)
-        .join('\n');
+      const graphRagQuery = `${meetingTitle} ${participants} ${meetingType}`;
+      const knowledgeContext = buildGraphRagContext(graphRagQuery, aiKnowledge, 12000);
 
       const prompt = `
         BẠN LÀ: Một Chuyên gia Tham mưu cao cấp cho Thường trực Đảng uỷ phường tại Việt Nam, am hiểu sâu sắc Quy định 66-QĐ/TW về thể thức văn bản của Đảng. 
@@ -107,10 +106,8 @@ export function useConclusionCreator() {
     setSuggestions([]);
 
     try {
-      const knowledgeContext = aiKnowledge
-        .slice(0, 20)
-        .map(k => `- ${k.title || 'Văn bản'}: ${k.content.substring(0, 300)}...`)
-        .join('\n');
+      const graphRagQuery = `${rawText} ${meetingType} ${selectedParticipants.join(' ')} ${organization}`;
+      const knowledgeContext = buildGraphRagContext(graphRagQuery, aiKnowledge, 12000);
 
       const conciseInstruction = isConcise 
         ? "CHẾ ĐỘ NGẮN GỌN: Hãy tập trung vào vấn đề chính, biểu đạt súc tích, dễ hiểu, lược bỏ rườm rà nhưng phải đảm bảo đầy đủ ý chí chỉ đạo của cấp uỷ."

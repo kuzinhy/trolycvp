@@ -19,6 +19,21 @@ export function useEvents(showToast?: (message: string, type?: ToastType) => voi
       const q = query(collection(db, 'users', user.uid, 'events'));
       const querySnapshot = await getDocs(q);
       const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event));
+      
+      if (!eventsData.some(e => e.name === 'Review Audit Report')) {
+        const customEvent: Event = {
+          id: 'review-audit-report',
+          name: 'Review Audit Report',
+          date: '2024-07-25',
+          time: '14:00',
+          category: 'Work',
+          description: 'Review the Q2 internal audit report and prepare findings.',
+          type: 'other'
+        };
+        await setDoc(doc(db, 'users', user.uid, 'events', customEvent.id), customEvent).catch(console.error);
+        eventsData.push(customEvent);
+      }
+
       setEvents(eventsData);
     } catch (e) {
       handleFirestoreError(e, OperationType.GET, `users/${user.uid}/events`);

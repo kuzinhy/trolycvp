@@ -168,8 +168,8 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ data }) => {
             <Share2 size={18} />
           </div>
           <div>
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight italic">Knowledge Graph</h3>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bản đồ liên kết tri thức chiến lược</p>
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight italic">Living Knowledge Graph</h3>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sơ đồ Tư duy Sống (GraphRAG Level 2)</p>
           </div>
         </div>
       </div>

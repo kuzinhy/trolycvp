@@ -1,36 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { database } from '../lib/firebase';
-import { ref, onValue, runTransaction } from 'firebase/database';
-import { listenForPresenceCount } from '../lib/presence';
+import React, { useMemo } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
+import { useAppStats } from '../hooks/useAppStats';
 import { Activity, Users, Zap, BarChart3 } from 'lucide-react';
 
 export const OnlineStatsModule: React.FC = () => {
-  const [onlineCount, setOnlineCount] = useState(0);
-  const [totalVisits, setTotalVisits] = useState(0);
   const { tasks, meetings } = useDashboardContext();
+  const { onlineCount, visitCount } = useAppStats();
 
-  useEffect(() => {
-    // 1. Online Users
-    const unsubscribePresence = listenForPresenceCount((count) => {
-      setOnlineCount(count);
-    });
-
-    // 2. Visits
-    const visitsRef = ref(database, 'stats/totalVisits');
-    runTransaction(visitsRef, (current) => (current || 0) + 1);
-    
-    const unsubscribeVisits = onValue(visitsRef, (snapshot) => {
-        setTotalVisits(snapshot.val() || 0);
-    });
-
-    return () => {
-      if (typeof unsubscribePresence === 'function') unsubscribePresence();
-      unsubscribeVisits();
-    };
-  }, []);
-
-  const systemHealth = React.useMemo(() => {
+  const systemHealth = useMemo(() => {
     const totalItems = tasks.length + meetings.length;
     let score = 100;
     if (totalItems > 50) score -= 20;
@@ -51,7 +28,7 @@ export const OnlineStatsModule: React.FC = () => {
         <Zap className="text-emerald-500" size={24} />
         <div>
           <p className="text-xs text-slate-500 uppercase font-bold">Lượt truy cập</p>
-          <p className="text-xl font-black text-slate-900">{totalVisits}</p>
+          <p className="text-xl font-black text-slate-900">{visitCount}</p>
         </div>
       </div>
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">

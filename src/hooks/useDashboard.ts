@@ -127,6 +127,22 @@ export function useDashboard(
       const q = query(collection(db, 'users', user.uid, 'events'));
       const querySnapshot = await getDocs(q);
       const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event));
+      
+      // Inject requested event
+      if (!eventsData.some(e => e.name === 'Review Audit Report')) {
+        const customEvent: Event = {
+          id: 'review-audit-report',
+          name: 'Review Audit Report',
+          date: '2024-07-25',
+          time: '14:00',
+          category: 'Work',
+          description: 'Review the Q2 internal audit report and prepare findings.',
+          type: 'other'
+        };
+        await setDoc(doc(db, 'users', user.uid, 'events', customEvent.id), customEvent).catch(console.error);
+        eventsData.push(customEvent);
+      }
+
       setEvents(eventsData);
       cacheData('app_settings', cacheKey, eventsData);
     } catch (e) {

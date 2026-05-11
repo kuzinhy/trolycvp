@@ -35,7 +35,7 @@ interface TaskManagementProps {
   isEmbedded?: boolean;
 }
 
-type TaskStatus = 'Pending' | 'In Progress' | 'Completed';
+type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold' | 'In Review';
 type ViewMode = 'kanban' | 'list';
 
 export const TaskManagement: React.FC<TaskManagementProps> = memo(({ tasks, setTasks, showToast, onSaveTasks, saveToKnowledge, isEmbedded }) => {
@@ -190,6 +190,8 @@ Trả về kết quả dưới dạng JSON với định dạng:
     return {
       'Pending': sortTasks(filteredTasks.filter(t => t.status === 'Pending')),
       'In Progress': sortTasks(filteredTasks.filter(t => t.status === 'In Progress')),
+      'On Hold': sortTasks(filteredTasks.filter(t => t.status === 'On Hold')),
+      'In Review': sortTasks(filteredTasks.filter(t => t.status === 'In Review')),
       'Completed': sortTasks(filteredTasks.filter(t => t.status === 'Completed'))
     };
   }, [filteredTasks]);
@@ -636,6 +638,40 @@ Trả về kết quả dưới dạng JSON với định dạng:
               </div>
             </div>
 
+            {/* In Review Column */}
+            <div 
+              className="w-80 flex flex-col bg-amber-50/30 rounded-2xl border border-amber-100 p-4"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'In Review')}
+            >
+              <ColumnHeader title="Đang duyệt (In Review)" count={tasksByStatus['In Review'].length} colorClass="bg-amber-500" />
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+                {tasksByStatus['In Review'].map(task => <TaskCard key={task.id} task={task} />)}
+                {tasksByStatus['In Review'].length === 0 && (
+                  <div className="h-24 border-2 border-dashed border-amber-200 rounded-xl flex items-center justify-center text-amber-400 text-sm font-medium">
+                    Kéo thả vào đây
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* On Hold Column */}
+            <div 
+              className="w-80 flex flex-col bg-slate-100/50 rounded-2xl border border-slate-200 p-4"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'On Hold')}
+            >
+              <ColumnHeader title="Tạm hoãn (On Hold)" count={tasksByStatus['On Hold'].length} colorClass="bg-slate-500" />
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+                {tasksByStatus['On Hold'].map(task => <TaskCard key={task.id} task={task} />)}
+                {tasksByStatus['On Hold'].length === 0 && (
+                  <div className="h-24 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-sm font-medium">
+                    Kéo thả vào đây
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Completed Column */}
             <div 
               className="w-80 flex flex-col bg-emerald-50/30 rounded-2xl border border-emerald-100 p-4"
@@ -667,6 +703,12 @@ Trả về kết quả dưới dạng JSON với định dạng:
                   </button>
                   <button onClick={() => handleBulkStatus('In Progress')} className="px-3 py-1.5 bg-white text-indigo-600 text-xs font-bold rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors">
                     Chuyển Đang làm
+                  </button>
+                  <button onClick={() => handleBulkStatus('In Review')} className="px-3 py-1.5 bg-white text-amber-600 text-xs font-bold rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors">
+                    Chuyển Đang duyệt
+                  </button>
+                  <button onClick={() => handleBulkStatus('On Hold')} className="px-3 py-1.5 bg-white text-slate-600 text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+                    Chuyển Tạm hoãn
                   </button>
                   <button onClick={() => handleBulkStatus('Completed')} className="px-3 py-1.5 bg-white text-emerald-600 text-xs font-bold rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors">
                     Đánh dấu Hoàn thành
@@ -770,9 +812,15 @@ Trả về kết quả dưới dạng JSON với định dạng:
                               "inline-flex items-center px-2 py-1 rounded-md text-xs font-bold",
                               task.status === 'Pending' ? "bg-slate-100 text-slate-700" :
                               task.status === 'In Progress' ? "bg-indigo-50 text-indigo-700" :
+                              task.status === 'In Review' ? "bg-amber-50 text-amber-700" :
+                              task.status === 'On Hold' ? "bg-slate-200 text-slate-800" :
                               "bg-emerald-50 text-emerald-700"
                             )}>
-                              {task.status === 'Pending' ? 'Cần làm' : task.status === 'In Progress' ? 'Đang làm' : 'Hoàn thành'}
+                              {task.status === 'Pending' ? 'Cần làm' : 
+                               task.status === 'In Progress' ? 'Đang làm' : 
+                               task.status === 'In Review' ? 'Đang duyệt' :
+                               task.status === 'On Hold' ? 'Tạm hoãn' :
+                               'Hoàn thành'}
                             </span>
                           </td>
                           <td className="p-4">
@@ -992,9 +1040,11 @@ Trả về kết quả dưới dạng JSON với định dạng:
                       onChange={(e) => setFormData({...formData, status: e.target.value as any})}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     >
-                      <option value="Pending">Pending</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Completed">Completed</option>
+                      <option value="Pending">Cần làm</option>
+                      <option value="In Progress">Đang làm</option>
+                      <option value="In Review">Đang duyệt</option>
+                      <option value="On Hold">Tạm hoãn</option>
+                      <option value="Completed">Hoàn thành</option>
                     </select>
                   </div>
                   
