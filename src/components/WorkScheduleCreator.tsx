@@ -1582,8 +1582,8 @@ Chỉ trả về JSON.`;
                         <td className="p-4 text-xs font-bold text-slate-600 print:text-black">{item.location}</td>
                         <td className="p-4">
                           <div className="flex flex-wrap gap-1">
-                            {item.participants.slice(0, 2).map(p => (
-                              <span key={p} className="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 print:border print:border-slate-300 print:bg-transparent print:text-black">{p}</span>
+                            {item.participants.slice(0, 2).map((p, pIdx) => (
+                              <span key={`${p}-${pIdx}`} className="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 print:border print:border-slate-300 print:bg-transparent print:text-black">{p}</span>
                             ))}
                             {item.participants.length > 2 && (
                               <span className="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 print:border print:border-slate-300 print:bg-transparent print:text-black">+{item.participants.length - 2}</span>
