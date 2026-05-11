@@ -699,9 +699,9 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredUsers.map((u) => (
+                {filteredUsers.map((u, idx) => (
                   <UserRow 
-                    key={u.id}
+                    key={u.id || `user-row-${idx}`}
                     user={u}
                     isSelected={selectedUserIds.has(u.id)}
                     onToggleSelect={toggleSelectUser}
