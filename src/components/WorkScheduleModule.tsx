@@ -105,6 +105,7 @@ export const WorkScheduleModule: React.FC<WorkScheduleModuleProps> = (props) => 
               onClearInitialItem={() => setItemToEdit(null)}
               items={creatorItems}
               setItems={setCreatorItems}
+              aiKnowledge={props.aiKnowledge}
             />
           </motion.div>
         )}

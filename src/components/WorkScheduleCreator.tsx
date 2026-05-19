@@ -411,6 +411,7 @@ interface WorkScheduleCreatorProps {
   onClearInitialItem?: () => void;
   items?: ScheduleItem[];
   setItems?: React.Dispatch<React.SetStateAction<ScheduleItem[]>>;
+  aiKnowledge?: any[];
 }
 
 export const WorkScheduleCreator: React.FC<WorkScheduleCreatorProps> = ({
@@ -421,7 +422,8 @@ export const WorkScheduleCreator: React.FC<WorkScheduleCreatorProps> = ({
   initialItem,
   onClearInitialItem,
   items: externalItems,
-  setItems: setExternalItems
+  setItems: setExternalItems,
+  aiKnowledge = [],
 }) => {
   const { preferences } = useUserPreferences();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -945,13 +947,18 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
     setIsGenerating(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const knowledgeContext = aiKnowledge.length > 0 
+        ? `\nTHÔNG TIN THAM KHẢO TỪ BỘ NÃO TRÍ TUỆ NHÂN TẠO:\n${aiKnowledge.slice(0, 10).map(k => `- ${k.title}: ${k.summary || k.content}`).join('\n')}\n(Sử dụng thông tin trên để hoàn thiện các thành phần còn thiếu như cơ quan phụ trách, nội dung, địa điểm).` 
+        : '';
+
       const prompt = `Bạn là Trợ lý Lịch công tác chuyên nghiệp. Hãy chuẩn hóa thông tin sau thành một lịch công tác hoàn chỉnh.
 Nhiệm vụ:
 1. Chuẩn hóa ngôn ngữ hành chính.
-2. Bổ sung thông tin: Nếu thiếu thành phần hoặc địa điểm, hãy suy luận logic (mặc định địa điểm: Phòng họp Đảng ủy).
+2. Bổ sung thông tin: Nếu thiếu thành phần hoặc địa điểm, hãy suy luận logic từ Dữ liệu đầu vào và Thông tin tham khảo (nếu có). (mặc định địa điểm: Phòng họp Đảng ủy nếu không suy luận được).
 3. Phân loại ưu tiên: high (BTV, hội nghị lớn), medium (làm việc), low (nội bộ).
 4. Cố gắng xác định ngày giờ từ thông tin 'time'. Nếu không rõ, để trống hoặc dùng ngày hiện tại. Dự đoán thời gian kết thúc (endTime) nếu có thể.
 5. Trạng thái mặc định là 'draft'.
+${knowledgeContext}
 
 Dữ liệu đầu vào:
 - Thời gian: ${draftState.time.join(', ')}
@@ -1027,13 +1034,18 @@ Chỉ trả về JSON.`;
     setIsGeneratingWeekly(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const knowledgeContext = aiKnowledge.length > 0 
+        ? `\nTHÔNG TIN THAM KHẢO (Đóng vai trò như bộ não, chứa thói quen, cách tổ chức lịch, cơ quan phụ trách):\n${aiKnowledge.slice(0, 10).map(k => `- ${k.title}: ${k.summary || k.content}`).join('\n')}\n` 
+        : '';
+
       const prompt = `Bạn là Trợ lý Lịch công tác chuyên nghiệp. Hãy sắp xếp danh sách các lịch công tác rời rạc sau thành một Lịch Tuần hoàn chỉnh, khoa học, không bị trùng lặp.
 Nhiệm vụ:
-1. Sắp xếp khoa học: Phân bổ các lịch vào các ngày trong tuần (từ Thứ 2 đến Chủ nhật) sao cho hợp lý.
+1. Sắp xếp khoa học: Phân bổ các lịch vào các ngày trong tuần (từ Thứ 2 đến Chủ nhật) sao cho hợp lý, áp dụng thói quen xếp lịch từ Thông tin tham khảo (nếu có).
 2. Tránh trùng lặp: Đảm bảo một người chủ trì không có 2 lịch cùng một thời điểm. Nếu có, hãy dời lịch ít quan trọng hơn sang buổi khác hoặc ngày khác. Sử dụng time và endTime để kiểm tra.
-3. Chuẩn hóa: Đảm bảo văn phong hành chính chuẩn mực.
+3. Chuẩn hóa: Đảm bảo văn phong hành chính chuẩn mực. Dựa vào Thông tin tham khảo để hoàn thiện các thông tin còn thiếu.
 4. Ưu tiên: Các cuộc họp quan trọng (high priority) nên xếp vào đầu tuần hoặc các khung giờ vàng (08:00, 14:00).
 5. Trạng thái: Cập nhật status thành 'published' nếu lịch đã chuẩn và không có vấn đề. Nếu có xung đột không thể giải quyết, để 'draft' và ghi chú vào notes.
+${knowledgeContext}
 
 Dữ liệu các lịch hiện có:
 ${JSON.stringify(items.map(i => ({

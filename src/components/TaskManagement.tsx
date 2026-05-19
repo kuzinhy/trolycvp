@@ -25,6 +25,7 @@ import { cn } from '../lib/utils';
 import { generateContentWithRetry } from '../lib/ai-utils';
 import { ToastType } from './ui/Toast';
 import { ConfirmationModal } from './ui/ConfirmationModal';
+import { AICreateTasksModal } from './AICreateTasksModal';
 
 interface TaskManagementProps {
   tasks: Task[];
@@ -47,6 +48,7 @@ export const TaskManagement: React.FC<TaskManagementProps> = memo(({ tasks, setT
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [isExtractModalOpen, setIsExtractModalOpen] = useState(false);
   
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
 
@@ -86,6 +88,13 @@ export const TaskManagement: React.FC<TaskManagementProps> = memo(({ tasks, setT
     if (onSaveTasks) onSaveTasks(updatedTasks);
     setSelectedTasks(new Set());
     showToast(`Đã cập nhật trạng thái cho ${selectedTasks.size} nhiệm vụ!`, "success");
+  };
+
+  const handleAddExtractedTasks = (extractedTasks: any[]) => {
+    const updatedTasks = [...tasks, ...extractedTasks];
+    setTasks(updatedTasks);
+    if (onSaveTasks) onSaveTasks(updatedTasks);
+    showToast(`Đã thêm ${extractedTasks.length} nhiệm vụ từ văn bản!`, "success");
   };
 
   // Form state
@@ -490,17 +499,26 @@ Trả về kết quả dưới dạng JSON với định dạng:
             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Quản lý Nhiệm vụ</h2>
             <p className="text-slate-500 mt-2 text-sm font-medium">Theo dõi và quản lý công việc hiệu quả</p>
           </div>
-          <button 
-            onClick={() => {
-              setEditingId(null);
-              setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
-              setIsAdding(true);
-            }}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Thêm nhiệm vụ
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsExtractModalOpen(true)}
+              className="px-4 py-2 bg-slate-100 text-indigo-600 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-200 transition-all flex items-center gap-2"
+            >
+              <Sparkles size={16} />
+              Tạo từ văn bản
+            </button>
+            <button 
+              onClick={() => {
+                setEditingId(null);
+                setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+                setIsAdding(true);
+              }}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+            >
+              <Plus size={16} />
+              Thêm nhiệm vụ
+            </button>
+          </div>
         </div>
       )}
 
@@ -1108,6 +1126,12 @@ Trả về kết quả dưới dạng JSON với định dạng:
         confirmText="Xóa nhiệm vụ"
         cancelText="Hủy"
         type="danger"
+      />
+
+      <AICreateTasksModal
+        isOpen={isExtractModalOpen}
+        onClose={() => setIsExtractModalOpen(false)}
+        onAddTasks={handleAddExtractedTasks}
       />
     </motion.div>
   );

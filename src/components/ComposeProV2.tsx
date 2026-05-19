@@ -307,9 +307,9 @@ ${aiKnowledge.slice(0, 5).map(k => `- ${k.title}: ${k.content}`).join('\n')}
         <div className="flex-1 bg-white border-l border-slate-200 flex flex-col shadow-inner">
           {/* Progress Steps Tabs */}
           <div className="flex border-b border-slate-100 bg-white sticky top-0 z-10 shrink-0">
-            {progressSteps.map((s) => (
+            {progressSteps.map((s, i) => (
               <button
-                key={s.id}
+                key={s.id + '-' + i}
                 onClick={() => setStep(s.id)}
                 className={cn(
                   "flex-1 py-4 text-[11px] font-bold uppercase tracking-wider transition-all relative",
@@ -394,8 +394,8 @@ ${aiKnowledge.slice(0, 5).map(k => `- ${k.title}: ${k.content}`).join('\n')}
                       onChange={(e) => setSelectedAiTemplate(e.target.value)}
                       className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-rose-200 transition-all cursor-pointer"
                     >
-                      {AI_TEMPLATES.map(t => (
-                        <option key={t.id} value={t.id}>{t.label}</option>
+                      {AI_TEMPLATES.map((t, i) => (
+                        <option key={t.id + '-' + i} value={t.id}>{t.label}</option>
                       ))}
                     </select>
                   </div>
@@ -425,18 +425,18 @@ ${aiKnowledge.slice(0, 5).map(k => `- ${k.title}: ${k.content}`).join('\n')}
                         onChange={(e) => handleMetadataChange('loaiVanBan', e.target.value)}
                         className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-700"
                       >
-                        {DOCUMENT_TYPES.map(type => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
+                      {DOCUMENT_TYPES.map((type, i) => (
+                        <option key={type + '-' + i} value={type}>{type}</option>
+                      ))}
                       </select>
                     </div>
                   </div>
 
                   {/* Issuing Unit Details */}
                   <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm space-y-4">
-                    <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <div className="text-[11px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                       <div className="w-1.5 h-6 bg-[#b33a30] rounded-full" /> Đơn vị ban hành chính
-                    </p>
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
