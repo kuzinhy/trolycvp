@@ -206,7 +206,11 @@ ${history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}` }]
 
       const knowledgeContext = relevantKnowledge.map((k, i) => `${i+1}. [${k.category || 'Chung'}]: ${k.content}`).join('\n');
       const userName = user?.displayName || 'Đồng chí';
-      const instruction = SYSTEM_INSTRUCTION.replace(/Anh Huy/g, userName);
+      const userRole = isAdmin ? (isSuperAdmin ? 'Super Admin' : 'Admin') : 'Người dùng';
+      const instruction = SYSTEM_INSTRUCTION
+        .replace(/\{\{USER_NAME\}\}/g, userName)
+        .replace(/\{\{USER_ROLE\}\}/g, userRole)
+        .replace(/Anh Huy/g, userName);
 
       const responseStream = await generateContentStreamWithRetry({
         model: "gemini-3-flash-preview",

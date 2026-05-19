@@ -250,7 +250,8 @@ LƯU Ý QUAN TRỌNG:
       
       // Dynamic system instruction based on user context
       let dynamicInstruction = SYSTEM_INSTRUCTION
-        .replace('Nguyễn Minh Huy - Chánh Văn Phòng Đảng uỷ', `${userName} - ${userRole}`)
+        .replace('{{USER_NAME}}', userName)
+        .replace('{{USER_ROLE}}', userRole)
         .replace('Anh Huy', userName);
 
       if (isSimpleMode) {
