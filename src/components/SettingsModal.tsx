@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Moon, Sun, Monitor, Layout, Type, AlignLeft, AlignRight, Check, User, Bell, LogOut, RefreshCw, Database, Download, Upload, ShieldCheck, ChevronRight, Save, Trash2, Brain, History } from 'lucide-react';
+import { X, Moon, Sun, Monitor, Layout, Type, AlignLeft, AlignRight, Check, User, Bell, LogOut, RefreshCw, Database, Download, Upload, ShieldCheck, ChevronRight, Save, Trash2, Brain, History, Key, Globe } from 'lucide-react';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { cn } from '../lib/utils';
 import { createBackup, restoreBackup, BackupData, saveSnapshot, getSnapshots, deleteSnapshot } from '../services/backupService';
@@ -30,7 +30,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const { preferences, updatePreference } = useUserPreferences();
   const { unitId, updateUserProfile, userInfo } = useAuth();
-  const [activeTab, setActiveTab] = useState<'ui' | 'account' | 'notifications' | 'backup'>('ui');
+  const [activeTab, setActiveTab] = useState<'ui' | 'account' | 'notifications' | 'backup' | 'api'>('ui');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [snapshots, setSnapshots] = useState<any[]>([]);
@@ -210,6 +210,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 { id: 'account', label: 'Tài khoản', icon: User, desc: 'Thông tin cá nhân' },
                 { id: 'notifications', label: 'Thông báo', icon: Bell, desc: 'Âm thanh & Đẩy' },
                 { id: 'backup', label: 'Sao lưu & Phục hồi', icon: Database, desc: 'Bảo mật dữ liệu' },
+                { id: 'api', label: 'Cấu hình Nguồn tin / API', icon: Key, desc: 'Khai báo khóa API' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -769,6 +770,108 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         Nên thực hiện sao lưu định kỳ sau mỗi tuần làm việc hoặc trước khi thực hiện các thay đổi lớn.
                       </li>
                     </ul>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'api' && (
+                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div>
+                    <h3 className="text-xl font-black mb-2 heading-pro">Cấu hình API Rà quét</h3>
+                    <p className="text-[hsl(var(--muted-foreground))] text-sm leading-relaxed">Cung cấp khóa API từ các dịch vụ bên thứ 3 để mở rộng khả năng thu thập và phân tích tin tức bên cạnh hệ thống AI mặc định.</p>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="p-6 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                            <Key size={18} />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-sm">SerpApi Key</h4>
+                            <p className="text-[10px] uppercase font-bold tracking-wider text-[hsl(var(--muted-foreground))]">Google News & Search Results</p>
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold border border-green-200">Được hỗ trợ</span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <input
+                          type="password"
+                          value={preferences.apiKeys?.serpApi || ''}
+                          onChange={(e) => updatePreference('apiKeys', { ...preferences.apiKeys, serpApi: e.target.value })}
+                          placeholder="Nhập khóa SerpApi (vd: cfa6f...)"
+                          className="w-full px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] transition-all font-mono"
+                        />
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                          Bạn có thể lấy khóa miễn phí tại <a href="https://serpapi.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline">serpapi.com</a>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-6 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-[2rem] hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                            <Database size={18} />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-sm">NewsAPI Key</h4>
+                            <p className="text-[10px] uppercase font-bold tracking-wider text-[hsl(var(--muted-foreground))]">Báo chí Quốc tế & Phân tích</p>
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold border border-green-200">Được hỗ trợ</span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <input
+                          type="password"
+                          value={preferences.apiKeys?.newsApi || ''}
+                          onChange={(e) => updatePreference('apiKeys', { ...preferences.apiKeys, newsApi: e.target.value })}
+                          placeholder="Nhập khóa NewsAPI (vd: 8b2cd...)"
+                          className="w-full px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] transition-all font-mono"
+                        />
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                          Lấy khóa miễn phí từ <a href="https://newsapi.org" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline">newsapi.org</a> (có giới hạn số lượng gọi)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                    <h4 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+                      <Globe size={16} /> Gợi ý các nhà cung cấp API Tin tức khác
+                    </h4>
+                    <ul className="space-y-2 text-xs text-blue-800">
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-blue-500">•</span>
+                        <div>
+                          <a href="https://gnews.io" target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">GNews API (gnews.io)</a> - Dễ sử dụng, hỗ trợ tìm kiếm tin tức tiếng Việt tốt, có gói miễn phí 100 request/ngày.
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-blue-500">•</span>
+                        <div>
+                          <a href="https://mediastack.com" target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">Mediastack</a> - Cung cấp tin tức thời gian thực từ nhiều nguồn toàn cầu, miễn phí 500 request/tháng.
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-blue-500">•</span>
+                        <div>
+                          <a href="https://azure.microsoft.com/en-us/products/ai-services/bing-news-search-api" target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">Bing News Search API (Microsoft)</a> - Trích xuất tin tức mạnh mẽ, chất lượng cao cực kỳ phổ biến.
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="flex justify-start">
+                    <button 
+                      onClick={() => showToast("Đã lưu cấu hình API thành công", "success")}
+                      className="px-8 py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:scale-[1.02] transition-all flex items-center gap-2"
+                    >
+                      <Save size={16} /> Lưu cấu hình
+                    </button>
                   </div>
                 </div>
               )}

@@ -13,10 +13,12 @@ interface KnowledgeHeaderProps {
   onSummarize: () => void;
   onDeleteAll: () => void;
   onSyncUnified: () => Promise<void>;
+  onSyncDrive?: () => Promise<void>;
   onAudit: () => void;
   isSummarizing: boolean;
   isDeletingAll: boolean;
   isSyncingUnified: boolean;
+  isSyncingDrive?: boolean;
   isAuditing: boolean;
   totalItems: number;
   viewMode: 'list' | 'grid';
@@ -31,10 +33,12 @@ export const KnowledgeHeader: React.FC<KnowledgeHeaderProps> = memo(({
   onSummarize,
   onDeleteAll,
   onSyncUnified,
+  onSyncDrive,
   onAudit,
   isSummarizing,
   isDeletingAll,
   isSyncingUnified,
+  isSyncingDrive,
   isAuditing,
   totalItems,
   viewMode,
@@ -162,6 +166,26 @@ export const KnowledgeHeader: React.FC<KnowledgeHeaderProps> = memo(({
                     <p className="text-xs font-bold text-white">Nạp Bộ Não (Apps Script v6.0)</p>
                     <p className="text-[9px] text-slate-400 uppercase tracking-widest">
                       Kết nối Unified Brain API
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              {/* Google Drive Personal Knowledge Sync */}
+              <button 
+                onClick={onSyncDrive}
+                disabled={isSyncingDrive}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 transition-all group disabled:opacity-50 border border-orange-500/30 shadow-sm mt-3"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-500/20 rounded-lg group-hover:scale-110 transition-transform">
+                    <RefreshCw className={`w-4 h-4 text-orange-400 ${isSyncingDrive ? 'animate-spin' : ''}`} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-white">Đồng bộ Google Drive Cá nhân</p>
+                    <p className="text-[9px] text-slate-400 uppercase tracking-widest">
+                      Kết nối ổ cứng riêng làm bộ não phụ
                     </p>
                   </div>
                 </div>

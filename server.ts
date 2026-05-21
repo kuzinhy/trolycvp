@@ -959,7 +959,7 @@ app.post("/api/github/save-hcmcpv", async (req, res) => {
   }
 });
 
-// GitHub API endpoint to get knowledge
+// Helper function to get knowledge
 app.get("/api/github/knowledge", async (req, res) => {
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const GITHUB_OWNER = process.env.GITHUB_OWNER || "kuzinhy";
@@ -982,6 +982,57 @@ app.get("/api/github/knowledge", async (req, res) => {
       error: "Lỗi khi tải kiến thức từ GitHub", 
       details: error.response?.data?.message || error.message 
     });
+  }
+});
+
+// Proxy for NewsAPI
+app.post("/api/news/newsapi", async (req, res) => {
+  const { query, apiKey, customUrl } = req.body;
+  const keyToUse = apiKey || process.env.NEWSAPI_KEY;
+  
+  if (!keyToUse) {
+    return res.status(401).json({ error: "Missing NewsAPI Key" });
+  }
+
+  try {
+    const defaultUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query || 'Việt Nam')}&sortBy=publishedAt&language=vi&pageSize=10`;
+    const response = await axios.get(customUrl || defaultUrl, {
+      headers: {
+        'X-Api-Key': keyToUse
+      },
+      timeout: 10000
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    console.error("NewsAPI Error:", error.message);
+    res.status(error.response?.status || 500).json({ error: error.message, details: error.response?.data });
+  }
+});
+
+// Proxy for SerpApi
+app.post("/api/news/serpapi", async (req, res) => {
+  const { query, apiKey, location } = req.body;
+  const keyToUse = apiKey || process.env.SERPAPI_KEY;
+
+  if (!keyToUse) {
+    return res.status(401).json({ error: "Missing SerpApi Key" });
+  }
+
+  try {
+    const response = await axios.get('https://serpapi.com/search.json', {
+      params: {
+        engine: 'google_news',
+        q: query || 'Tin tức',
+        gl: 'vn',
+        hl: 'vi',
+        api_key: keyToUse
+      },
+      timeout: 15000
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    console.error("SerpApi Error:", error.message);
+    res.status(error.response?.status || 500).json({ error: error.message, details: error.response?.data });
   }
 });
 

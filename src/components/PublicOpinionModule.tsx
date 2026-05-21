@@ -15,13 +15,18 @@ import {
   AlertCircle,
   CheckCircle2,
   Sparkles,
-  Loader2
+  Loader2,
+  ExternalLink,
+  Activity
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+
 
 interface OpinionItem {
   id: string;
   source: 'Facebook' | 'Báo chí' | 'Zalo' | 'Trực tiếp';
+  sourceDetail?: string;
+  url?: string;
   location: string;
   content: string;
   sentiment: 'positive' | 'neutral' | 'negative';
@@ -46,6 +51,8 @@ export const PublicOpinionModule: React.FC = () => {
         {
           id: '1',
           source: 'Facebook',
+          sourceDetail: 'Fanpage Tuổi Trẻ Bình Dương',
+          url: 'https://facebook.com',
           location: 'Phường Phú Cường',
           content: 'Người dân rất phấn khởi trước dự án cải tạo vỉa hè, giúp đường thông thoáng hơn.',
           sentiment: 'positive',
@@ -55,6 +62,8 @@ export const PublicOpinionModule: React.FC = () => {
         {
           id: '2',
           source: 'Báo chí',
+          sourceDetail: 'Báo Tuổi Trẻ',
+          url: 'https://tuoitre.vn',
           location: 'Phường Thủ Dầu Một, TP.HCM',
           content: 'Phản ánh tình trạng rác thải ùn ứ tại một số điểm tập kết vào giờ cao điểm.',
           sentiment: 'negative',
@@ -64,6 +73,7 @@ export const PublicOpinionModule: React.FC = () => {
         {
           id: '3',
           source: 'Zalo',
+          sourceDetail: 'Nhóm Zalo Tổ dân phố 3',
           location: 'Phường Hiệp Thành',
           content: 'Ý kiến về việc điều chỉnh giờ làm việc tại bộ phận một cửa để thuận tiện cho công nhân.',
           sentiment: 'neutral',
@@ -73,11 +83,23 @@ export const PublicOpinionModule: React.FC = () => {
         {
           id: '4',
           source: 'Trực tiếp',
+          sourceDetail: 'Hội nghị cử tri',
           location: 'Phường Chánh Nghĩa',
           content: 'Kiến nghị tăng cường tuần tra đêm tại các khu dân cư mới để đảm bảo an ninh.',
           sentiment: 'neutral',
           date: '2026-03-29',
           tags: ['An ninh', 'Trật tự']
+        },
+        {
+          id: '5',
+          source: 'Báo chí',
+          sourceDetail: 'VnExpress',
+          url: 'https://vnexpress.net',
+          location: 'TP. Thủ Dầu Một',
+          content: 'Người dân mong mỏi việc đẩy nhanh tiến độ thi công cống thoát nước trước mùa mưa.',
+          sentiment: 'negative',
+          date: '2026-03-28',
+          tags: ['Hạ tầng', 'Thoát nước']
         }
       ];
       setOpinions(mockData);
@@ -188,8 +210,30 @@ export const PublicOpinionModule: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{opinion.source}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={cn(
+                              "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded shadow-sm",
+                              opinion.source === 'Báo chí' ? "bg-amber-100 text-amber-700" :
+                              opinion.source === 'Facebook' ? "bg-blue-100 text-blue-700" :
+                              opinion.source === 'Zalo' ? "bg-indigo-100 text-indigo-700" : "bg-slate-200 text-slate-700"
+                            )}>{opinion.source}</span>
+                            
+                            {opinion.sourceDetail && (
+                              <>
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                {opinion.url ? (
+                                  <a href={opinion.url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-1 hover:underline">
+                                    {opinion.sourceDetail}
+                                    <ExternalLink size={10} />
+                                  </a>
+                                ) : (
+                                  <span className="text-[10px] font-medium text-slate-600">
+                                    {opinion.sourceDetail}
+                                  </span>
+                                )}
+                              </>
+                            )}
+
                             <span className="w-1 h-1 rounded-full bg-slate-300" />
                             <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
                               <MapPin size={10} />
@@ -273,6 +317,37 @@ export const PublicOpinionModule: React.FC = () => {
                     <span className="text-[10px] font-black text-slate-400">{topic.count}</span>
                     {topic.trend === 'up' ? <TrendingUp size={12} className="text-emerald-500" /> : 
                      topic.trend === 'down' ? <TrendingDown size={12} className="text-rose-500" /> : <Minus size={12} className="text-slate-300" />}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top Sources */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+            <div className="flex items-center gap-2">
+              <Newspaper size={18} className="text-blue-600" />
+              <h3 className="font-black text-slate-900 uppercase tracking-wider text-sm">Thống kê nguồn báo chí</h3>
+            </div>
+            <div className="space-y-4">
+              {[
+                { name: 'Báo Tuổi Trẻ', type: 'Báo chí', count: 24 },
+                { name: 'VnExpress', type: 'Báo chí', count: 18 },
+                { name: 'Fanpage Tuổi Trẻ Bình Dương', type: 'Facebook', count: 56 },
+                { name: 'Nhóm Zalo Cư dân Phường', type: 'Zalo', count: 32 },
+              ].map((src, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all cursor-pointer border border-transparent shadow-sm hover:border-slate-200">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-bold text-slate-700">{src.name}</span>
+                    <span className={cn(
+                      "text-[9px] font-black uppercase tracking-widest w-fit px-1.5 py-0.5 rounded",
+                      src.type === 'Báo chí' ? "bg-amber-50 text-amber-600" :
+                      src.type === 'Facebook' ? "bg-blue-50 text-blue-600" :
+                      src.type === 'Zalo' ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-600"
+                    )}>{src.type}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{src.count} bài</span>
                   </div>
                 </div>
               ))}

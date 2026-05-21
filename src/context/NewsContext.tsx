@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { generateContentWithRetry } from '../lib/ai-utils';
 import { WEB_SOURCES } from '../constants';
+import { useUserPreferences } from './UserPreferencesContext';
+import axios from 'axios';
 
 export interface NewsItem {
   title: string;
@@ -62,6 +64,7 @@ interface NewsContextType {
 const NewsContext = createContext<NewsContextType | undefined>(undefined);
 
 export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { preferences } = useUserPreferences();
   const [results, setResults] = useState<NewsItem[]>(() => {
     const saved = localStorage.getItem('news_results');
     return saved ? JSON.parse(saved) : [];
@@ -134,59 +137,135 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setScanError(null);
     
     try {
+      let combinedResults: NewsItem[] = [];
+
+      const apiPromises = [];
+
+      // Try NewsAPI if key exists
+      if (preferences.apiKeys?.newsApi) {
+        apiPromises.push(
+          axios.post('/api/news/newsapi', { query: activeQuery, apiKey: preferences.apiKeys.newsApi })
+            .then(res => {
+              const articles = res.data.articles || [];
+              return articles.slice(0, 5).map((a: any) => ({
+                title: a.title,
+                summary: a.description || a.content || 'Không có tóm tắt.',
+                url: a.url,
+                source: a.source?.name || 'NewsAPI',
+                date: new Date(a.publishedAt).toLocaleDateString('vi-VN'),
+                relevance: 'Trung bình',
+                imageUrl: a.urlToImage,
+                sentiment: 'Trung lập',
+                publicInterest: 'Trung bình',
+                isAlert: false
+              } as NewsItem));
+            }).catch(e => {
+              console.warn("NewsAPI error", e);
+              return [];
+            })
+        );
+      }
+
+      // Try SerpAPI if key exists
+      if (preferences.apiKeys?.serpApi) {
+        apiPromises.push(
+          axios.post('/api/news/serpapi', { query: activeQuery, apiKey: preferences.apiKeys.serpApi })
+            .then(res => {
+              const articles = res.data.news_results || [];
+              return articles.slice(0, 5).map((a: any) => ({
+                title: a.title,
+                summary: a.snippet || a.title,
+                url: a.link,
+                source: a.source || 'Google News',
+                date: a.date || new Date().toLocaleDateString('vi-VN'),
+                relevance: 'Cao',
+                imageUrl: a.thumbnail,
+                sentiment: 'Trung lập',
+                publicInterest: 'Cao',
+                isAlert: false
+              } as NewsItem));
+            }).catch(e => {
+              console.warn("SerpAPI error", e);
+              return [];
+            })
+        );
+      }
+
+      // We still use Gemini as fallback/primary if keys aren't provided, or just combined
       const selectedUrls = ALL_SOURCES
         .filter(s => activeSources.includes(s.id))
         .map(s => s.url);
 
       const prompt = `Bạn là một chuyên gia phân tích tin tức thông minh và cố vấn truyền thông cấp cao.
       NHIỆM VỤ: Sử dụng GOOGLE SEARCH để tổng hợp tin tức THỰC TẾ, CÓ THẬT liên quan đến: "${activeQuery}".
-      NGUYÊN TẮC: TUYỆT ĐỐI KHÔNG BỊA CHUYỆN. Mọi tin tức phải có URL thật từ báo chí chính thống.
+      NGUYÊN TẮC: 
+      - TUYỆT ĐỐI KHÔNG BỊA CHUYỆN. Mọi tin tức phải có URL thật từ kết quả tìm kiếm Google.
+      - TRÍCH XUẤT CHÍNH XÁC URL (đường link) từ kết quả tìm kiếm. Nếu không có URL thật, hãy BỎ QUA bài báo đó.
       
       Yêu cầu đặc biệt:
-      - QUÉT TOÀN BỘ các nguồn sau để không bỏ sót thông tin: ${selectedUrls.join(', ')}.
-      - CHỈ LẤY TIN TỨC THỰC TẾ TRONG 7 NGÀY GẦN ĐÂY (từ ngày ${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN')} đến nay).
-      - ĐỐI SOÁT NGUỒN TIN: Mỗi tin bài phải có URL thực dẫn đến bài báo gốc trên các trang báo chính thống.
+      - Tối ưu quét các nguồn báo chí (nếu có): ${selectedUrls.join(', ')}.
+      - CHỈ LẤY TIN TỨC TRONG 7 NGÀY GẦN ĐÂY.
       - Ưu tiên tin bài về Thành phố Hồ Chí Minh và Phường Thủ Dầu Một.
-      ${userLocation ? `- Vị trí hiện tại của người dùng: Vĩ độ ${userLocation.lat}, Kinh độ ${userLocation.lng}. Hãy đặc biệt ưu tiên các tin tức xảy ra trong bán kính 20km từ tọa độ này.` : ''}
+      ${userLocation ? `- Vị trí hiện tại của người dùng: Vĩ độ ${userLocation.lat}, Kinh độ ${userLocation.lng}. Hãy ưu tiên các tin tức xảy ra gần đây.` : ''}
       
       PHÂN TÍCH NÂNG CAO:
       1. Đánh giá Sắc thái dư luận (Sentiment): Tích cực, Tiêu cực, hoặc Trung lập.
       2. Đánh giá Mức độ quan tâm của công chúng (PublicInterest): Thấp, Trung bình, Cao.
       3. Xác định Cảnh báo (IsAlert): Đánh dấu true nếu tin tức chứa nội dung chê trách chính quyền, cảnh báo an ninh, dịch bệnh, hoặc các vấn đề nhạy cảm cần xử lý ngay.
-      4. Lý do cảnh báo (AlertReason): Nếu IsAlert là true, hãy tóm tắt ngắn gọn lý do cần chú ý.
+      4. Lý do cảnh báo (AlertReason): Nếu IsAlert là true, hãy tóm tắt lý do.
 
-      Hãy trả về danh sách các tin tức tiêu biểu (khoảng 8-12 tin). 
-      Với mỗi tin, hãy cung cấp:
-      1. Tiêu đề tin tức (Title)
-      2. Tóm tắt ngắn gọn (Summary)
-      3. Nguồn tin trích dẫn (Source - phải là báo thật)
-      4. URL bài viết gốc (Url - bắt buộc phải là đường dẫn thật)
-      5. Ngày đăng (Date)
-      5. Đánh giá mức độ liên quan đến địa phương (Relevance: Thấp/Trung bình/Cao)
-      6. URL hình ảnh minh họa (ImageUrl: picsum.photos/seed/{keyword}/800/450)
-      7. Nội dung chi tiết của tin tức (FullContent: 200-300 từ)
-      8. Sắc thái (Sentiment)
-      9. Mức độ quan tâm (PublicInterest)
-      10. Cảnh báo (IsAlert: boolean)
-      11. Lý do cảnh báo (AlertReason: string)
-      
-      Trả về kết quả dưới dạng mảng JSON các đối tượng:
-      { "title": string, "summary": string, "url": string, "source": string, "date": string, "relevance": string, "imageUrl": string, "fullContent": string, "sentiment": string, "publicInterest": string, "isAlert": boolean, "alertReason": string }`;
+      Hãy trả về danh sách các tin tức tiêu biểu (khoảng 3-5 tin). 
+      Với mỗi tin, hãy cung cấp MẢNG JSON các đối tượng gồm:
+      - title: (string) Tiêu đề tin tức
+      - summary: (string) Tóm tắt
+      - source: (string) Nguồn tin
+      - url: (string) URL BẮT BUỘC PHẢI CHÍNH XÁC VÀ TRUY CẬP ĐƯỢC từ kết quả Google Search
+      - date: (string) Ngày đăng
+      - relevance: (string) Thấp/Trung bình/Cao
+      - imageUrl: (string) Để trống hoặc lấy url thật
+      - fullContent: (string) Nội dung chi tiết
+      - sentiment: (string) Tích cực/Tiêu cực/Trung lập
+      - publicInterest: (string) Thấp/Trung bình/Cao
+      - isAlert: (boolean)
+      - alertReason: (string)
+      `;
 
-      const response = await generateContentWithRetry({
+      const aiPromise = generateContentWithRetry({
         model: 'gemini-3-flash-preview',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
           tools: [{ googleSearch: {} }],
           responseMimeType: "application/json"
         }
+      }).then(response => {
+        const text = response.text;
+        if (!text) return [];
+        return JSON.parse(text) as NewsItem[];
+      }).catch(e => {
+        console.warn("Gemini Error", e);
+        return [];
       });
 
-      const text = response.text;
-      if (!text) throw new Error("Empty response from AI");
-      
-      const parsedResults = JSON.parse(text);
-      setResults(parsedResults);
+      apiPromises.push(aiPromise);
+
+      const allResults = await Promise.all(apiPromises);
+      combinedResults = allResults.flat();
+
+      if (combinedResults.length === 0) {
+         throw new Error("Không lấy được kết quả tin tức nào từ các nguồn.");
+      }
+
+      // Deduplicate by URL
+      const uniqueUrls = new Set();
+      const finalResults: NewsItem[] = [];
+      for (const item of combinedResults) {
+        if (!uniqueUrls.has(item.url) && item.title) {
+          uniqueUrls.add(item.url);
+          finalResults.push(item);
+        }
+      }
+
+      setResults(finalResults);
       setLastRefresh(new Date());
       setScanError(null);
     } catch (error: any) {
@@ -195,7 +274,7 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     setIsScanning(false);
-  }, [searchQuery, selectedSources, userLocation, isScanning, newsTopics]);
+  }, [searchQuery, selectedSources, userLocation, isScanning, newsTopics, preferences.apiKeys]);
 
   // Auto-scan every 30 minutes (increased from 15 to reduce quota usage)
   useEffect(() => {

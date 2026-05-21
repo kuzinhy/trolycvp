@@ -84,6 +84,7 @@ interface KnowledgeContextType {
   smartSummarizeKnowledge: (category?: string) => Promise<void>;
   deleteAllKnowledge: () => Promise<void>;
   syncUnifiedStrategicKnowledge: () => Promise<void>;
+  syncGoogleDriveKnowledge: () => Promise<void>;
   auditAndOptimizeKnowledge: () => Promise<{ optimizedCount: number; issuesFound: number }>;
   
   // AI Review
@@ -101,7 +102,7 @@ interface KnowledgeContextType {
 const KnowledgeContext = createContext<KnowledgeContextType | undefined>(undefined);
 
 export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, unitId, isSuperAdmin, isAdmin } = useAuth();
+  const { user, unitId, isSuperAdmin, isAdmin, googleDriveToken, signInWithGoogle } = useAuth();
   const { showToast } = useToast();
   
   const [aiKnowledge, setAiKnowledge] = useState<any[]>([]);
@@ -448,6 +449,57 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [user, unitId, isSuperAdmin, isSyncingUnified, aiKnowledge, processAndSaveKnowledge, showToast]);
 
+  const syncGoogleDriveKnowledge = useCallback(async () => {
+    if (!user) return;
+    try {
+      if (!googleDriveToken) {
+        showToast("Đang kết nối Google Drive...", "info");
+        await signInWithGoogle(true);
+        return showToast("Đã xác thực Google Drive, vui lòng ấn lại nút Đồng bộ (tải lại trang nếu cần).", "success");
+      }
+      
+      showToast("Đang tải dữ liệu từ Google Drive cá nhân...", "info");
+      
+      const res = await fetch('https://www.googleapis.com/drive/v3/files?q=mimeType="text/plain" or mimeType="application/vnd.google-apps.document"&pageSize=10', {
+        headers: { Authorization: `Bearer ${googleDriveToken}` },
+      });
+      const data = await res.json();
+      
+      if (data.files && data.files.length > 0) {
+        let count = 0;
+        for (const file of data.files) {
+          const isDuplicate = aiKnowledge.some(k => k.title === `Drive: ${file.name}`);
+          if (!isDuplicate) {
+            try {
+              let textContent = `Từ bộ nhớ Drive cá nhân: ${file.name}`;
+              if (file.mimeType === 'application/vnd.google-apps.document') {
+                const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}/export?mimeType=text/plain`, {
+                  headers: { Authorization: `Bearer ${googleDriveToken}` }
+                });
+                if (docRes.ok) textContent = await docRes.text();
+              } else {
+                const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+                  headers: { Authorization: `Bearer ${googleDriveToken}` }
+                });
+                if (fileRes.ok) textContent = await fileRes.text();
+              }
+              await processAndSaveKnowledge(`Drive: ${file.name}\n${textContent.substring(0, 3000)}`, ['drive-sync', 'personal'], 'Google Drive');
+              count++;
+            } catch (err) {
+              console.warn("Could not fetch drive file details", err);
+            }
+          }
+        }
+        showToast(`Đã đồng bộ ${count} tài liệu bộ não từ Drive.`, "success");
+      } else {
+        showToast("Không tìm thấy tài liệu trên Drive.", "info");
+      }
+    } catch (e) {
+       console.error("Drive error", e);
+       showToast("Trải qua lỗi xác thực ổ cứng ảo. Vui lòng đăng nhập lại.", "error");     
+    }
+  }, [user, googleDriveToken, signInWithGoogle, aiKnowledge, showToast, processAndSaveKnowledge]);
+
   const discardAIItems = useCallback(() => {
     setPendingAIItems([]);
     setIsReviewingAI(false);
@@ -536,7 +588,7 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setIsAddingManual, setSummarizedContent,
     loadKnowledge, addManualKnowledge, updateKnowledge, deleteKnowledge,
     handleReorderKnowledge, smartLearnFromText, learnFromFile,
-    smartSummarizeKnowledge, deleteAllKnowledge, syncUnifiedStrategicKnowledge,
+    smartSummarizeKnowledge, deleteAllKnowledge, syncUnifiedStrategicKnowledge, syncGoogleDriveKnowledge,
     auditAndOptimizeKnowledge,
     isAuditing,
     isSyncingUnified,
@@ -550,7 +602,7 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     searchQuery, filterCategory,
     loadKnowledge, addManualKnowledge, updateKnowledge, deleteKnowledge,
     handleReorderKnowledge, smartLearnFromText, learnFromFile,
-    smartSummarizeKnowledge, deleteAllKnowledge, syncUnifiedStrategicKnowledge,
+    smartSummarizeKnowledge, deleteAllKnowledge, syncUnifiedStrategicKnowledge, syncGoogleDriveKnowledge,
     auditAndOptimizeKnowledge,
     isAuditing,
     isSyncingUnified,

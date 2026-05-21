@@ -14,6 +14,10 @@ interface UserPreferences {
     enabled: boolean;
     customIntervals: number[]; // Array of minutes before, e.g. [15, 30, 60]
   };
+  apiKeys?: {
+    serpApi?: string;
+    newsApi?: string;
+  };
 }
 
 interface UserPreferencesContextType {
@@ -32,6 +36,10 @@ const defaultPreferences: UserPreferences = {
     defaultEventMinutes: 30,
     enabled: true,
     customIntervals: [5, 15, 30, 60, 1440], // 5m, 15m, 30m, 1h, 1d
+  },
+  apiKeys: {
+    serpApi: '',
+    newsApi: ''
   }
 };
 

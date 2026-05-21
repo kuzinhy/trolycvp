@@ -141,6 +141,7 @@ export interface KnowledgeModuleProps {
   setSummarizedContent: (val: string | null) => void;
   syncUnifiedStrategicKnowledge: () => Promise<void>;
   isSyncingUnified?: boolean;
+  syncGoogleDriveKnowledge?: () => Promise<void>;
   showToast: (message: string, type?: any) => void;
   pendingAIItems: any[];
   isReviewingAI: boolean;
@@ -247,6 +248,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
     setSummarizedContent,
     syncUnifiedStrategicKnowledge,
     isSyncingUnified,
+    syncGoogleDriveKnowledge,
     showToast,
     pendingAIItems,
     isReviewingAI,
@@ -394,6 +396,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
         onSummarize={() => smartSummarizeKnowledge(filterCategory)}
         onDeleteAll={deleteAllKnowledge || (() => {})}
         onSyncUnified={syncUnifiedStrategicKnowledge}
+        onSyncDrive={syncGoogleDriveKnowledge}
         onAudit={auditAndOptimizeKnowledge || (() => Promise.resolve())}
         isSummarizing={isSummarizing}
         isDeletingAll={isDeletingAll || false}

@@ -298,10 +298,19 @@ export const NewsScannerModule: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {results.filter(r => r.isAlert).map((alert, idx) => (
-                <div key={idx} className="bg-white/60 p-3 rounded-xl border border-rose-100 flex gap-3">
+                <div 
+                  key={idx} 
+                  onClick={() => setSelectedNews(alert)}
+                  className="bg-white/60 p-3 rounded-xl border border-rose-100 flex gap-3 cursor-pointer hover:bg-white hover:shadow-md transition-all group"
+                >
                   <div className="w-1.5 h-auto bg-rose-500 rounded-full shrink-0" />
-                  <div className="space-y-1 w-full">
-                    <p className="text-xs font-bold text-slate-900 line-clamp-1" title={alert.title}>{alert.title}</p>
+                  <div className="space-y-1 w-full relative">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-bold text-slate-900 line-clamp-1 group-hover:text-emerald-600 transition-colors" title={alert.title}>{alert.title}</p>
+                      <a href={alert.url} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-emerald-600 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
                     <p className="text-[10px] text-rose-600 font-medium leading-tight mb-1">{alert.alertReason}</p>
                     <div className="flex items-center justify-between text-[9px] text-slate-500 mt-2 pt-2 border-t border-rose-100/50">
                       <span className="flex items-center gap-1"><Calendar size={10} /> {alert.date}</span>
@@ -633,8 +642,13 @@ export const NewsScannerModule: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500">
-                    <ChevronRight size={18} />
+                  <div className="flex items-center gap-2">
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-300" title="Đọc bài gốc">
+                      <ExternalLink size={14} />
+                    </a>
+                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500">
+                      <ChevronRight size={18} />
+                    </div>
                   </div>
                 </div>
               </div>
