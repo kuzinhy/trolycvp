@@ -255,7 +255,7 @@ LƯU Ý QUAN TRỌNG:
         .replace('Anh Huy', userName);
 
       if (isSimpleMode) {
-        dynamicInstruction += "\n\nCHẾ ĐỘ ĐƠN THUẦN ĐANG BẬT: Hãy trả lời cực kỳ ngắn gọn, đi thẳng vào trọng tâm, không rườm rà, không chào hỏi xã giao không cần thiết. Ưu tiên câu trả lời dưới 3 câu nếu có thể.";
+        dynamicInstruction += "\n\nCHẾ ĐỘ ĐƠN THUẦN ĐANG BẬT: Hãy trả lời cực kỳ ngắn gọn, đi thẳng vào trọng tâm. TRẢ LỜI TRỰC TIẾP VÀO CÂU HỎI. KHÔNG GIẢI THÍCH DÀI DÒNG. KHÔNG GỢI Ý THÊM HÀNH ĐỘNG HAY ĐƯA RA LỜI KHUYÊN NẾU KHÔNG ĐƯỢC YÊU CẦU. KHÔNG CHÀO HỎI. Chỉ tập trung cung cấp đúng thông tin người dùng cần.";
       }
 
       const responseStream = await generateContentStreamWithRetry({

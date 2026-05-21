@@ -9,6 +9,7 @@ import { generateContentWithRetry, generateContentStreamWithRetry } from '../lib
 import { cacheData, getCachedData } from '../lib/cache';
 import { useToast } from '../hooks/useToast';
 import { useKnowledgeContext } from './KnowledgeContext';
+import { useDashboardContext } from './DashboardContext';
 
 interface ChatContextType {
   messages: Message[];
@@ -42,6 +43,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user, isAdmin, isSuperAdmin, unitId } = useAuth();
   const { showToast } = useToast();
   const { aiKnowledge, loadKnowledge } = useKnowledgeContext();
+  const { tasks = [], meetings = [], events = [], birthdays = [] } = useDashboardContext();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -164,7 +166,7 @@ ${history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}` }]
 
     const trimmedText = text.trim();
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user',
       content: fileContent ? `${trimmedText}\n\n[FILE]:\n${fileContent}` : trimmedText,
       timestamp: Date.now(),
@@ -207,22 +209,45 @@ ${history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}` }]
       const knowledgeContext = relevantKnowledge.map((k, i) => `${i+1}. [${k.category || 'Chung'}]: ${k.content}`).join('\n');
       const userName = user?.displayName || 'Đồng chí';
       const userRole = isAdmin ? (isSuperAdmin ? 'Super Admin' : 'Admin') : 'Người dùng';
-      const instruction = SYSTEM_INSTRUCTION
+      let instruction = SYSTEM_INSTRUCTION
         .replace(/\{\{USER_NAME\}\}/g, userName)
         .replace(/\{\{USER_ROLE\}\}/g, userRole)
         .replace(/Anh Huy/g, userName);
+
+      if (isSimpleMode) {
+        instruction += "\n\nCHẾ ĐỘ ĐƠN THUẦN ĐANG BẬT: Hãy trả lời cực kỳ ngắn gọn, đi thẳng vào trọng tâm. TRẢ LỜI TRỰC TIẾP VÀO CÂU HỎI. KHÔNG GIẢI THÍCH DÀI DÒNG. KHÔNG GỢI Ý THÊM HÀNH ĐỘNG HAY ĐƯA RA LỜI KHUYÊN NẾU KHÔNG ĐƯỢC YÊU CẦU. KHÔNG CHÀO HỎI. Chỉ tập trung cung cấp đúng thông tin người dùng cần.";
+      }
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+      // Format schedule context
+      const scheduleContext = `
+THỜI GIAN HIỆN TẠI: ${timeStr}, ${dateStr}
+
+LỊCH CÔNG TÁC & NHIỆM VỤ (DỮ LIỆU THỰC TẾ):
+- Cuộc họp/Lịch công tác: ${meetings.length > 0 ? meetings.map(m => `${m.date} ${m.time}: ${m.name} (${m.location})`).join('; ') : 'Không có lịch họp.'}
+- Nhiệm vụ: ${tasks.length > 0 ? tasks.map(t => `${t.title} (Hạn: ${t.deadline}, Trạng thái: ${t.status})`).join('; ') : 'Không có nhiệm vụ.'}
+- Sự kiện: ${events.length > 0 ? events.map(e => `${e.date}: ${e.name}`).join('; ') : 'Không có sự kiện.'}
+- Sinh nhật: ${birthdays.length > 0 ? birthdays.map(b => `${b.date}: ${b.name}`).join('; ') : 'Không có thông tin sinh nhật.'}
+
+LƯU Ý QUAN TRỌNG VỀ DỮ LIỆU:
+1. Tuyệt đối chỉ trả lời lịch công tác/nhiệm vụ dựa trên dữ liệu thực tế được cung cấp ở trên.
+2. Nếu người dùng hỏi thông tin không có trong Kho dữ liệu (KNOWLEDGE) hoặc LỊCH CÔNG TÁC, hãy trả lời trung thực là "Tôi chưa có thông tin về vấn đề này trong hệ thống" và không tự bịa thông tin.
+      `.trim();
 
       const responseStream = await generateContentStreamWithRetry({
         model: "gemini-3-flash-preview",
         contents: [{
           role: 'user',
-          parts: [{ text: `${instruction}\n\nKNOWLEDGE:\n${knowledgeContext}\n\nHISTORY:\n${messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n')}\n\nUSER: ${userMessage.content}` }]
+          parts: [{ text: `${instruction}\n\n${scheduleContext}\n\nKNOWLEDGE:\n${knowledgeContext || 'Chưa có thông tin.'}\n\nHISTORY:\n${messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n')}\n\nUSER: ${userMessage.content}` }]
         }],
         config: { temperature: 0.7, tools: isSearchEnabled ? [{ googleSearch: {} }] : undefined }
       });
 
       let aiText = "";
-      const aiMessageId = `ai-${Date.now()}`;
+      const aiMessageId = `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       setMessages(prev => [...prev, { id: aiMessageId, role: 'model', content: '', timestamp: Date.now() }]);
 
       for await (const chunk of responseStream) {

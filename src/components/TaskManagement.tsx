@@ -105,6 +105,7 @@ export const TaskManagement: React.FC<TaskManagementProps> = memo(({ tasks, setT
     time: string;
     priority: 'high' | 'medium' | 'low'; 
     status: TaskStatus; 
+    progress?: number;
     aiSuggestion?: string; 
     assignee?: string; 
     isImportant?: boolean;
@@ -117,6 +118,7 @@ export const TaskManagement: React.FC<TaskManagementProps> = memo(({ tasks, setT
     time: '',
     priority: 'medium',
     status: 'Pending',
+    progress: 0,
     aiSuggestion: '',
     assignee: '',
     isImportant: false,
@@ -205,7 +207,10 @@ Trả về kết quả dưới dạng JSON với định dạng:
     };
   }, [filteredTasks]);
 
-  const handleAdd = () => {
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [autoEnhance, setAutoEnhance] = useState(true);
+
+  const handleAddWithAI = async () => {
     if (!formData.title || !formData.deadline) {
       showToast("Vui lòng nhập đầy đủ thông tin!", "error");
       return;
@@ -216,18 +221,69 @@ Trả về kết quả dưới dạng JSON với định dạng:
       return;
     }
 
+    let finalTitle = formData.title;
+    let finalDesc = formData.description;
+    let finalPriority = formData.priority;
+    let finalCategory = formData.category;
+
+    if (autoEnhance) {
+      setIsEnhancing(true);
+      try {
+        const prompt = `Bạn là trợ lý AI thông minh chuyên quản lý công việc văn phòng.
+Người dùng đã nhập một nhiệm vụ thô sơ:
+Tiêu đề: "${formData.title}"
+Mô tả: "${formData.description}"
+
+Nhiệm vụ của bạn:
+1. Viết lại TIÊU ĐỀ ngắn gọn, chuyên nghiệp, đúng trọng tâm công việc.
+2. Nếu mô tả trống, hãy đưa ra một mô tả cơ bản các bước cần làm dựa vào tiêu đề. Nếu có mô tả, viết lại chi tiết, rành mạch, phân tích các bước cần thực hiện, làm rõ bản chất công việc. Đảm bảo ngôn từ lịch sự, chuẩn mực công sở.
+3. Nếu cần thiết, có thể đề xuất mức độ ưu tiên hoặc danh mục phù hợp.
+
+Trả về kết quả dưới dạng JSON theo định dạng sau:
+{
+  "title": "Tiêu đề mới chuyên nghiệp hơn",
+  "description": "Mô tả đã được phân tích chi tiết...",
+  "priority": "high" | "medium" | "low",
+  "category": "Danh mục đề xuất (tùy chọn)"
+}`;
+
+        const response = await generateContentWithRetry({
+          model: 'gemini-3.1-flash-preview',
+          contents: [{ parts: [{ text: prompt }] }],
+          config: {
+            responseMimeType: 'application/json',
+          }
+        });
+
+        if (response.text) {
+          const result = JSON.parse(response.text);
+          finalTitle = result.title || finalTitle;
+          finalDesc = result.description || finalDesc;
+          if (result.priority) finalPriority = result.priority;
+          if (result.category && !finalCategory) finalCategory = result.category;
+          showToast("AI đã tinh chỉnh thông tin nhiệm vụ!", "success");
+        }
+      } catch (err) {
+        console.error("AI enhancement failed:", err);
+        showToast("Không thể dùng AI tinh chỉnh, dùng thông tin gốc.", "warning");
+      } finally {
+        setIsEnhancing(false);
+      }
+    }
+
     const newTask: Task = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      title: formData.title,
-      description: formData.description,
+      title: finalTitle,
+      description: finalDesc,
       deadline: formData.deadline,
       time: formData.time,
-      priority: formData.priority,
+      priority: finalPriority,
       status: formData.status,
+      progress: formData.progress || 0,
       aiSuggestion: formData.aiSuggestion,
       assignee: formData.assignee,
       isImportant: formData.isImportant,
-      category: formData.category,
+      category: finalCategory,
       estimatedTime: formData.estimatedTime,
       createdAt: Date.now()
     };
@@ -240,7 +296,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
     setTasks(updatedTasks);
     if (onSaveTasks) onSaveTasks(updatedTasks);
     
-    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
     setIsAdding(false);
     showToast("Đã thêm nhiệm vụ mới!", "success");
   };
@@ -258,7 +314,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
     if (onSaveTasks) onSaveTasks(updatedTasks);
     
     setEditingId(null);
-    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
     showToast("Đã cập nhật nhiệm vụ!", "success");
   };
 
@@ -288,6 +344,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
       time: task.time || '',
       priority: task.priority,
       status: task.status,
+      progress: task.progress || 0,
       aiSuggestion: task.aiSuggestion || '',
       assignee: task.assignee || '',
       isImportant: task.isImportant || false,
@@ -299,7 +356,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
 
   const cancelEdit = () => {
     setEditingId(null);
-    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
     setIsAdding(false);
   };
 
@@ -439,6 +496,23 @@ Trả về kết quả dưới dạng JSON với định dạng:
               <p className="leading-relaxed line-clamp-2" title={task.aiSuggestion}>{task.aiSuggestion}</p>
             </div>
           )}
+
+          {task.progress !== undefined && (
+            <div className="mt-3">
+              <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1">
+                <span>Tiến độ hoàn thành</span>
+                <span>{task.progress}%</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div 
+                  className={cn("h-full rounded-full transition-all duration-300", 
+                    task.progress === 100 ? "bg-emerald-500" : "bg-indigo-500"
+                  )}
+                  style={{ width: `${task.progress}%` }} 
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -510,7 +584,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
             <button 
               onClick={() => {
                 setEditingId(null);
-                setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+                setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
                 setIsAdding(true);
               }}
               className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all flex items-center gap-2"
@@ -529,11 +603,11 @@ Trả về kết quả dưới dạng JSON với định dạng:
           <span className="text-2xl font-black text-slate-800">{stats.total}</span>
         </div>
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center">
-          <span className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Cần làm</span>
+          <span className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Chờ xử lý</span>
           <span className="text-2xl font-black text-slate-700">{stats.pending}</span>
         </div>
         <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 shadow-sm flex flex-col justify-center">
-          <span className="text-indigo-600 text-xs font-bold uppercase tracking-wider mb-1">Đang làm</span>
+          <span className="text-indigo-600 text-xs font-bold uppercase tracking-wider mb-1">Đang thực hiện</span>
           <span className="text-2xl font-black text-indigo-700">{stats.inProgress}</span>
         </div>
         <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-center">
@@ -553,7 +627,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
             <button 
               onClick={() => {
                 setEditingId(null);
-                setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+                setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
                 setIsAdding(true);
               }}
               className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all shadow-sm shrink-0"
@@ -628,7 +702,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'Pending')}
             >
-              <ColumnHeader title="Cần làm (Pending)" count={tasksByStatus['Pending'].length} colorClass="bg-slate-400" />
+              <ColumnHeader title="Chờ xử lý (Pending)" count={tasksByStatus['Pending'].length} colorClass="bg-slate-400" />
               <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
                 {tasksByStatus['Pending'].map(task => <TaskCard key={task.id} task={task} />)}
                 {tasksByStatus['Pending'].length === 0 && (
@@ -645,7 +719,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'In Progress')}
             >
-              <ColumnHeader title="Đang làm (In Progress)" count={tasksByStatus['In Progress'].length} colorClass="bg-indigo-500" />
+              <ColumnHeader title="Đang thực hiện (In Progress)" count={tasksByStatus['In Progress'].length} colorClass="bg-indigo-500" />
               <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
                 {tasksByStatus['In Progress'].map(task => <TaskCard key={task.id} task={task} />)}
                 {tasksByStatus['In Progress'].length === 0 && (
@@ -662,7 +736,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'In Review')}
             >
-              <ColumnHeader title="Đang duyệt (In Review)" count={tasksByStatus['In Review'].length} colorClass="bg-amber-500" />
+              <ColumnHeader title="Đang xem xét (In Review)" count={tasksByStatus['In Review'].length} colorClass="bg-amber-500" />
               <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
                 {tasksByStatus['In Review'].map(task => <TaskCard key={task.id} task={task} />)}
                 {tasksByStatus['In Review'].length === 0 && (
@@ -717,13 +791,13 @@ Trả về kết quả dưới dạng JSON với định dạng:
                 </span>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleBulkStatus('Pending')} className="px-3 py-1.5 bg-white text-slate-600 text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-                    Chuyển Cần làm
+                    Chuyển Chờ xử lý
                   </button>
                   <button onClick={() => handleBulkStatus('In Progress')} className="px-3 py-1.5 bg-white text-indigo-600 text-xs font-bold rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors">
-                    Chuyển Đang làm
+                    Chuyển Đang thực hiện
                   </button>
                   <button onClick={() => handleBulkStatus('In Review')} className="px-3 py-1.5 bg-white text-amber-600 text-xs font-bold rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors">
-                    Chuyển Đang duyệt
+                    Chuyển Đang xem xét
                   </button>
                   <button onClick={() => handleBulkStatus('On Hold')} className="px-3 py-1.5 bg-white text-slate-600 text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
                     Chuyển Tạm hoãn
@@ -834,9 +908,9 @@ Trả về kết quả dưới dạng JSON với định dạng:
                               task.status === 'On Hold' ? "bg-slate-200 text-slate-800" :
                               "bg-emerald-50 text-emerald-700"
                             )}>
-                              {task.status === 'Pending' ? 'Cần làm' : 
-                               task.status === 'In Progress' ? 'Đang làm' : 
-                               task.status === 'In Review' ? 'Đang duyệt' :
+                              {task.status === 'Pending' ? 'Chờ xử lý' : 
+                               task.status === 'In Progress' ? 'Đang thực hiện' : 
+                               task.status === 'In Review' ? 'Đang xem xét' :
                                task.status === 'On Hold' ? 'Tạm hoãn' :
                                'Hoàn thành'}
                             </span>
@@ -1049,21 +1123,46 @@ Trả về kết quả dưới dạng JSON với định dạng:
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      Trạng thái
-                    </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                    >
-                      <option value="Pending">Cần làm</option>
-                      <option value="In Progress">Đang làm</option>
-                      <option value="In Review">Đang duyệt</option>
-                      <option value="On Hold">Tạm hoãn</option>
-                      <option value="Completed">Hoàn thành</option>
-                    </select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Trạng thái
+                      </label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      >
+                        <option value="Pending">Chờ xử lý</option>
+                        <option value="In Progress">Đang thực hiện</option>
+                        <option value="In Review">Đang xem xét</option>
+                        <option value="On Hold">Tạm hoãn</option>
+                        <option value="Completed">Hoàn thành</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Tiến độ (%)
+                      </label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={formData.progress || 0}
+                          onChange={(e) => {
+                            const newProgress = parseInt(e.target.value);
+                            setFormData({
+                              ...formData, 
+                              progress: newProgress,
+                              status: newProgress === 100 ? 'Completed' : (newProgress > 0 && formData.status === 'Pending' ? 'In Progress' : formData.status)
+                            });
+                          }}
+                          className="flex-1 w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                        />
+                        <span className="text-sm font-bold w-10 text-right">{formData.progress || 0}%</span>
+                      </div>
+                    </div>
                   </div>
                   
                   <div>
@@ -1089,6 +1188,21 @@ Trả về kết quả dưới dạng JSON với định dạng:
                       ))}
                     </div>
                   </div>
+                  
+                  {!editingId && (
+                    <div>
+                      <label className="flex items-center gap-2 cursor-pointer mb-2">
+                        <input
+                          type="checkbox"
+                          checked={autoEnhance}
+                          onChange={(e) => setAutoEnhance(e.target.checked)}
+                          className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                        />
+                        <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5"><Sparkles size={14} className="text-indigo-500"/> Tự động AI tinh chỉnh</span>
+                      </label>
+                      <p className="text-[10px] text-slate-500">AI tự động chuẩn hóa lại Tiêu đề, Mô tả và phân loại chuyên nghiệp hơn trước khi lưu.</p>
+                    </div>
+                  )}
 
                   <div className="pt-4 flex gap-3">
                     <button 
@@ -1098,11 +1212,18 @@ Trả về kết quả dưới dạng JSON với định dạng:
                       Hủy bỏ
                     </button>
                     <button 
-                      onClick={editingId ? handleUpdate : handleAdd}
-                      className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+                      onClick={editingId ? handleUpdate : handleAddWithAI}
+                      disabled={isEnhancing}
+                      className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      {editingId ? <Save size={16} /> : <Plus size={16} />}
-                      {editingId ? 'Cập nhật' : 'Thêm mới'}
+                      {isEnhancing ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : editingId ? (
+                        <Save size={16} />
+                      ) : (
+                        <Plus size={16} />
+                      )}
+                      {isEnhancing ? 'AI Đang xử lý...' : editingId ? 'Cập nhật' : 'Thêm mới'}
                     </button>
                   </div>
                 </div>

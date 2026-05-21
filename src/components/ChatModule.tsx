@@ -635,6 +635,13 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                               ul({ children }) { return <ul className="list-disc pl-5 space-y-1 my-2 break-words text-[13px]">{children}</ul>; },
                               ol({ children }) { return <ol className="list-decimal pl-5 space-y-1 my-2 break-words text-[13px]">{children}</ol>; },
                               li({ children }) { return <li className="leading-snug break-words text-inherit">{children}</li>; },
+                              a({ href, children, ...props }) {
+                                return (
+                                  <a href={href} target="_blank" rel="noopener noreferrer" className={cn("text-blue-600 hover:underline cursor-pointer", msg.role === 'user' ? "text-blue-300" : "")} {...props}>
+                                    {children}
+                                  </a>
+                                );
+                              },
                               p({ children }) { return <p className="mb-2 last:mb-0 leading-snug text-inherit break-words text-[13px]">{children}</p>; }
                             }}
                           >

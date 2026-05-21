@@ -1,0 +1,112 @@
+39:import { GoogleGenAI } from "@google/genai";
+45:import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
+86:  chairperson: string;
+102:  chairperson: string[];
+124:  chairperson: STAFF_LIST,
+186:        !isSelected && type === 'chairperson' && "border-indigo-200 text-indigo-700 bg-indigo-50",
+343:          {item.chairperson || 'Chưa rõ'}
+414:  aiKnowledge?: any[];
+426:  aiKnowledge = [],
+440:  const resolveConflictsWithAI = async () => {
+444:      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+447:1. Trùng thời gian (Overlap): Hai lịch có cùng khung giờ hoặc khung giờ giao nhau.
+448:2. Trùng địa điểm: Hai lịch tại cùng một địa điểm cùng lúc.
+449:3. Trùng chủ trì: Một người chủ trì hai việc cùng lúc.
+452:${JSON.stringify(items.map(i => ({ id: i.id, date: i.date, time: i.time, endTime: i.endTime, content: i.content, chairperson: i.chairperson, location: i.location })), null, 2)}
+457:      const model = ai.models.generateContent({
+463:      const response = await model;
+465:      const data = parseAIResponse(text);
+469:          const aiItem = data.find((d: any) => d.id === item.id);
+470:          return aiItem ? { ...item, ...aiItem } : item;
+477:      console.error("AI Conflict Resolution Error:", err);
+487:  const [activeTab, setActiveTab] = useState<'time' | 'chairperson' | 'location' | 'participants' | 'type' | 'preparingUnit'>('time');
+507:        chairperson: initialItem.chairperson || initialItem.assignee || '',
+567:            chairperson: item.chairperson || '',
+574:            organizer: item.chairperson || ''
+580:            assignee: item.chairperson || (item.participants && item.participants[0]) || 'Chưa phân công',
+599:      if (meetingsToUpdate.length > 0) await updateMeetings(prev => updateCollection(prev, meetingsToUpdate));
+600:      if (tasksToUpdate.length > 0) await updateTasks(prev => updateCollection(prev, tasksToUpdate));
+601:      if (eventsToUpdate.length > 0) await updateEvents(prev => updateCollection(prev, eventsToUpdate));
+615:    await syncItemsToSystem(items);
+640:        chairperson (người chủ trì), 
+654:      const response = await generateContentWithRetry({
+660:      const data = parseAIResponse(response.text || '{}');
+668:          chairperson: data.chairperson || '',
+717:    chairperson: [],
+726:    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+738:      item.chairperson.toLowerCase().includes(searchQuery.toLowerCase()) ||
+750:      chairperson: '',
+766:      userEmail: auth.currentUser?.email || 'anonymous',
+768:      details: `Thêm lịch mới vào ngày ${format(date || currentDate, 'dd/MM/yyyy')}`,
+807:        if (item.chairperson && other.chairperson && item.chairperson === other.chairperson) {
+808:          if (!conflicts.includes(`Trùng lịch chủ trì: ${item.chairperson}`)) {
+809:            conflicts.push(`Trùng lịch chủ trì: ${item.chairperson}`);
+841:      const count = items.filter(i => i.chairperson === staff).length;
+874:      userEmail: auth.currentUser?.email || 'anonymous',
+876:      details: `Cập nhật lịch: ${updatedItem.content.substring(0, 50)}...`,
+897:      userEmail: auth.currentUser?.email || 'anonymous',
+899:      details: `Xóa lịch: ${itemToDelete?.content.substring(0, 50)}...`,
+945:  const generateSingleItemWithAI = useCallback(async () => {
+946:    if (!draftState.content && draftState.time.length === 0 && draftState.chairperson.length === 0) return;
+949:      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+950:      const knowledgeContext = aiKnowledge.length > 0 
+951:        ? `\nTHÔNG TIN THAM KHẢO TỪ BỘ NÃO TRÍ TUỆ NHÂN TẠO:\n${aiKnowledge.slice(0, 10).map(k => `- ${k.title}: ${k.summary || k.content}`).join('\n')}\n(Sử dụng thông tin trên để hoàn thiện các thành phần còn thiếu như cơ quan phụ trách, nội dung, địa điểm).` 
+965:- Chủ trì: ${draftState.chairperson.join(', ')}
+973:Cấu trúc: { date (YYYY-MM-DD), time (HH:mm), endTime (HH:mm), content, chairperson, location, participants (mảng string), type, preparingUnit, priority, status, notes }
+976:      const model = ai.models.generateContent({
+982:      const response = await model;
+984:      const data = parseAIResponse(text);
+993:          chairperson: data.chairperson || '',
+1004:        setDraftState({ time: [], chairperson: [], location: [], participants: [], type: [], preparingUnit: [], content: '' });
+1008:      console.error("AI Error:", err);
+1014:  // Automatic AI generation trigger
+1019:    const hasChair = draftState.chairperson.length > 0;
+1024:    if (hasTime && hasChair && hasLoc && hasContent && hasType) {
+1026:        generateSingleItemWithAI();
+1030:  }, [draftState, autoGenerate, isGenerating, generateSingleItemWithAI]);
+1032:  const generateWeeklyScheduleWithAI = async () => {
+1036:      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+1037:      const knowledgeContext = aiKnowledge.length > 0 
+1038:        ? `\nTHÔNG TIN THAM KHẢO (Đóng vai trò như bộ não, chứa thói quen, cách tổ chức lịch, cơ quan phụ trách):\n${aiKnowledge.slice(0, 10).map(k => `- ${k.title}: ${k.summary || k.content}`).join('\n')}\n` 
+1057:  host: i.chairperson,
+1068:Cấu trúc mỗi mục: { id, date (YYYY-MM-DD), time (HH:mm), endTime (HH:mm), content, chairperson, location, participants, priority, status, notes }
+1071:      const model = ai.models.generateContent({
+1077:      const response = await model;
+1079:      const data = parseAIResponse(text);
+1083:          const aiItem = data.find((d: any) => d.id === item.id);
+1084:          if (aiItem) {
+1087:              content: aiItem.content || item.content,
+1088:              chairperson: aiItem.chairperson || item.chairperson,
+1089:              location: aiItem.location || item.location,
+1090:              priority: aiItem.priority || item.priority,
+1091:              notes: aiItem.notes || item.notes,
+1092:              time: aiItem.time || item.time,
+1093:              endTime: aiItem.endTime || item.endTime,
+1094:              status: aiItem.status || item.status,
+1095:              date: aiItem.date ? new Date(aiItem.date).toISOString() : item.date,
+1096:              participants: aiItem.participants || item.participants
+1105:      console.error("AI Error:", err);
+1129:                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Doc-to-Schedule AI</p>
+1144:                    Sau khi quét xong, hãy copy nội dung văn bản và dán vào thanh lệnh thông minh để AI tự động trích xuất lịch.
+1169:              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hệ thống quản lý & Chuẩn hóa AI</p>
+1268:            <span className="flex items-center gap-1"><Info size={10} /> Mẹo: "Sáng mai họp chi bộ lúc 9h"</span>
+1329:              onClick={resolveConflictsWithAI}
+1352:              Trợ lý Tạo Lịch AI
+1387:            onClick={generateWeeklyScheduleWithAI}
+1395:            Hoàn thiện Lịch Tuần (AI)
+1400:      {/* Main Content Area */}
+1493:        {/* Main Calendar/List View */}
+1593:                        <td className="p-4 text-xs font-bold text-slate-600 print:text-black">{item.chairperson}</td>
+1642:                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Click chọn các yếu tố để AI chuẩn hóa</p>
+1647:                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Tự động tạo (AI)</span>
+1663:                    onClick={() => setDraftState({ time: [], chairperson: [], location: [], participants: [], type: [], preparingUnit: [], content: '' })}
+1682:                      { id: 'chairperson', label: 'Chủ trì', icon: Users },
+1736:                    <SelectedItemsZone label="Chủ trì" items={draftState.chairperson} onRemove={(i) => setDraftState((prev: any) => ({ ...prev, chairperson: prev.chairperson.filter((x: string) => x !== i) }))} icon={Users} colorClass="border-indigo-200 bg-indigo-50/30" />
+1772:                          {draftState.chairperson.length > 0 ? draftState.chairperson[0] : 'Chủ trì'}
+1784:                      generateSingleItemWithAI().then(() => setIsQuickBuilderOpen(false));
+1786:                    disabled={isGenerating || (!draftState.content && draftState.time.length === 0 && draftState.chairperson.length === 0)}
+1789:                      isGenerating || (!draftState.content && draftState.time.length === 0 && draftState.chairperson.length === 0) 
+1795:                    Tạo & Chuẩn hóa (AI)
+1826:                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hệ thống quản lý & Chuẩn hóa AI</p>
+1923:                              value={editingItem.chairperson}
+1924:                              onChange={(e) => setEditingItem({ ...editingItem, chairperson: e.target.value })}

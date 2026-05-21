@@ -24,12 +24,14 @@ interface AuthContextType {
   unitInfo: UnitInfo | null;
   userInfo: UserInfo | null;
   isEmailVerified: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (requestDriveAccess?: boolean) => Promise<void>;
   signOutUser: () => Promise<void>;
   updateUnitInfo: (info: UnitInfo) => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUserProfile: (data: { displayName?: string; photoURL?: string; phoneNumber?: string; position?: string; department?: string }) => Promise<void>;
+  googleDriveToken: string | null;
+  setGoogleDriveToken: (token: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({ 
@@ -47,7 +49,9 @@ const AuthContext = createContext<AuthContextType>({
   updateUnitInfo: async () => {},
   sendVerificationEmail: async () => {},
   refreshUser: async () => {},
-  updateUserProfile: async () => {}
+  updateUserProfile: async () => {},
+  googleDriveToken: null,
+  setGoogleDriveToken: () => {}
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -59,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [unitInfo, setUnitInfo] = useState<UnitInfo | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [googleDriveToken, setGoogleDriveToken] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -145,11 +150,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (requestDriveAccess: boolean = false) => {
     try {
       setLoading(true);
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      if (requestDriveAccess) {
+        provider.addScope('https://www.googleapis.com/auth/drive.readonly');
+        provider.addScope('https://www.googleapis.com/auth/drive.metadata.readonly');
+      }
+      const result = await signInWithPopup(auth, provider);
+      
+      if (requestDriveAccess) {
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        if (credential?.accessToken) {
+            setGoogleDriveToken(credential.accessToken);
+        }
+      }
     } catch (error: any) {
       console.error("Sign in error:", error);
       let message = "Không thể đăng nhập bằng Google. Vui lòng thử lại.";
@@ -235,7 +251,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{ 
       user, loading, isAdmin, isSuperAdmin, role, unitId, unitInfo, userInfo, isEmailVerified,
-      signInWithGoogle, signOutUser, updateUnitInfo, sendVerificationEmail, refreshUser, updateUserProfile
+      signInWithGoogle, signOutUser, updateUnitInfo, sendVerificationEmail, refreshUser, updateUserProfile,
+      googleDriveToken, setGoogleDriveToken
     }}>
       {!loading && children}
     </AuthContext.Provider>

@@ -198,8 +198,8 @@ const TaskDetailModal = ({
                       onChange={(e) => setStatus(e.target.value as any)}
                       className="w-full bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 outline-none rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
                     >
-                      <option value="Pending">Cần làm</option>
-                      <option value="In Progress">Đang làm</option>
+                      <option value="Pending">Chờ xử lý</option>
+                      <option value="In Progress">Đang thực hiện</option>
                       <option value="Completed">Hoàn thành</option>
                     </select>
                   </div>
@@ -294,7 +294,7 @@ const TaskDetailModal = ({
                       Ưu tiên: {task.priority === 'high' ? 'Cao' : task.priority === 'medium' ? 'TB' : 'Thấp'}
                     </span>
                     <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border", getStatusStyles(task.status))}>
-                      Trạng thái: {task.status === 'Pending' ? 'Cần làm' : task.status === 'In Progress' ? 'Đang làm' : 'Xong'}
+                      Trạng thái: {task.status === 'Pending' ? 'Chờ xử lý' : task.status === 'In Progress' ? 'Đang thực hiện' : 'Hoàn thành'}
                     </span>
                   </div>
                 </div>
@@ -1020,7 +1020,7 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
                                   "px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shrink-0",
                                   task.status === 'Completed' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-500 border-slate-100"
                                 )}>
-                                  {task.status === 'Pending' ? 'Cần làm' : task.status === 'In Progress' ? 'Đang làm' : 'Xong'}
+                                  {task.status === 'Pending' ? 'Chờ xử lý' : task.status === 'In Progress' ? 'Đang thực hiện' : 'Hoàn thành'}
                                 </div>
                               </div>
 

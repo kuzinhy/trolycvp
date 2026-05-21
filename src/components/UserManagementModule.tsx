@@ -38,12 +38,17 @@ const UserRow = memo(({
   onToggleStatus,
   currentUserEmail
 }: any) => (
-  <tr className={cn("hover:bg-slate-50/50 transition-colors", isSelected && "bg-blue-50/30")}>
-    <td className="px-6 py-4">
+  <tr 
+    className={cn("hover:bg-slate-50/50 transition-colors cursor-pointer", isSelected && "bg-blue-50/30")}
+    onClick={() => onShowDetails(u)}
+  >
+    <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
       <input 
         type="checkbox" 
         checked={isSelected}
-        onChange={() => onToggleSelect(u.id)}
+        onChange={(e) => {
+          onToggleSelect(u.id);
+        }}
         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
       />
     </td>
@@ -78,7 +83,7 @@ const UserRow = memo(({
       {u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString('vi-VN') : 'N/A'}
     </td>
     {isSuperAdmin && (
-      <td className="px-6 py-4">
+      <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
         <div className="flex flex-col gap-1">
           <input
             type="text"
@@ -96,7 +101,7 @@ const UserRow = memo(({
         </div>
       </td>
     )}
-    <td className="px-6 py-4">
+    <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
       <select 
         value={u.role || 'user'}
         onChange={(e) => onRoleChange(u.id, e.target.value)}
@@ -108,7 +113,7 @@ const UserRow = memo(({
         {isSuperAdmin && <option value="super_admin">Super Admin</option>}
       </select>
     </td>
-    <td className="px-6 py-4">
+    <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
       <div className="flex justify-center gap-2">
         <button
           onClick={() => onShowDetails(u)}
@@ -152,6 +157,41 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [selectedUserForNotif, setSelectedUserForNotif] = useState<any | null>(null);
   const [selectedUserForDetails, setSelectedUserForDetails] = useState<any | null>(null);
+  const [userAccessLogs, setUserAccessLogs] = useState<any[]>([]);
+  const [isLogsLoading, setIsLogsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchUserLogs = async () => {
+      if (!selectedUserForDetails) {
+        setUserAccessLogs([]);
+        return;
+      }
+      setIsLogsLoading(true);
+      try {
+        const q = query(
+          collection(db, 'access_logs'),
+          where('userId', '==', selectedUserForDetails.id),
+          limit(20)
+        );
+        const snapshot = await getDocs(q);
+        const logs = snapshot.docs.map(doc => {
+          const data = doc.data() as any;
+          return {
+            id: doc.id,
+            ...data,
+            timestamp: data.timestamp?.toMillis ? data.timestamp.toMillis() : Date.now()
+          };
+        }).sort((a, b) => b.timestamp - a.timestamp);
+        setUserAccessLogs(logs);
+      } catch (error) {
+        console.error("Error fetching access logs:", error);
+      } finally {
+        setIsLogsLoading(false);
+      }
+    };
+
+    fetchUserLogs();
+  }, [selectedUserForDetails]);
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -826,6 +866,48 @@ export const UserManagementModule: React.FC<UserManagementModuleProps> = ({ show
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Access Logs Section */}
+              <div className="mt-8 border-t border-slate-100 pt-6">
+                <h4 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <Clock size={16} className="text-blue-500" />
+                  Lịch sử hoạt động gần đây
+                </h4>
+                
+                {isLogsLoading ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 size={24} className="animate-spin text-blue-500" />
+                  </div>
+                ) : userAccessLogs.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-4 bg-slate-50 rounded-xl">Chưa có lịch sử hoạt động nào được ghi nhận.</p>
+                ) : (
+                  <div className="max-h-[250px] overflow-y-auto pr-2 space-y-3">
+                    {userAccessLogs.map(log => (
+                      <div key={log.id} className="flex gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 items-start">
+                        <div className="p-2 bg-white rounded-lg shadow-sm">
+                          <Activity size={16} className="text-slate-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">
+                            {log.action === 'visit' ? 'Truy cập' : 
+                             log.action === 'click' ? 'Tương tác' : 
+                             log.action === 'create' ? 'Tạo mới' : 
+                             log.action === 'update' ? 'Cập nhật' : 
+                             log.action === 'delete' ? 'Xóa' : 
+                             log.action === 'auth_login' ? 'Đăng nhập' : 
+                             log.action === 'auth_logout' ? 'Đăng xuất' : log.action}
+                            <span className="text-slate-500 ml-1 font-medium">- {log.module}</span>
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {new Date(log.timestamp).toLocaleString('vi-VN')} 
+                            {log.details && ` • ${log.details}`}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -11,12 +11,14 @@ import {
   FileText,
   Calendar,
   TrendingUp,
-  CheckSquare
+  CheckSquare,
+  BarChart
 } from 'lucide-react';
 import { TrackingItem, Task } from '../constants';
 import { cn } from '../lib/utils';
 import { TaskManagement } from './TaskManagement';
 import { ToastType } from './ui/Toast';
+import { StrategicProgressChart } from './StrategicProgressChart';
 
 interface ProgressTrackingProps {
   items: TrackingItem[];
@@ -26,7 +28,7 @@ interface ProgressTrackingProps {
 }
 
 export const ProgressTracking: React.FC<ProgressTrackingProps> = memo(({ items, tasks, setTasks, showToast }) => {
-  const [activeTab, setActiveTab] = useState<'progress' | 'tasks'>('progress');
+  const [activeTab, setActiveTab] = useState<'progress' | 'tasks' | 'overview'>('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'in_progress' | 'pending'>('all');
 
@@ -73,6 +75,18 @@ export const ProgressTracking: React.FC<ProgressTrackingProps> = memo(({ items, 
         </div>
         <div className="flex p-1 bg-slate-100/80 rounded-2xl border border-slate-200 shadow-inner w-fit">
           <button
+            onClick={() => setActiveTab('overview')}
+            className={cn(
+              "flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+              activeTab === 'overview' 
+                ? "bg-white text-blue-700 shadow-md ring-1 ring-blue-100" 
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+            )}
+          >
+            <BarChart size={16} />
+            Tổng quan
+          </button>
+          <button
             onClick={() => setActiveTab('progress')}
             className={cn(
               "flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
@@ -100,7 +114,16 @@ export const ProgressTracking: React.FC<ProgressTrackingProps> = memo(({ items, 
       </div>
 
       <AnimatePresence mode="wait">
-        {activeTab === 'progress' ? (
+        {activeTab === 'overview' ? (
+          <motion.div
+            key="overview-tab"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+          >
+            <StrategicProgressChart tasks={tasks} />
+          </motion.div>
+        ) : activeTab === 'progress' ? (
           <motion.div
             key="progress-tab"
             initial={{ opacity: 0, x: -20 }}

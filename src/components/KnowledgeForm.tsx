@@ -1,10 +1,12 @@
-import React, { memo, useState, useRef } from 'react';
-import { motion } from 'motion/react';
-import { Upload, Plus, FileText, X, AlertCircle, Loader2, PenLine, Sparkles } from 'lucide-react';
+import React, { memo, useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Upload, Plus, FileText, X, AlertCircle, Loader2, PenLine, Sparkles, Cloud } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { Button } from './ui/Button';
 import { KNOWLEDGE_CATEGORIES } from '../constants';
 import { KnowledgeConfirmModal } from './KnowledgeConfirmModal';
+import { useAuth } from '../context/AuthContext';
+import { cn } from '../lib/utils';
 
 interface KnowledgeFormProps {
   onFileUpload: (file: File) => Promise<void>;
@@ -24,6 +26,99 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
   existingKnowledge
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { googleDriveToken, signInWithGoogle } = useAuth();
+  
+  const [showDrivePicker, setShowDrivePicker] = useState(false);
+  const [driveFiles, setDriveFiles] = useState<any[]>([]);
+  const [isLoadingDrive, setIsLoadingDrive] = useState(false);
+  const [isFetchingDriveContent, setIsFetchingDriveContent] = useState(false);
+  const [driveError, setDriveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (showDrivePicker && googleDriveToken) {
+      fetchDriveFiles();
+    }
+  }, [showDrivePicker, googleDriveToken]);
+
+  const handleOpenDrive = async () => {
+    if (!googleDriveToken) {
+      try {
+        await signInWithGoogle(true);
+      } catch (err) {
+        console.error("Failed to sign in with Drive permissions");
+        return;
+      }
+    }
+    setShowDrivePicker(true);
+  };
+
+  const fetchDriveFiles = async () => {
+    if (!googleDriveToken) return;
+    setIsLoadingDrive(true);
+    setDriveError(null);
+    try {
+      // Fetch recent 15 documents and text-like files
+      const query = "trashed = false and (mimeType = 'application/vnd.google-apps.document' or mimeType = 'text/plain' or mimeType = 'application/pdf')";
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&orderBy=modifiedTime desc&pageSize=15&fields=files(id,name,mimeType,modifiedTime)`;
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${googleDriveToken}` }
+      });
+      if (!response.ok) {
+         if (response.status === 401 || response.status === 403) {
+             setDriveError("Token expired or missing permissions. Vui lòng đăng nhập lại Google.");
+         } else {
+             setDriveError("Lỗi khi tải danh sách Drive.");
+         }
+         return;
+      }
+      const data = await response.json();
+      setDriveFiles(data.files || []);
+    } catch (err) {
+      console.error("fetchDriveFiles error:", err);
+      setDriveError("Không thể kết nối với Google Drive.");
+    } finally {
+      setIsLoadingDrive(false);
+    }
+  };
+
+  const handleSelectDriveFile = async (file: any) => {
+    setIsFetchingDriveContent(true);
+    try {
+       let content = "";
+       if (file.mimeType === 'application/vnd.google-apps.document') {
+           // Export Google Doc as plain text
+           const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}/export?mimeType=text/plain`, {
+               headers: { Authorization: `Bearer ${googleDriveToken}` }
+           });
+           if (!res.ok) throw new Error("Export failed");
+           content = await res.text();
+       } else if (file.mimeType === 'text/plain') {
+           // Get raw text
+           const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+               headers: { Authorization: `Bearer ${googleDriveToken}` }
+           });
+           if (!res.ok) throw new Error("Download failed");
+           content = await res.text();
+       } else {
+           throw new Error("Loại file chưa được hỗ trợ lấy văn bản trực tiếp. Vui lòng dùng Google Docs hoặc Text file.");
+       }
+
+       setNewKnowledge(prev => ({
+           ...prev,
+           title: file.name,
+           content: content || "Không tìm thấy nội dung"
+       }));
+       setShowDrivePicker(false);
+       setIsAddingManual(true);
+
+    } catch (err: any) {
+        console.error("fetch drive content error", err);
+        setDriveError(err.message || "Lỗi khi lấy tài liệu từ Drive.");
+    } finally {
+        setIsFetchingDriveContent(false);
+    }
+  };
+
   const [newKnowledge, setNewKnowledge] = useState({
     title: '',
     content: '',
@@ -128,7 +223,7 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
 
   return (
     <div className="space-y-6 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div 
           onClick={() => fileInputRef.current?.click()}
           className="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-sm border border-slate-200/60 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
@@ -153,6 +248,22 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
         </div>
 
         <div 
+          onClick={handleOpenDrive}
+          className="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-sm border border-slate-200/60 hover:border-yellow-300 hover:shadow-md transition-all cursor-pointer group"
+        >
+          <div className="flex-shrink-0 p-4 bg-yellow-50 text-yellow-600 rounded-2xl group-hover:scale-110 transition-transform">
+            <Cloud className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-slate-900 text-base">Nhập từ Drive</h3>
+            <p className="text-xs text-slate-500 mt-1">Lấy trực tiếp từ Google Drive của bạn</p>
+          </div>
+          <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-yellow-600 group-hover:text-white transition-colors">
+            <Plus className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div 
           onClick={() => setIsAddingManual(true)}
           className="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-sm border border-slate-200/60 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group"
         >
@@ -168,6 +279,59 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showDrivePicker && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 max-w-2xl mx-auto mt-6"
+          >
+            <div className="flex justify-between items-center mb-6 border-b pb-4">
+              <h3 className="font-bold flex items-center gap-2"><Cloud className="text-yellow-600 w-5 h-5" /> Chọn tệp từ Google Drive</h3>
+              <button onClick={() => setShowDrivePicker(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+            </div>
+            
+            {driveError ? (
+              <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm mb-4">
+                {driveError}
+                <div className="mt-2 text-xs">
+                    *Mẹo: Bạn có thể cần đăng xuất khỏi ứng dụng và đăng nhập lại để cấp quyền Google Drive hoàn chỉnh.
+                </div>
+              </div>
+            ) : null}
+
+            {isLoadingDrive || isFetchingDriveContent ? (
+              <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                <Loader2 className="w-8 h-8 animate-spin text-yellow-500" />
+                <p className="text-sm font-medium text-slate-500">
+                  {isFetchingDriveContent ? "Đang lấy nội dung tài liệu..." : "Đang tải danh sách tài liệu từ Drive..."}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                {driveFiles.map(file => (
+                  <div 
+                    key={file.id} 
+                    onClick={() => handleSelectDriveFile(file)}
+                    className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl cursor-pointer border border-transparent hover:border-slate-200 transition-colors"
+                  >
+                    <FileText className="text-blue-500 flex-shrink-0" size={20} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-800 text-sm truncate">{file.name}</p>
+                      <p className="text-xs text-slate-500">{new Date(file.modifiedTime).toLocaleDateString("vi-VN")}</p>
+                    </div>
+                  </div>
+                ))}
+                {driveFiles.length === 0 && !driveError && (
+                  <p className="text-center py-8 text-slate-500 text-sm">Không tìm thấy tài liệu Google Docs hoặc Text nào được cập nhật gần đây.</p>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isAddingManual && (
         <motion.div 
