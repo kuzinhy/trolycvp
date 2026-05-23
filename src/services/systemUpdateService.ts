@@ -7,8 +7,11 @@ const MOCK_ISSUES: SystemIssue[] = [
 ];
 
 const MOCK_INTEGRATIONS: IntegrationSuggestion[] = [
-  { id: '1', name: 'Google Analytics', purpose: 'Phân tích người dùng', benefit: 'Hiểu rõ hành vi người dùng', priority: 'very_suitable', complexity: 'low', isAvailable: true, action: async () => {} },
-  { id: '2', name: 'Slack Integration', purpose: 'Thông báo', benefit: 'Nhận thông báo tức thời', priority: 'consider', complexity: 'medium', isAvailable: true, action: async () => {} },
+  { id: '1', name: 'Google Workspace (Calendar, Gmail, Docs, Sheets)', purpose: 'Đồng bộ dữ liệu văn phòng', benefit: 'Đã sẵn sàng. Đã được cấp quyền OAuth2.', priority: 'very_suitable', complexity: 'medium', isAvailable: true, status: 'completed' },
+  { id: '2', name: 'Gemini Live API & Multimodal', purpose: 'Trợ lý giọng nói thời gian thực', benefit: 'Hỗ trợ giao tiếp bằng giọng nói tự nhiên, độ trễ thấp.', priority: 'very_suitable', complexity: 'high', isAvailable: true, status: 'in_progress' },
+  { id: '3', name: 'Google Search Grounding', purpose: 'Đã tích hợp', benefit: 'Trợ lý đã có khả năng truy suất tin tức thời gian thực từ Google.', priority: 'consider', complexity: 'low', isAvailable: true, status: 'completed' },
+  { id: '4', name: 'Google Maps Platform', purpose: 'Bản đồ chiến lược', benefit: 'Tương tác bản đồ động, tối ưu công tác.', priority: 'consider', complexity: 'medium', isAvailable: true, status: 'in_progress' },
+  { id: '5', name: 'Firebase Tối ưu (Firestore/Auth)', purpose: 'Bảo mật & Realtime', benefit: 'Được quản lý tự động thông qua Security Rules chuyên sâu.', priority: 'consider', complexity: 'medium', isAvailable: true, status: 'in_progress' },
 ];
 
 export const systemUpdateService = {

@@ -21,7 +21,8 @@ export interface IntegrationSuggestion {
   priority: IntegrationPriority;
   complexity: 'low' | 'medium' | 'high';
   isAvailable: boolean;
-  action: () => Promise<void>;
+  status?: 'pending' | 'in_progress' | 'completed';
+  action?: () => Promise<void>;
 }
 
 export interface ScanHistory {

@@ -105,6 +105,7 @@ interface DraftState {
   type: string[];
   preparingUnit: string[];
   content: string;
+  customInstruction?: string;
 }
 
 const WORK_TYPES = [
@@ -711,6 +712,7 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
   };
 
   const [customChips, setCustomChips] = useState(CHIPS);
+  const [showCustomInstruction, setShowCustomInstruction] = useState(false);
 
   const [draftState, setDraftState] = useState<DraftState>({
     time: [],
@@ -968,6 +970,7 @@ Dữ liệu đầu vào:
 - Loại hình: ${draftState.type.join(', ')}
 - Đơn vị chuẩn bị: ${draftState.preparingUnit.join(', ')}
 - Nội dung: ${draftState.content}
+${draftState.customInstruction ? `- Chỉ đạo đặc biệt (Tùy chỉnh từ người dùng): ${draftState.customInstruction}` : ''}
 
 HÃY TRẢ VỀ MỘT ĐỐI TƯỢNG JSON duy nhất đại diện cho lịch công tác.
 Cấu trúc: { date (YYYY-MM-DD), time (HH:mm), endTime (HH:mm), content, chairperson, location, participants (mảng string), type, preparingUnit, priority, status, notes }
@@ -1753,6 +1756,45 @@ Chỉ trả về JSON.`;
                       placeholder="Nhập nội dung công việc hoặc click chọn các yếu tố bên trái..."
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all min-h-[100px]"
                     />
+                  </div>
+
+                  {/* Custom Instruction Header toggle */}
+                  <div className="pt-2">
+                    <div 
+                      onClick={() => setShowCustomInstruction(!showCustomInstruction)}
+                      className="bento-card p-6 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl flex items-center justify-between group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                          <Wand2 size={18} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors">Tùy chỉnh AI</h4>
+                          <p className="text-xs text-slate-500 font-medium">Thêm chỉ đạo đặc biệt hoặc yêu cầu xử lý</p>
+                        </div>
+                      </div>
+                      <div className={cn("p-1.5 rounded-lg transition-all", showCustomInstruction ? "bg-indigo-600 text-white" : "bg-white text-indigo-400 group-hover:bg-indigo-100 group-hover:text-indigo-600")}>
+                        {showCustomInstruction ? <ChevronLeft size={16} className="-rotate-90 transition-transform" /> : <ChevronRight size={16} className="transition-transform" />}
+                      </div>
+                    </div>
+
+                    <AnimatePresence>
+                      {showCustomInstruction && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                          animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <textarea 
+                            value={draftState.customInstruction || ''}
+                            onChange={(e) => setDraftState({ ...draftState, customInstruction: e.target.value })}
+                            placeholder="Ví dụ: Ưu tiên thiết lập phòng họp trực tuyến, hoặc tự động tham chiếu tài liệu tuần trước..."
+                            className="w-full px-4 py-3 bg-indigo-50/50 border border-indigo-100 rounded-xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all min-h-[80px]"
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Live Preview Card */}

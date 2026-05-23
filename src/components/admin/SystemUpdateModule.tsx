@@ -91,10 +91,11 @@ export const SystemUpdateModule: React.FC = () => {
 
       {/* Integrations Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Zap className="text-indigo-500" /> Đề xuất tích hợp
+            <Zap className="text-indigo-500" /> Hệ sinh thái Google & Thay đổi nền tảng (AI Studio)
           </h3>
+          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-wider">Mới nhất</span>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
@@ -112,17 +113,28 @@ export const SystemUpdateModule: React.FC = () => {
                 <td className="px-6 py-4 text-slate-600">{s.purpose}</td>
                 <td className="px-6 py-4 text-slate-600">{s.complexity}</td>
                 <td className="px-6 py-4 text-right">
-                  <button 
-                    onClick={async () => {
-                      if (s.action) {
-                        await s.action();
-                        loadData();
-                      }
-                    }}
-                    className="flex items-center gap-1 text-indigo-600 text-xs font-bold hover:underline ml-auto"
-                  >
-                    Đề xuất <ChevronRight size={14} />
-                  </button>
+                  {s.status ? (
+                    <span className={cn(
+                      "px-2 py-1 text-xs font-bold rounded-full",
+                      s.status === 'completed' ? "bg-emerald-100 text-emerald-700" :
+                      s.status === 'in_progress' ? "bg-blue-100 text-blue-700" :
+                      "bg-slate-100 text-slate-700"
+                    )}>
+                      {s.status === 'completed' ? 'Đã hoàn tất' : s.status === 'in_progress' ? 'Đang triển khai' : 'Đang chờ'}
+                    </span>
+                  ) : s.action ? (
+                    <button 
+                      onClick={async () => {
+                        if (s.action) {
+                          await s.action();
+                          loadData();
+                        }
+                      }}
+                      className="flex items-center gap-1 text-indigo-600 text-xs font-bold hover:underline ml-auto"
+                    >
+                      Đề xuất <ChevronRight size={14} />
+                    </button>
+                  ) : null}
                 </td>
               </tr>
             ))}

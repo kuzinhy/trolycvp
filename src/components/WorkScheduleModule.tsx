@@ -35,30 +35,46 @@ export const WorkScheduleModule: React.FC<WorkScheduleModuleProps> = (props) => 
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4 border-b border-slate-200/60 pb-5 mb-6">
+      <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-5 mb-8">
         <button
           onClick={() => setActiveTab('optimized')}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200",
+            "relative flex items-center gap-2.5 px-6 py-3 rounded-2xl transition-all duration-300 group outline-none",
             activeTab === 'optimized' 
-              ? "bg-blue-50 text-blue-700 font-medium shadow-sm" 
-              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              ? "text-blue-700 font-black" 
+              : "text-slate-500 font-bold hover:text-slate-800"
           )}
         >
-          <Zap size={18} />
-          <span>Lịch công tác tối ưu</span>
+          {activeTab === 'optimized' && (
+            <motion.div
+              layoutId="activeScheduleTabBg"
+              className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl"
+              initial={false}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+          <Zap size={18} className={cn("relative z-10 transition-transform", activeTab === 'optimized' ? "text-blue-600 scale-110" : "group-hover:scale-110")} />
+          <span className="relative z-10">Lịch công tác tối ưu</span>
         </button>
         <button
           onClick={() => setActiveTab('create')}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200",
+            "relative flex items-center gap-2.5 px-6 py-3 rounded-2xl transition-all duration-300 group outline-none",
             activeTab === 'create' 
-              ? "bg-blue-50 text-blue-700 font-medium shadow-sm" 
-              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              ? "text-blue-700 font-black" 
+              : "text-slate-500 font-bold hover:text-slate-800"
           )}
         >
-          <PenTool size={18} />
-          <span>Tạo & Chỉnh sửa</span>
+          {activeTab === 'create' && (
+            <motion.div
+              layoutId="activeScheduleTabBg"
+              className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl"
+              initial={false}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+          <PenTool size={18} className={cn("relative z-10 transition-transform", activeTab === 'create' ? "text-blue-600 scale-110" : "group-hover:scale-110")} />
+          <span className="relative z-10">Tạo & Chỉnh sửa</span>
         </button>
       </div>
 
@@ -66,10 +82,10 @@ export const WorkScheduleModule: React.FC<WorkScheduleModuleProps> = (props) => 
         {activeTab === 'optimized' ? (
           <motion.div
             key="optimized"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
           >
             <OptimizedScheduleView 
               meetings={props.meetings}
@@ -91,10 +107,10 @@ export const WorkScheduleModule: React.FC<WorkScheduleModuleProps> = (props) => 
         ) : (
           <motion.div
             key="create"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
           >
             <WorkScheduleCreator 
               updateMeetings={props.updateMeetings}

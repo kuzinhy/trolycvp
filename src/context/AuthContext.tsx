@@ -161,6 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         provider.addScope('https://www.googleapis.com/auth/calendar');
         provider.addScope('https://www.googleapis.com/auth/spreadsheets');
         provider.addScope('https://www.googleapis.com/auth/documents');
+        provider.addScope('https://www.googleapis.com/auth/gmail.readonly');
       }
       const result = await signInWithPopup(auth, provider);
       
