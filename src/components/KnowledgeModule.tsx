@@ -447,7 +447,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
             {/* KnowledgeForm Modal */}
             <AnimatePresence>
               {isAddingManual && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-sm">
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -555,7 +555,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
                           key={item.id ? `knowledge-grid-${item.id}` : `knowledge-grid-idx-${index}`}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
+                          className="bg-white dark:bg-blue-950 rounded-2xl border border-slate-200/60 dark:border-slate-700 p-5 hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer group flex flex-col justify-between"
                           onClick={() => setSelectedKnowledge(item)}
                         >
                           <div className="space-y-3">
@@ -747,7 +747,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
       {/* AI Analysis Result Modal */}
       <AnimatePresence>
         {analysisResult && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-blue-950/80 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -799,7 +799,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
       {/* AI Summary Modal */}
       <AnimatePresence>
         {summarizedContent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-blue-950/80 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

@@ -174,7 +174,7 @@ export const RoadmapModule: React.FC = memo(() => {
                       {item.priority === 'high' ? 'Cao' : item.priority === 'medium' ? 'Trung bình' : 'Thấp'}
                     </span>
                   </div>
-                  <button className="w-full py-2.5 mt-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 group/btn">
+                  <button className="w-full py-2.5 mt-2 bg-blue-950 text-white rounded-xl text-xs font-bold hover:bg-blue-950 transition-colors flex items-center justify-center gap-2 group/btn">
                     Tài liệu chiến lược <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                   </button>
                 </div>
@@ -199,7 +199,7 @@ export const RoadmapModule: React.FC = memo(() => {
       </div>
 
       {/* Call to Action */}
-      <div className="bento-card p-12 bg-slate-900 text-white border-none shadow-2xl shadow-slate-900/40 relative overflow-hidden text-center">
+      <div className="bento-card p-12 bg-blue-950 text-white border-none shadow-2xl shadow-blue-950/40 relative overflow-hidden text-center">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15),transparent_70%)]" />
         <div className="relative z-10 max-w-2xl mx-auto space-y-6">
           <h2 className="text-3xl font-black tracking-tighter uppercase italic">Bạn có ý tưởng mới?</h2>

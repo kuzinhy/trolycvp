@@ -390,7 +390,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsHistorySidebarOpen(false)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[90]"
+              className="fixed inset-0 bg-blue-950/40 backdrop-blur-sm z-[90]"
             />
             <motion.div
               initial={{ x: -400 }}
@@ -548,7 +548,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                         className={cn(
                           "px-3 py-2 rounded-2xl text-[13px] leading-relaxed shadow-sm relative transition-all duration-500 hover:shadow-md cursor-pointer break-words border",
                           msg.role === 'user' 
-                            ? "bg-slate-900 text-white border-slate-800 rounded-tr-none shadow-md" 
+                            ? "bg-blue-950 text-white border-slate-800 rounded-tr-none shadow-md" 
                             : "bg-white text-slate-900 border-slate-200 rounded-tl-none ring-1 ring-slate-200/50 shadow-sm",
                           expandedMessages.has(msg.id || `msg-${idx}`) && "border-blue-500/30 ring-2 ring-blue-500/5 shadow-lg"
                         )}
@@ -577,7 +577,7 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                                           navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
                                           if (showToast) showToast("Đã sao chép mã nguồn", "success");
                                         }}
-                                        className="p-2 bg-slate-800/80 text-slate-200 hover:text-white rounded-lg backdrop-blur-sm border border-slate-700 shadow-lg transition-all active:scale-95"
+                                        className="p-2 bg-blue-950/80 text-slate-200 hover:text-white rounded-lg backdrop-blur-sm border border-slate-700 shadow-lg transition-all active:scale-95"
                                         title="Sao chép mã"
                                       >
                                         <Copy size={14} />
@@ -586,12 +586,12 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                                     <div className="absolute left-4 top-3 text-[10px] font-mono text-slate-500 uppercase tracking-widest pointer-events-none">
                                       {match[1]}
                                     </div>
-                                    <Suspense fallback={<div className="h-40 bg-slate-900 rounded-xl animate-pulse"></div>}>
+                                    <Suspense fallback={<div className="h-40 bg-blue-950 rounded-xl animate-pulse"></div>}>
                                       <SyntaxHighlighter
                                         style={vscDarkPlus as any}
                                         language={match[1]}
                                         PreTag="div"
-                                        className="rounded-xl !bg-slate-900 !pt-8 !pb-3 !px-3 !m-0 custom-scrollbar border border-slate-800 shadow-xl text-[12px]"
+                                        className="rounded-xl !bg-blue-950 !pt-8 !pb-3 !px-3 !m-0 custom-scrollbar border border-slate-800 shadow-xl text-[12px]"
                                       >
                                         {String(children).replace(/\n$/, '')}
                                       </SyntaxHighlighter>

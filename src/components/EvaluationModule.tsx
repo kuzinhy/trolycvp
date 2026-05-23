@@ -152,7 +152,7 @@ const OfficerForm = ({ isOpen, onClose, onSave, initialData, defaultUnitId, isSu
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-blue-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -798,7 +798,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
                 className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden sticky top-6"
               >
                 {/* Profile Header */}
-                <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
+                <div className="p-6 bg-blue-950 text-white flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-2xl font-black border border-white/20">
                       {selectedOfficer.name.charAt(0)}
@@ -1027,7 +1027,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {isComparing && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-blue-950/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1066,7 +1066,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
         )}
 
         {isDeleteModalOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-blue-950/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

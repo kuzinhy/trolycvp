@@ -276,7 +276,7 @@ export const DashboardModule = memo((props: DashboardModuleProps) => {
               onClick={() => setRole('leader')}
               className={cn(
                 "px-6 py-2.5 text-[11px] font-black rounded-2xl flex items-center gap-2 transition-all uppercase tracking-widest", 
-                role === 'leader' ? "bg-slate-900 text-white shadow-xl" : "text-slate-500 hover:text-slate-700"
+                role === 'leader' ? "bg-blue-950 text-white shadow-xl" : "text-slate-500 hover:text-slate-700"
               )}
             >
               <ShieldCheck size={14} /> Lãnh đạo

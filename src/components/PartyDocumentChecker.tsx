@@ -223,14 +223,14 @@ export const PartyDocumentChecker: React.FC = () => {
                 className="p-3 bg-white rounded-2xl shadow-md text-slate-500 hover:text-[#b33a30] transition-colors group relative"
               >
                 <Upload size={24} />
-                <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Tải file Word</span>
+                <span className="absolute left-full ml-3 px-2 py-1 bg-blue-950 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Tải file Word</span>
               </button>
               <button 
                 onClick={() => setText('')}
                 className="p-3 bg-white rounded-2xl shadow-md text-slate-500 hover:text-rose-600 transition-colors group relative"
               >
                 <RotateCcw size={24} />
-                <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Làm mới</span>
+                <span className="absolute left-full ml-3 px-2 py-1 bg-blue-950 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Làm mới</span>
               </button>
               <input 
                 type="file" 
@@ -330,7 +330,7 @@ export const PartyDocumentChecker: React.FC = () => {
                     </div>
                   ) : isAnalyzing ? (
                     <div className="space-y-6">
-                       <div className="p-6 rounded-3xl bg-slate-900 text-white flex flex-col items-center gap-4">
+                       <div className="p-6 rounded-3xl bg-blue-950 text-white flex flex-col items-center gap-4">
                         <Loader2 size={32} className="animate-spin text-rose-500" />
                         <div className="text-center">
                           <p className="text-sm font-bold uppercase tracking-widest">Đang rà soát trí tuệ nhân tạo</p>
@@ -422,7 +422,7 @@ export const PartyDocumentChecker: React.FC = () => {
                     <button
                       onClick={handleAnalyze}
                       disabled={isAnalyzing || !text.trim()}
-                      className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-slate-900/10 hover:bg-black transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
+                      className="w-full py-4 bg-blue-950 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-blue-950/10 hover:bg-blue-950 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
                     >
                       {isAnalyzing ? (
                         <>
@@ -520,7 +520,7 @@ export const PartyDocumentChecker: React.FC = () => {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             onClick={() => setShowRuleModal(false)}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+            className="absolute inset-0 bg-blue-950/40 backdrop-blur-sm" 
           />
           <motion.div 
             initial={{ scale: 0.9, opacity: 0, y: 20 }}

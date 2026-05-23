@@ -169,7 +169,7 @@ Hãy tập trung vào các vấn đề: Khiếu kiện, thiên tai, dịch bện
         </div>
 
         <div className="space-y-8">
-          <div className="bento-card p-8 bg-slate-900 text-white border-none shadow-2xl">
+          <div className="bento-card p-8 bg-blue-950 text-white border-none shadow-2xl">
             <h4 className="text-lg font-black uppercase tracking-tight italic mb-6">Chỉ số rủi ro tổng hợp</h4>
             <div className="flex flex-col items-center justify-center py-10">
               <div className="relative w-48 h-48 flex items-center justify-center">

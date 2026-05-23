@@ -34,7 +34,7 @@ export const StatCard = memo(({
         {onAction && (
           <button 
             onClick={(e) => { e.stopPropagation(); onAction(); }}
-            className="p-2.5 bg-slate-900 text-white hover:bg-blue-600 rounded-xl shadow-lg border border-slate-800 hover:border-blue-500 transition-all opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100"
+            className="p-2.5 bg-blue-950 text-white hover:bg-blue-600 rounded-xl shadow-lg border border-slate-800 hover:border-blue-500 transition-all opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100"
           >
             <ArrowUpRight size={18} />
           </button>

@@ -53,7 +53,7 @@ export const CommandFocusMode: React.FC<CommandFocusModeProps> = ({ task, onClos
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[300] bg-slate-950 flex flex-col items-center justify-center p-6"
+      className="fixed inset-0 z-[300] bg-blue-950 flex flex-col items-center justify-center p-6"
     >
       {/* Background Glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -111,7 +111,7 @@ export const CommandFocusMode: React.FC<CommandFocusModeProps> = ({ task, onClos
         <div className="flex items-center gap-6">
           <button 
             onClick={resetTimer}
-            className="p-4 bg-slate-900 text-slate-400 rounded-2xl border border-slate-800 hover:text-white hover:border-slate-700 transition-all"
+            className="p-4 bg-blue-950 text-slate-400 rounded-2xl border border-slate-800 hover:text-white hover:border-slate-700 transition-all"
           >
             <RotateCcw size={24} />
           </button>
@@ -138,7 +138,7 @@ export const CommandFocusMode: React.FC<CommandFocusModeProps> = ({ task, onClos
         </div>
 
         {/* Tips / AI Advice */}
-        <div className="w-full max-w-lg bg-slate-900/50 backdrop-blur-md p-6 rounded-[2rem] border border-slate-800 flex items-start gap-4">
+        <div className="w-full max-w-lg bg-blue-950/50 backdrop-blur-md p-6 rounded-[2rem] border border-slate-800 flex items-start gap-4">
           <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl">
             <Brain size={20} />
           </div>

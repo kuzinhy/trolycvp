@@ -198,7 +198,7 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-50 to-blue-50/50 rounded-full blur-3xl -mr-64 -mt-64 transition-all duration-700" />
             <div className="relative space-y-6 z-10 w-full md:w-auto">
               <div className="flex items-center gap-3">
-                <div className="px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-sm">
+                <div className="px-3 py-1.5 bg-blue-950 text-white text-xs font-semibold rounded-lg shadow-sm">
                   COMMAND OS v6.0
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg border border-blue-100">

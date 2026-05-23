@@ -117,7 +117,7 @@ export const AccessHistoryModule: React.FC = () => {
                 <Download size={14} />
                 Xuất báo cáo
               </button>
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-blue-950 text-white rounded-xl text-xs font-bold hover:bg-blue-950 transition-all shadow-lg shadow-blue-950/20">
                 <Trash2 size={14} />
                 Xóa lịch sử
               </button>
@@ -298,7 +298,7 @@ export const AccessHistoryModule: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedLog(null)}
-              className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-blue-950/20 backdrop-blur-sm z-40"
             />
             <motion.div 
               initial={{ x: '100%' }}
@@ -322,7 +322,7 @@ export const AccessHistoryModule: React.FC = () => {
                     "w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg ring-8 ring-slate-50",
                     selectedLog.action === 'ai_interaction' ? "bg-amber-500 text-white shadow-amber-500/20" :
                     selectedLog.action === 'visit' ? "bg-blue-500 text-white shadow-blue-500/20" :
-                    selectedLog.action === 'knowledge_add' ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-slate-900 text-white"
+                    selectedLog.action === 'knowledge_add' ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-blue-950 text-white"
                   )}>
                     {React.createElement(ACTION_ICONS[selectedLog.action] || Activity, { size: 32 })}
                   </div>
@@ -362,7 +362,7 @@ export const AccessHistoryModule: React.FC = () => {
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/60">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Người thực hiện</p>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold text-xs ring-2 ring-white shadow-md">
+                      <div className="w-10 h-10 bg-blue-950 rounded-xl flex items-center justify-center text-white font-bold text-xs ring-2 ring-white shadow-md">
                         {selectedLog.userName.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -377,7 +377,7 @@ export const AccessHistoryModule: React.FC = () => {
               <div className="p-6 border-t border-slate-200 bg-slate-50/50">
                 <button 
                   onClick={() => setSelectedLog(null)}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
+                  className="w-full py-4 bg-blue-950 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-950 transition-all shadow-lg shadow-blue-950/20"
                 >
                   Đóng chi tiết
                 </button>

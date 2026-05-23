@@ -98,7 +98,7 @@ const TaskDetailModal = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="fixed inset-0 bg-blue-950/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -894,7 +894,7 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowSmartSearch(false)}
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm"
               />
               <motion.div 
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -1092,7 +1092,7 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
                   </div>
                   <button 
                     onClick={() => setShowSmartSearch(false)}
-                    className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                    className="px-6 py-2.5 bg-blue-950 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-blue-950 transition-all shadow-lg shadow-slate-200"
                   >
                     Đóng
                   </button>
@@ -1123,7 +1123,7 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setTaskToJournal(null)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm"
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}

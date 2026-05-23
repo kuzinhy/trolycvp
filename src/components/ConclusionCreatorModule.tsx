@@ -301,7 +301,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                 "flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-bold text-[10px] uppercase shadow-md",
                 activeStep === 'input' 
                   ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "bg-slate-800 text-white hover:bg-slate-900"
+                  : "bg-blue-950 text-white hover:bg-blue-950"
               )}
             >
               {isCompleting ? <Sparkles size={14} className="animate-pulse" /> : <FileText size={14} />}
@@ -518,7 +518,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
 
                 {/* Right Side: Collected Segments */}
                 <div className="lg:col-span-4 flex flex-col gap-4 h-full overflow-y-auto custom-scrollbar-dark pr-1">
-                  <div className="bg-slate-900 rounded-[2rem] p-4 flex flex-col h-full shadow-2xl shadow-slate-900/40 relative overflow-hidden">
+                  <div className="bg-blue-950 rounded-[2rem] p-4 flex flex-col h-full shadow-2xl shadow-blue-950/40 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl -translate-y-1/2 translate-x-1/2 rounded-full" />
                     
                     <div className="flex items-center justify-between mb-4 relative z-10">
@@ -696,7 +696,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                           showToast("Tính năng lưu trữ chưa khả dụng trên môi trường này", "warning");
                         }
                       }}
-                      className="flex items-center gap-3 px-12 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase hover:bg-black transition-all shadow-xl shadow-slate-900/20"
+                      className="flex items-center gap-3 px-12 py-4 bg-blue-950 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-950 transition-all shadow-xl shadow-blue-950/20"
                     >
                       <Save size={18} />
                       Lưu trữ kết luận
@@ -736,7 +736,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowParticipantsModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -809,7 +809,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                 <span className="text-[10px] font-bold text-slate-500 uppercase">Đã chọn: <span className="text-blue-600">{selectedParticipants.length}</span></span>
                 <button 
                   onClick={() => setShowParticipantsModal(false)}
-                  className="px-6 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-black transition-all"
+                  className="px-6 py-2 bg-blue-950 text-white rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-blue-950 transition-all"
                 >
                   Xác nhận
                 </button>
@@ -828,7 +828,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowSuggestionsModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm"
             />
             
             <motion.div 
@@ -933,7 +933,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                               addSegment(version.content);
                               setShowSuggestionsModal(false);
                             }}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase hover:bg-blue-600 transition-all shadow-lg shadow-slate-900/10"
+                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-950 text-white rounded-xl font-bold text-xs uppercase hover:bg-blue-600 transition-all shadow-lg shadow-blue-950/10"
                           >
                             <Plus size={16} />
                             Chọn đoạn này
@@ -967,14 +967,14 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowReferenceModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm"
             />
             
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl shadow-slate-900/40 flex flex-col overflow-hidden max-h-[80vh]"
+              className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl shadow-blue-950/40 flex flex-col overflow-hidden max-h-[80vh]"
             >
               <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                 <div className="flex items-center gap-3">
@@ -1066,7 +1066,7 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                 <span className="text-[10px] font-bold text-slate-400">Đã chọn {referencedKnowledgeIds.length} tài liệu tham chiếu</span>
                 <button 
                   onClick={() => setShowReferenceModal(false)}
-                  className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase hover:bg-black transition-all shadow-xl"
+                  className="px-8 py-3 bg-blue-950 text-white rounded-xl font-black text-[10px] uppercase hover:bg-blue-950 transition-all shadow-xl"
                 >
                   Hoàn tất
                 </button>
@@ -1080,14 +1080,14 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
       <AnimatePresence>
         {showTemplateModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTemplateModal(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTemplateModal(false)} className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden p-6 space-y-4">
               <h2 className="text-sm font-black text-slate-900 uppercase">Chọn mẫu kết luận</h2>
               <div className="space-y-2">
                 <button onClick={() => applyTemplate('ban_thuong_vu')} className="w-full text-left p-4 rounded-xl hover:bg-slate-100 font-bold text-slate-700">Thông báo kết luận BTV</button>
                 <button onClick={() => applyTemplate('thuong_truc')} className="w-full text-left p-4 rounded-xl hover:bg-slate-100 font-bold text-slate-700">Thông báo kết luận Thường trực</button>
               </div>
-              <button onClick={() => setShowTemplateModal(false)} className="w-full py-2 bg-slate-900 text-white rounded-xl font-bold uppercase text-xs">Đóng</button>
+              <button onClick={() => setShowTemplateModal(false)} className="w-full py-2 bg-blue-950 text-white rounded-xl font-bold uppercase text-xs">Đóng</button>
             </motion.div>
           </div>
         )}

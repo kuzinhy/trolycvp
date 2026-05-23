@@ -66,7 +66,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-md"
       >
         <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden ring-1 ring-black/5">
         <div className="p-4 border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm flex items-center justify-between">
@@ -124,7 +124,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                         className={cn(
                           "px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border",
                           filterType === t 
-                            ? "bg-slate-900 text-white border-slate-900 shadow-md" 
+                            ? "bg-blue-950 text-white border-slate-900 shadow-md" 
                             : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
                         )}
                       >
@@ -213,7 +213,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       </motion.div>
 
       {selectedNotification && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-md">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}

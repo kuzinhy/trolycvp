@@ -27,11 +27,11 @@ export const KnowledgeConfirmModal: React.FC<KnowledgeConfirmModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-sm">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full space-y-6 border border-slate-100 dark:border-slate-800"
+        className="bg-white dark:bg-blue-950 rounded-3xl shadow-2xl p-8 max-w-md w-full space-y-6 border border-slate-100 dark:border-slate-800"
       >
         <div className="flex items-center gap-4 text-amber-600">
           <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
@@ -75,7 +75,7 @@ export const KnowledgeConfirmModal: React.FC<KnowledgeConfirmModalProps> = ({
             </p>
           </div>
 
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+          <div className="p-4 bg-slate-50 dark:bg-blue-950/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Xem trước nội dung</p>
             <div className="max-h-32 overflow-y-auto custom-scrollbar">
               <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1">{title}</h4>

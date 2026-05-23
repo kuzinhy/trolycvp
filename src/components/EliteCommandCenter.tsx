@@ -116,7 +116,7 @@ export const EliteCommandCenter: React.FC<EliteCommandCenterProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] transition-all"
+            className="fixed inset-0 bg-blue-950/40 backdrop-blur-md z-[100] transition-all"
           />
           <div className="fixed inset-0 flex items-center justify-center p-4 z-[101] pointer-events-none">
             <motion.div 

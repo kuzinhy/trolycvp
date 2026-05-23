@@ -141,7 +141,7 @@ export const NewsBar: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-blue-950/40 backdrop-blur-sm"
               onClick={() => setSelectedNews(null)}
             />
             <motion.div 
@@ -161,7 +161,7 @@ export const NewsBar: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
                 <button 
                   onClick={() => setSelectedNews(null)}
-                  className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-all"
+                  className="absolute top-4 right-4 p-2 bg-blue-950/20 hover:bg-blue-950/40 text-white rounded-full backdrop-blur-md transition-all"
                 >
                   <X size={20} />
                 </button>
@@ -242,7 +242,7 @@ export const NewsBar: React.FC = () => {
                   href={selectedNews.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold text-sm transition-all shadow-lg shadow-slate-200"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-950 text-white hover:bg-blue-950 rounded-xl font-bold text-sm transition-all shadow-lg shadow-slate-200"
                 >
                   Xem bài viết gốc
                   <ExternalLink size={16} />

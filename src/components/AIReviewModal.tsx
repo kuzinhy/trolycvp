@@ -54,11 +54,11 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-blue-950/80 backdrop-blur-md">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9, y: 40 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800"
+        className="bg-white dark:bg-blue-950 rounded-[32px] shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800"
       >
         {/* Header */}
         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-primary/5 to-transparent">
@@ -71,7 +71,7 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
               <p className="text-sm text-muted-foreground mt-1">AI đã trích xuất {(items || []).length} mục kiến thức. Vui lòng rà soát độ chính xác.</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-blue-950 rounded-xl transition-colors">
             <X className="w-6 h-6 text-slate-400" />
           </button>
         </div>
@@ -90,8 +90,8 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
                   className={cn(
                     "group relative p-6 rounded-[24px] border-2 transition-all duration-300",
                     isSelected 
-                      ? "bg-white dark:bg-slate-900 border-primary shadow-xl shadow-primary/5" 
-                      : "bg-slate-50/50 dark:bg-slate-800/30 border-transparent opacity-60 grayscale-[0.5]"
+                      ? "bg-white dark:bg-blue-950 border-primary shadow-xl shadow-primary/5" 
+                      : "bg-slate-50/50 dark:bg-blue-950/30 border-transparent opacity-60 grayscale-[0.5]"
                   )}
                 >
                   <div className="flex items-start gap-6">
@@ -120,13 +120,13 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
                             </div>
                           )}
                         </div>
-                        <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                        <span className="px-3 py-1 bg-slate-100 dark:bg-blue-950 text-slate-600 dark:text-slate-400 rounded-full text-[10px] font-bold uppercase tracking-widest">
                           {item.category}
                         </span>
                       </div>
 
                       {/* Content Preview */}
-                      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                      <div className="p-4 bg-slate-50 dark:bg-blue-950/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
                         <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3 italic">
                           "{item.content}"
                         </p>
@@ -180,7 +180,7 @@ export const AIReviewModal: React.FC<AIReviewModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
+        <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-blue-950/30 flex items-center justify-between">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Info className="w-4 h-4" />
             <p className="text-xs font-medium">Đã chọn {selectedIndices.size} / {(items || []).length} mục kiến thức</p>

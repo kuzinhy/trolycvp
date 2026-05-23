@@ -119,7 +119,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({ tasks, meeting
         {/* Header / Drag Handle */}
         <div 
           onPointerDown={(e) => dragControls.start(e)}
-          className="bg-slate-900 p-4 text-white flex items-center justify-between cursor-move select-none"
+          className="bg-blue-950 p-4 text-white flex items-center justify-between cursor-move select-none"
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -215,7 +215,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({ tasks, meeting
               </div>
               <button 
                 onClick={onClose}
-                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 flex items-center gap-2"
+                className="px-4 py-2 bg-blue-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 flex items-center gap-2"
               >
                 Bắt đầu
                 <ChevronRight size={14} />

@@ -374,29 +374,29 @@ Yêu cầu:
       {/* Task Detail Modal */}
       <AnimatePresence>
         {selectedTasks && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[85vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800"
+              className="bg-white dark:bg-blue-950 w-full max-w-4xl max-h-[85vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800"
             >
               {/* Modal Header */}
-              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-blue-950 sticky top-0 z-10">
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{modalTitle}</h3>
                   <p className="text-sm text-slate-500 mt-1">Danh sách chi tiết các công việc trong mục này</p>
                 </div>
                 <button 
                   onClick={() => setSelectedTasks(null)}
-                  className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all hover:rotate-90"
+                  className="p-3 hover:bg-slate-100 dark:hover:bg-blue-950 rounded-2xl transition-all hover:rotate-90"
                 >
                   <X size={24} className="text-slate-400" />
                 </button>
               </div>
 
               {/* Modal Content */}
-              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 dark:bg-slate-900/30">
+              <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 dark:bg-blue-950/30">
                 <div className="grid grid-cols-1 gap-4">
                   {selectedTasks.length > 0 ? (
                     selectedTasks.map((task, index) => (
@@ -405,7 +405,7 @@ Yêu cầu:
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 hover:border-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/5 transition-all group relative overflow-hidden"
+                        className="p-6 bg-white dark:bg-blue-950 rounded-[2rem] border border-slate-100 dark:border-slate-700 hover:border-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/5 transition-all group relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                         
@@ -425,12 +425,12 @@ Yêu cầu:
                             </div>
                             
                             <div className="flex flex-wrap gap-6">
-                              <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                              <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-blue-950/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
                                 <Calendar size={14} className="text-indigo-500" />
                                 <span className="text-slate-400 mr-1">Hạn chót:</span>
                                 <span className="text-slate-700 dark:text-slate-300">{task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Không có hạn'}</span>
                               </div>
-                              <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                              <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-blue-950/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
                                 <Tag size={14} className={cn(
                                   task.priority === 'High' ? "text-rose-500" : 
                                   task.priority === 'Medium' ? "text-amber-500" : "text-emerald-500"
@@ -444,7 +444,7 @@ Yêu cầu:
                                 </span>
                               </div>
                               {task.category && (
-                                <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-2.5 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-blue-950/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
                                   <Layers size={14} className="text-blue-500" />
                                   <span className="text-slate-400 mr-1">Danh mục:</span>
                                   <span className="text-slate-700 dark:text-slate-300">{task.category}</span>
@@ -453,7 +453,7 @@ Yêu cầu:
                             </div>
 
                             {task.description && (
-                              <div className="p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                              <div className="p-4 bg-slate-50/50 dark:bg-blue-950/30 rounded-2xl border border-slate-100 dark:border-slate-800">
                                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">
                                   "{task.description}"
                                 </p>
@@ -469,7 +469,7 @@ Yêu cầu:
                     ))
                   ) : (
                     <div className="text-center py-24">
-                      <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <div className="w-24 h-24 bg-slate-100 dark:bg-blue-950 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Search size={40} className="text-slate-300" />
                       </div>
                       <h4 className="text-xl font-black text-slate-900 dark:text-white">Không có dữ liệu</h4>
@@ -480,7 +480,7 @@ Yêu cầu:
               </div>
 
               {/* Modal Footer */}
-              <div className="p-8 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <div className="p-8 bg-white dark:bg-blue-950 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                 <button 
                   onClick={() => setSelectedTasks(null)}
                   className="px-12 py-4 bg-indigo-600 text-white rounded-2xl text-sm font-black shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95"

@@ -338,7 +338,7 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
   return (
     <div className="flex h-[calc(100vh-180px)] bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden shadow-2xl relative">
       {/* Left Rail - Navigation */}
-      <div className="w-16 bg-slate-900 flex flex-col items-center py-6 gap-6 shrink-0 z-20">
+      <div className="w-16 bg-blue-950 flex flex-col items-center py-6 gap-6 shrink-0 z-20">
         <button 
           onClick={() => { setActiveRailTab('docs'); setSidebarOpen(true); }}
           className={cn(
@@ -541,7 +541,7 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
                   </div>
                   <button 
                     onClick={() => handleAIAction('standardize')}
-                    className="w-full py-3 bg-slate-900 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
+                    className="w-full py-3 bg-blue-950 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-950 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-950/20"
                   >
                     <Languages size={16} /> Chuẩn hóa hành chính
                   </button>

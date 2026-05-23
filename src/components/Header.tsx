@@ -108,7 +108,7 @@ export const Header: React.FC<HeaderProps> = memo(({
               </h2>
             </div>
             <div className="flex items-center gap-1">
-              <div className="px-2 py-0.5 bg-slate-900 text-white text-[8px] font-black rounded-md uppercase tracking-tighter shadow-lg shadow-slate-900/20 border border-slate-800">STRATEGIC NODE</div>
+              <div className="px-2 py-0.5 bg-blue-950 text-white text-[8px] font-black rounded-md uppercase tracking-tighter shadow-lg shadow-blue-950/20 border border-slate-800">STRATEGIC NODE</div>
               <div className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 text-[8px] font-black rounded-md uppercase tracking-tighter">SECURE CHANNEL</div>
             </div>
           </div>

@@ -304,7 +304,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               <Check className="w-3 h-3 text-white" />
                             </div>
                           )}
-                          <div className={cn("p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm transition-transform group-hover:scale-110", item.color)}>
+                          <div className={cn("p-4 rounded-2xl bg-white dark:bg-blue-950 shadow-sm transition-transform group-hover:scale-110", item.color)}>
                             <item.icon className="w-8 h-8" />
                           </div>
                           <span className="text-xs font-black uppercase tracking-wider">{item.label}</span>
@@ -335,7 +335,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           )}
                         >
                           <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm group-hover:rotate-12 transition-transform">
+                            <div className="p-3 rounded-xl bg-white dark:bg-blue-950 shadow-sm group-hover:rotate-12 transition-transform">
                               <item.icon className="w-6 h-6 text-blue-500" />
                             </div>
                             <span className="text-sm font-black">{item.label}</span>
@@ -353,7 +353,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {/* Compact Mode */}
                   <section className="p-6 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/20 rounded-[2.5rem] flex items-center justify-between">
                     <div className="flex items-center gap-5">
-                      <div className="w-14 h-14 bg-white dark:bg-slate-800 rounded-[1.5rem] shadow-lg flex items-center justify-center">
+                      <div className="w-14 h-14 bg-white dark:bg-blue-950 rounded-[1.5rem] shadow-lg flex items-center justify-center">
                         <Layout className="w-7 h-7 text-blue-600" />
                       </div>
                       <div>
@@ -408,7 +408,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                   <div className="grid grid-cols-1 gap-6">
                     {/* Chỉnh sửa thông tin cá nhân */}
-                    <div className="p-8 bg-white dark:bg-slate-900 border-2 border-[hsl(var(--border))] rounded-[3rem] space-y-6 shadow-sm">
+                    <div className="p-8 bg-white dark:bg-blue-950 border-2 border-[hsl(var(--border))] rounded-[3rem] space-y-6 shadow-sm">
                       <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600">
                           <User className="w-6 h-6" />
@@ -428,7 +428,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               placeholder="Nhập họ tên đầy đủ"
                               value={displayName}
                               onChange={(e) => setDisplayName(e.target.value)}
-                              className="flex-1 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[1.5rem] text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                              className="flex-1 px-5 py-4 bg-slate-50 dark:bg-blue-950 border border-slate-200 dark:border-slate-700 rounded-[1.5rem] text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                             />
                             <button
                               onClick={handleUpdateProfile}
@@ -487,7 +487,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       ].map((item: any) => (
                         <div key={item.id} className="flex items-center justify-between p-6 bg-[hsl(var(--secondary))]/30 border border-[hsl(var(--border))] rounded-[2rem] group hover:bg-[hsl(var(--secondary))]/50 transition-all">
                           <div className="flex items-center gap-5">
-                            <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+                            <div className="p-3 bg-white dark:bg-blue-950 rounded-xl shadow-sm group-hover:scale-110 transition-transform">
                               <item.icon className="w-5 h-5 text-blue-500" />
                             </div>
                             <div>
@@ -633,7 +633,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Snapshot Action */}
-                    <div className="p-8 bg-white dark:bg-slate-900 border-2 border-[hsl(var(--border))] rounded-[3rem] space-y-6">
+                    <div className="p-8 bg-white dark:bg-blue-950 border-2 border-[hsl(var(--border))] rounded-[3rem] space-y-6">
                       <div className="flex items-center gap-4">
                         <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600">
                           <Brain className="w-6 h-6" />
@@ -663,7 +663,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
 
                     {/* Snapshot List */}
-                    <div className="p-8 bg-white dark:bg-slate-900 border-2 border-[hsl(var(--border))] rounded-[3rem] flex flex-col">
+                    <div className="p-8 bg-white dark:bg-blue-950 border-2 border-[hsl(var(--border))] rounded-[3rem] flex flex-col">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
                           <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl text-emerald-600">
@@ -684,7 +684,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           <div className="text-center py-8 opacity-30 italic text-xs">Chưa có bản sao lưu nào</div>
                         ) : (
                           snapshots.map((s) => (
-                            <div key={s.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl flex items-center justify-between group">
+                            <div key={s.id} className="p-3 bg-slate-50 dark:bg-blue-950/50 border border-slate-100 dark:border-slate-700 rounded-xl flex items-center justify-between group">
                               <div className="min-w-0 flex-1">
                                 <p className="text-xs font-black truncate">{s.label}</p>
                                 <p className="text-[9px] text-slate-400">{s.createdAt?.toDate ? s.createdAt.toDate().toLocaleString('vi-VN') : 'Vừa xong'}</p>
@@ -715,7 +715,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <button
                       onClick={handleCreateBackup}
                       disabled={isBackingUp}
-                      className="flex flex-col items-center gap-6 p-10 bg-white dark:bg-slate-900 border-2 border-[hsl(var(--border))] rounded-[3rem] hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/10 transition-all group disabled:opacity-50"
+                      className="flex flex-col items-center gap-6 p-10 bg-white dark:bg-blue-950 border-2 border-[hsl(var(--border))] rounded-[3rem] hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/10 transition-all group disabled:opacity-50"
                     >
                       <div className="p-6 bg-blue-50 dark:bg-blue-900/30 rounded-[2rem] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
                         <Download className={cn("w-12 h-12 text-blue-500", isBackingUp && "animate-bounce")} />
@@ -724,13 +724,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <span className="block text-xl font-black mb-1">Tạo bản sao lưu</span>
                         <span className="text-xs text-[hsl(var(--muted-foreground))]">Đóng gói dữ liệu thành tệp .json</span>
                       </div>
-                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-full h-1 bg-slate-100 dark:bg-blue-950 rounded-full overflow-hidden">
                         <div className={cn("h-full bg-blue-500 transition-all duration-1000", isBackingUp ? "w-full" : "w-0")} />
                       </div>
                     </button>
  
                     {/* Restore Action */}
-                    <label className="flex flex-col items-center gap-6 p-10 bg-white dark:bg-slate-900 border-2 border-[hsl(var(--border))] rounded-[3rem] hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all group cursor-pointer disabled:opacity-50">
+                    <label className="flex flex-col items-center gap-6 p-10 bg-white dark:bg-blue-950 border-2 border-[hsl(var(--border))] rounded-[3rem] hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all group cursor-pointer disabled:opacity-50">
                       <input 
                         type="file" 
                         accept=".json" 
@@ -745,7 +745,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <span className="block text-xl font-black mb-1">Khôi phục dữ liệu</span>
                         <span className="text-xs text-[hsl(var(--muted-foreground))]">Ghi đè dữ liệu từ tệp sao lưu</span>
                       </div>
-                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-full h-1 bg-slate-100 dark:bg-blue-950 rounded-full overflow-hidden">
                         <div className={cn("h-full bg-emerald-500 transition-all duration-1000", isRestoring ? "w-full" : "w-0")} />
                       </div>
                     </label>

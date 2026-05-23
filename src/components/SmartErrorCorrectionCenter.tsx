@@ -787,7 +787,7 @@ export const SmartErrorCorrectionCenter: React.FC = () => {
       {/* Error Detail Modal */}
       <AnimatePresence>
         {selectedError && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/40 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -876,7 +876,7 @@ export const SmartErrorCorrectionCenter: React.FC = () => {
                     <Terminal size={16} className="text-slate-400" />
                     <span className="text-sm font-black uppercase tracking-tight">Nhật ký xử lý</span>
                   </div>
-                  <div className="bg-slate-900 rounded-2xl p-4 font-mono text-[10px] text-emerald-400 space-y-1 max-h-40 overflow-y-auto">
+                  <div className="bg-blue-950 rounded-2xl p-4 font-mono text-[10px] text-emerald-400 space-y-1 max-h-40 overflow-y-auto">
                     {selectedError.log?.map((line, i) => (
                       <div key={i} className="flex gap-2">
                         <span className="text-slate-600">[{i+1}]</span>

@@ -105,7 +105,7 @@ export const WorkForecastingModal: React.FC<WorkForecastingModalProps> = ({ isOp
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-blue-950/40 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div 
@@ -163,7 +163,7 @@ export const WorkForecastingModal: React.FC<WorkForecastingModalProps> = ({ isOp
                 <button 
                   onClick={handleAnalyze}
                   disabled={isAnalyzing}
-                  className="w-full py-5 bg-slate-900 text-white rounded-[2rem] text-sm font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200 disabled:opacity-50"
+                  className="w-full py-5 bg-blue-950 text-white rounded-[2rem] text-sm font-black uppercase tracking-widest hover:bg-blue-950 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200 disabled:opacity-50"
                 >
                   {isAnalyzing ? <><Loader2 className="animate-spin" size={20}/> Đang phân tích chiến lược...</> : <><Send size={20}/> Thực hiện dự báo chiến lược</>}
                 </button>

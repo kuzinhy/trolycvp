@@ -127,7 +127,7 @@ export const KnowledgeHeader: React.FC<KnowledgeHeaderProps> = memo(({
       </div>
 
       {/* Brain Connections & Quick Actions */}
-      <div className="bg-slate-900 rounded-2xl p-6 flex flex-col justify-between text-white shadow-sm border border-slate-800">
+      <div className="bg-blue-950 rounded-2xl p-6 flex flex-col justify-between text-white shadow-sm border border-slate-800">
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Kết nối bộ não</h3>

@@ -693,7 +693,7 @@ export const WorkLogModule: React.FC = () => {
                 "flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all shadow-lg",
                 isSaving 
                   ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
-                  : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20"
+                  : "bg-blue-950 text-white hover:bg-blue-950 shadow-blue-950/20"
               )}
             >
               {isSaving ? <Clock className="animate-spin" size={18} /> : <Save size={18} />}
@@ -968,7 +968,7 @@ export const WorkLogModule: React.FC = () => {
 
         {/* Notes & Summary */}
         <div className="space-y-6">
-          <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl shadow-slate-900/20 relative overflow-hidden">
+          <div className="bg-blue-950 rounded-3xl p-6 text-white shadow-xl shadow-blue-950/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <FileText size={64} />
             </div>

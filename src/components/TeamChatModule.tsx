@@ -160,7 +160,7 @@ export const TeamChatModule: React.FC<TeamChatModuleProps> = ({ isOpen, onClose 
           onClick={() => isMinimized && setIsMinimized(false)}
         >
           {/* Header */}
-          <div className="bg-slate-900 p-3 text-white flex items-center justify-between shrink-0 border-b border-slate-800">
+          <div className="bg-blue-950 p-3 text-white flex items-center justify-between shrink-0 border-b border-slate-800">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
                 {selectedUser ? <Users size={18} /> : <Hash size={18} />}

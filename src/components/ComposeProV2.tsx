@@ -240,7 +240,7 @@ ${aiKnowledge.slice(0, 5).map(k => `- ${k.title}: ${k.content}`).join('\n')}
                   <p className="text-[14px] font-bold uppercase tracking-tight leading-tight">
                     Độc lập - Tự do - Hạnh phúc
                   </p>
-                  <div className="w-1/2 h-[1px] bg-black my-2" />
+                  <div className="w-1/2 h-[1px] bg-blue-950 my-2" />
                   <p className="text-[13px] italic mt-2">
                     {metadata.diaDanh}, ngày {metadata.ngayBanHanh.split('/')[0]} tháng {metadata.ngayBanHanh.split('/')[1]} năm {metadata.ngayBanHanh.split('/')[2]}
                   </p>
@@ -576,7 +576,7 @@ ${aiKnowledge.slice(0, 5).map(k => `- ${k.title}: ${k.content}`).join('\n')}
                     <button 
                       onClick={generateAIContent}
                       disabled={isGenerating || !aiPrompt.trim()}
-                      className="flex-1 py-4 bg-slate-900 text-white rounded-xl font-bold uppercase tracking-[0.2em] shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="flex-1 py-4 bg-blue-950 text-white rounded-xl font-bold uppercase tracking-[0.2em] shadow-lg shadow-blue-950/10 hover:bg-blue-950 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {isGenerating ? (
                         <>

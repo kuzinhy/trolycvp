@@ -67,7 +67,7 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-sm">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ 
@@ -81,7 +81,7 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
             }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className={cn(
-              "bg-white dark:bg-slate-900 shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 flex flex-col transition-all duration-500 ease-in-out",
+              "bg-white dark:bg-blue-950 shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 flex flex-col transition-all duration-500 ease-in-out",
               isFullScreen ? "rounded-none" : "rounded-[3rem]"
             )}
           >
@@ -150,7 +150,7 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
             </div>
 
             {/* Action Bar */}
-            <div className="px-8 py-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+            <div className="px-8 py-4 bg-slate-50 dark:bg-blue-950/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setActiveTab('content')}
@@ -187,7 +187,7 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white dark:bg-slate-900">
+            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white dark:bg-blue-950">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                 {/* Main Content Area */}
                 <div className="lg:col-span-8 space-y-10">
@@ -225,7 +225,7 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
                       </h3>
                       <div className="flex flex-wrap gap-3">
                         {item.tags.map((tag: string, idx: number) => (
-                          <span key={idx} className="px-5 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 transition-all cursor-default">
+                          <span key={idx} className="px-5 py-2.5 bg-slate-50 dark:bg-blue-950 text-slate-600 dark:text-slate-400 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 transition-all cursor-default">
                             #{tag}
                           </span>
                         ))}
@@ -236,11 +236,11 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
 
                 {/* Sidebar Info */}
                 <div className="lg:col-span-4 space-y-8">
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-8 space-y-8">
+                  <div className="bg-slate-50 dark:bg-blue-950/50 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-8 space-y-8">
                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Thông tin quản trị</h4>
                     
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <div className="flex items-center justify-between p-4 bg-white dark:bg-blue-950 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                         <div className="flex items-center gap-3">
                           <Shield size={16} className="text-indigo-500" />
                           <span className="text-xs font-bold text-slate-500">Trạng thái</span>
@@ -255,7 +255,7 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <div className="flex items-center justify-between p-4 bg-white dark:bg-blue-950 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                         <div className="flex items-center gap-3">
                           <BarChart3 size={16} className="text-indigo-500" />
                           <span className="text-xs font-bold text-slate-500">Mức độ</span>
@@ -268,7 +268,7 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <div className="flex items-center justify-between p-4 bg-white dark:bg-blue-950 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                         <div className="flex items-center gap-3">
                           <User size={16} className="text-indigo-500" />
                           <span className="text-xs font-bold text-slate-500">Phạm vi</span>
@@ -315,7 +315,7 @@ export const KnowledgeDetailModal: React.FC<KnowledgeDetailModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-8 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+            <div className="p-8 bg-slate-50 dark:bg-blue-950/50 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
               <Button 
                 onClick={onClose}
                 className="rounded-2xl px-16 py-6 font-black uppercase tracking-widest shadow-2xl shadow-indigo-600/20 bg-indigo-600 hover:bg-indigo-700 text-white transition-all active:scale-95"

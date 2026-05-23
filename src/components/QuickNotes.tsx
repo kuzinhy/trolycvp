@@ -204,7 +204,7 @@ export const QuickNotes: React.FC<{
                             <button onClick={() => setEditingId(null)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
                               <X size={16} />
                             </button>
-                            <button onClick={() => handleSaveEdit(note.id)} className="p-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm">
+                            <button onClick={() => handleSaveEdit(note.id)} className="p-2 bg-blue-950 text-white rounded-lg hover:bg-blue-950 transition-colors shadow-sm">
                               <Check size={16} />
                             </button>
                           </div>
@@ -242,7 +242,7 @@ export const QuickNotes: React.FC<{
 
       <AnimatePresence>
         {isAdding && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

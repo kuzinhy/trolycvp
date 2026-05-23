@@ -506,7 +506,7 @@ Yêu cầu (định dạng Markdown):
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
       {/* AI Recommend Modal */}
       {showAIRecommendModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-blue-950/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -569,7 +569,7 @@ Yêu cầu (định dạng Markdown):
 
       {/* Settings Modal */}
       {showSettingsModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-blue-950/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -616,7 +616,7 @@ Yêu cầu (định dạng Markdown):
                         {user.photoURL ? (
                           <img src={user.photoURL} alt="" className="w-10 h-10 rounded-xl object-cover" referrerPolicy="no-referrer" />
                         ) : (
-                          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-sm">
+                          <div className="w-10 h-10 bg-blue-950 rounded-xl flex items-center justify-center text-white font-black text-sm">
                             {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -731,7 +731,7 @@ Yêu cầu (định dạng Markdown):
 
           {/* Strategic Command Center v5.0 */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="md:col-span-2 bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-slate-200 relative overflow-hidden group">
+            <div className="md:col-span-2 bg-blue-950 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-slate-200 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-blue-500/20 transition-colors" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-6">

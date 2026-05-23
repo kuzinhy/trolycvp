@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Hệ thống gặp sự cố khi tải nội dung này. Vui lòng thử tải lại trang hoặc liên hệ quản trị viên.
             </p>
             {this.state.error && (
-              <pre className="mt-4 p-4 bg-slate-900 text-slate-100 text-[10px] font-mono rounded-xl overflow-auto max-w-full text-left">
+              <pre className="mt-4 p-4 bg-blue-950 text-slate-100 text-[10px] font-mono rounded-xl overflow-auto max-w-full text-left">
                 {this.state.error.message}
               </pre>
             )}

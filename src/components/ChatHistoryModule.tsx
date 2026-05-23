@@ -417,7 +417,7 @@ export const ChatHistoryModule: React.FC<ChatHistoryModuleProps> = ({
                 <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
                 <button 
                   onClick={() => onNavigate('chat')}
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm"
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-blue-950 text-white rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-950 transition-all shadow-sm"
                 >
                   Tiếp tục
                   <ArrowRight size={14} />
@@ -521,7 +521,7 @@ export const ChatHistoryModule: React.FC<ChatHistoryModuleProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-sm"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}

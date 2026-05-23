@@ -1115,7 +1115,7 @@ Chỉ trả về JSON.`;
     <div className="max-w-[1600px] mx-auto p-6 space-y-6 min-h-screen bg-slate-50/50 print:bg-white print:p-0">
       <AnimatePresence>
         {showScanner && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/60 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1628,7 +1628,7 @@ Chỉ trả về JSON.`;
       {/* Quick Builder Modal */}
       <AnimatePresence>
         {isQuickBuilderOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blue-950/50 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1853,7 +1853,7 @@ Chỉ trả về JSON.`;
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setEditingItem(null)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm"
             />
               <div className="relative w-full max-w-4xl bg-white rounded-[40px] shadow-2xl border border-slate-200 overflow-hidden">
                 <div className="flex flex-col h-full max-h-[90vh]">
