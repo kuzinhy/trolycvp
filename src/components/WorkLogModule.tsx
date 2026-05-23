@@ -85,7 +85,7 @@ const FIXED_TASKS: Task[] = [
 ];
 
 export const WorkLogModule: React.FC = () => {
-  const { user, unitId } = useAuth();
+  const { user, unitId, googleDriveToken, signInWithGoogle } = useAuth();
   const { showToast: toastFn } = useToast();
   const { meetings, events } = useDashboard();
   const { tasks: calendarTasksList } = useTasks(() => {});
@@ -425,6 +425,105 @@ export const WorkLogModule: React.FC = () => {
     }
   };
 
+  const exportToGoogleSheets = async (range: 'day' | 'month' | 'all' = 'all') => {
+    if (!user) return;
+    try {
+      if (!googleDriveToken) {
+        toastFn?.("Đang kết nối Google Sheets...", "info");
+        await signInWithGoogle(true);
+        return toastFn?.("Đã xác thực Google Sheets, vui lòng ấn lại nút Đồng bộ (tải lại trang nếu cần).", "success");
+      }
+
+      toastFn?.("Đang xuất dữ liệu sang Google Sheets...", "info");
+      
+      const q = query(
+        collection(db, "work_logs"),
+        where("userId", "==", user.uid)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      let logs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      
+      if (range === 'day') {
+        logs = logs.filter(log => {
+          const logDateInt = log.date?.toMillis ? log.date.toMillis() : new Date(log.date).getTime();
+          const targetDateInt = new Date(selectedDate + "T00:00:00").getTime();
+          return new Date(logDateInt).toDateString() === new Date(targetDateInt).toDateString();
+        });
+      } else if (range === 'month') {
+        logs = logs.filter(log => {
+          const logDate = log.date?.toDate ? log.date.toDate() : new Date(log.date);
+          const targetDate = new Date(selectedDate + "T00:00:00");
+          return logDate.getMonth() === targetDate.getMonth() && logDate.getFullYear() === targetDate.getFullYear();
+        });
+      }
+
+      logs.sort((a, b) => {
+        const dateA = a.date?.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
+        const dateB = b.date?.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
+        return dateB - dateA;
+      });
+
+      if (logs.length === 0) {
+        toastFn?.("Không có dữ liệu nhật ký trong khoảng thời gian này", "info");
+        return;
+      }
+
+      const rows: any[][] = [
+        ["Ngày", "Nhiệm vụ cố định", "Nhiệm vụ phát sinh", "Nhiệm vụ lịch", "Ghi chú"]
+      ];
+
+      logs.forEach(log => {
+        const date = log.date instanceof Timestamp ? log.date.toDate().toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN');
+        const fixed = (log.tasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+        const additional = (log.additionalTasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+        const calendar = (log.calendarTasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+        
+        rows.push([date, fixed, additional, calendar, log.notes || '']);
+      });
+
+      // 1. Create Spreadsheet via Drive API in specific folder
+      const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${googleDriveToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: `Nhat_Ky_Cong_Viec_${range}_${new Date().toLocaleDateString('vi-VN')}`,
+          mimeType: "application/vnd.google-apps.spreadsheet",
+          parents: ["1PYVbIAYivf3xrqxBc5YENp2C3kJwlqVR"]
+        })
+      });
+      const createData = await createRes.json();
+      const spreadsheetId = createData.id;
+
+      if (!spreadsheetId) throw new Error("Could not create spreadsheet.");
+
+      // 2. Append Data
+      const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:append?valueInputOption=USER_ENTERED`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${googleDriveToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          range: "Sheet1!A1",
+          values: rows
+        })
+      });
+
+      if (updateRes.ok) {
+         toastFn?.("Đã xuất dữ liệu lên Google Sheets thành công!", "success");
+      } else {
+         toastFn?.("Chưa xuất được lên Google Sheets, vui lòng kiểm tra lại quyền truy cập.", "error");
+      }
+    } catch (error: any) {
+      console.error("Export error:", error);
+      toastFn?.("Lỗi xuất Google Sheets. Đăng nhập lại Google.", "error");
+    }
+  };
+
   const addNewTask = () => {
     setAdditionalTasks([
       ...additionalTasks,
@@ -550,17 +649,25 @@ export const WorkLogModule: React.FC = () => {
             <button 
               onClick={() => exportLogs('day')}
               className="p-2 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
-              title="Xuất ngày hôm nay"
+              title="Xuất CSV ngày hôm nay"
             >
-              <Download size={14} /> Ngày
+              <Download size={14} /> CSV Ngày
             </button>
             <div className="w-px h-4 bg-slate-200 mx-1" />
             <button 
               onClick={() => exportLogs('month')}
               className="p-2 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
-              title="Xuất tháng này"
+              title="Xuất CSV tháng này"
             >
-              <Download size={14} /> Tháng
+              <Download size={14} /> CSV Tháng
+            </button>
+            <div className="w-px h-4 bg-slate-200 mx-1" />
+            <button 
+              onClick={() => exportToGoogleSheets('month')}
+              className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
+              title="Đồng bộ tháng này lên Google Sheets"
+            >
+              <FileText size={14} /> Đồng Bộ Sheets
             </button>
           </div>
 

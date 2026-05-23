@@ -7,7 +7,7 @@ import { getAnalytics, isSupported } from "firebase/analytics";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 import firebaseConfigData from '../../firebase-applet-config.json';
-const firebaseConfig = {
+const firebaseConfig: Record<string, string> = {
   ...firebaseConfigData
 };
 

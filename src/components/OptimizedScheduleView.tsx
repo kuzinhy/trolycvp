@@ -32,6 +32,7 @@ import { generateContentWithRetry, parseAIResponse } from '../lib/ai-utils';
 import Papa from 'papaparse';
 import ICAL from 'ical.js';
 import { useUserPreferences } from '../context/UserPreferencesContext';
+import { useAuth } from '../context/AuthContext';
 
 interface OptimizedScheduleViewProps {
   meetings: Meeting[];
@@ -206,6 +207,54 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
   const [isSmartProcessing, setIsSmartProcessing] = React.useState(false);
 
   const { preferences } = useUserPreferences();
+  const { user, googleDriveToken, signInWithGoogle } = useAuth();
+
+  const handleGoogleCalendarSync = async () => {
+    if (!user) {
+      showToast("Vui lòng đăng nhập trước.", "error");
+      return;
+    }
+    try {
+      if (!googleDriveToken) {
+        showToast("Đang kết nối Google Calendar...", "info");
+        await signInWithGoogle(true);
+        return showToast("Đã xác thực, vui lòng ấn lại nút Đồng bộ Google Calendar.", "success");
+      }
+
+      showToast("Đang tải dữ liệu từ Google Calendar...", "info");
+
+      const timeMin = startOfWeek(currentWeekStart, { weekStartsOn: 1 }).toISOString();
+      const timeMax = addDays(timeMin, 14).toISOString();
+
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, {
+        headers: { Authorization: `Bearer ${googleDriveToken}` },
+      });
+      const data = await res.json();
+
+      if (data.items && data.items.length > 0) {
+        const newEvents = data.items.map((event: any) => ({
+           name: event.summary || 'Sự kiện Google Calendar',
+           date: event.start?.date || event.start?.dateTime?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'),
+           time: event.start?.dateTime ? format(new Date(event.start.dateTime), 'HH:mm') : '00:00',
+           location: event.location || '',
+           description: event.description || '',
+           id: Math.random().toString(36).substr(2, 9)
+        }));
+        await updateEvents(prev => {
+           // Basic deduplication based on name and date
+           const existingIds = new Set(prev.map(e => `${e.name}-${e.date}`));
+           const filteredNewEvents = newEvents.filter((e: any) => !existingIds.has(`${e.name}-${e.date}`));
+           return [...prev, ...filteredNewEvents];
+        });
+        showToast(`Đã đồng bộ sự kiện từ Google Calendar.`, "success");
+      } else {
+        showToast("Không có sự kiện nào trong tuần này trên Google Calendar.", "info");
+      }
+    } catch (e) {
+      console.error("Calendar error", e);
+      showToast("Lỗi lấy dữ liệu Google Calendar. Vui lòng đăng nhập lại Google.", "error");
+    }
+  };
 
   const handleSmartInput = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -544,6 +593,13 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
                 >
                   <Trash2 size={16} />
                   <span>Xóa hết</span>
+                </button>
+                <button 
+                  onClick={handleGoogleCalendarSync}
+                  className="p-2 bg-gradient-to-r from-orange-500/80 to-amber-500/80 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl shadow-lg border border-orange-400/50 backdrop-blur-md transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
+                >
+                  <CalendarIcon size={16} />
+                  <span>Đồng bộ Google</span>
                 </button>
                 <input 
                   type="file" 

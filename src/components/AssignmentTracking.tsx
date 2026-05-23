@@ -21,7 +21,9 @@ import {
   Check,
   Search,
   ClipboardList,
-  Bell
+  Bell,
+  Users,
+  Wand2
 } from 'lucide-react';
 import { generateContentWithRetry } from '../lib/ai-utils';
 import { cn } from '../lib/utils';
@@ -439,6 +441,11 @@ Văn phong: Khách quan, sắc sảo, mang tính quyết định, không dùng t
     }
   };
 
+  const [showAIRecommendModal, setShowAIRecommendModal] = useState(false);
+  const [recommendTaskDesc, setRecommendTaskDesc] = useState('');
+  const [recommendResult, setRecommendResult] = useState('');
+  const [isRecommending, setIsRecommending] = useState(false);
+
   useEffect(() => {
     if (systemTasks.length > 0 && !analysis) {
       runAnalysis();
@@ -448,6 +455,48 @@ Văn phong: Khách quan, sắc sảo, mang tính quyết định, không dùng t
     }
   }, [systemTasks, viceChief1Tasks, viceChief2Tasks]);
 
+  const handleAIRecommend = async () => {
+    if (!recommendTaskDesc.trim()) return;
+    setIsRecommending(true);
+    setRecommendResult('');
+
+    const wc1 = viceChief1Tasks.filter(t => t.progress < 100).length;
+    const wc2 = viceChief2Tasks.filter(t => t.progress < 100).length;
+
+    const dataInfo = `
+TẢI CÔNG VIỆC HIỆN TẠI (Chưa hoàn thành):
+- ${viceChief1Info?.displayName || "Phó VP 1"}: ${wc1} nhiệm vụ
+- ${viceChief2Info?.displayName || "Phó VP 2"}: ${wc2} nhiệm vụ
+- Hệ thống: ${systemTasks.filter(t => t.status !== 'Completed').length} nhiệm vụ
+
+NHIỆM VỤ MỚI CẦN PHÂN CÔNG:
+"${recommendTaskDesc}"
+`;
+
+    const prompt = `Bạn là Trợ lý AI Tham mưu.
+Hãy đề xuất phân công nhiệm vụ mới này dựa trên khối lượng công việc hiện tại.
+Dữ liệu:
+${dataInfo}
+
+Yêu cầu (định dạng Markdown):
+1. **Đề xuất Đơn vị/Cá nhân Chủ trì**: (Ai phù hợp nhất để nhận nhiệm vụ này).
+2. **Đề xuất Đơn vị/Cá nhân Phối hợp**:
+3. **Lý do đề xuất**: (Ngắn gọn).
+4. **Các bước triển khai khuyến nghị**: (Gạch đầu dòng).`;
+
+    try {
+      const response = await generateContentWithRetry({
+        model: "gemini-3.1-flash",
+        contents: [{ parts: [{ text: prompt }] }]
+      });
+      setRecommendResult(response.text || "Không có kết quả");
+    } catch (err) {
+      setRecommendResult("Lỗi khi kết nối AI.");
+    } finally {
+      setIsRecommending(false);
+    }
+  };
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(analysis);
     alert("Đã sao chép báo cáo vào bộ nhớ tạm.");
@@ -455,6 +504,69 @@ Văn phong: Khách quan, sắc sảo, mang tính quyết định, không dùng t
 
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
+      {/* AI Recommend Modal */}
+      {showAIRecommendModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]"
+          >
+            <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-emerald-50 text-emerald-900 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white rounded-2xl shadow-sm text-emerald-600">
+                  <Wand2 size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black tracking-tight">AI Đề xuất Phân công</h3>
+                  <p className="text-emerald-600/80 text-xs font-bold uppercase tracking-widest mt-1">Dựa trên khối lượng công việc hiện tại</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowAIRecommendModal(false)}
+                className="p-2 hover:bg-white rounded-2xl transition-all text-emerald-600/60 hover:text-emerald-700 shadow-sm"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-black text-slate-900 mb-2">Tóm tắt Nhiệm vụ mới khởi tạo:</label>
+                  <textarea 
+                    value={recommendTaskDesc}
+                    onChange={(e) => setRecommendTaskDesc(e.target.value)}
+                    placeholder="Nhập nội dung/yêu cầu công việc cần phân công..."
+                    rows={4}
+                    className="w-full bg-slate-50 border-2 border-slate-100 py-3 px-4 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
+                  />
+                </div>
+                
+                <button
+                  onClick={handleAIRecommend}
+                  disabled={isRecommending || !recommendTaskDesc.trim()}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
+                >
+                  {isRecommending ? <RefreshCw size={20} className="animate-spin" /> : <Wand2 size={20} />}
+                  {isRecommending ? "Đang phân tích dữ liệu..." : "Đề xuất Hướng xử lý"}
+                </button>
+
+                {recommendResult && (
+                  <div className="bg-slate-50 rounded-2xl p-6 border-2 border-slate-100">
+                    <div className="prose prose-sm prose-slate max-w-none prose-headings:font-black prose-p:font-medium prose-p:leading-relaxed text-sm">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {recommendResult}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Settings Modal */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
@@ -545,6 +657,13 @@ Văn phong: Khách quan, sắc sảo, mang tính quyết định, không dùng t
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowAIRecommendModal(true)}
+              className="flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-sm transition-all shadow-md active:scale-95 group bg-white border-2 border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+            >
+              <Wand2 size={20} className="group-hover:scale-110 transition-transform" />
+              Đề xuất Phân công
+            </button>
             <button 
               onClick={runAnalysis}
               disabled={isAnalyzing || (systemTasks.length === 0 && viceChief1Tasks.length === 0 && viceChief2Tasks.length === 0)}

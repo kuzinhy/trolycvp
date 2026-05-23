@@ -136,8 +136,8 @@ export const RoadmapModule: React.FC = memo(() => {
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-50 transition-colors duration-500" />
               
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6">
+              <div className="relative z-10 flex-1 flex flex-col">
+                <div className="flex items-center justify-between mb-6 group-hover:-translate-y-1 transition-transform duration-500">
                   <div className="p-4 bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                     <Icon size={28} className={cn(
                       item.id === '1' && "text-blue-500",
@@ -156,15 +156,31 @@ export const RoadmapModule: React.FC = memo(() => {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-3 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-3 group-hover:text-blue-600 transition-colors group-hover:-translate-y-1 duration-500">
                   {item.title}
                 </h3>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed mb-6">
+                <p className="text-sm text-slate-500 font-medium leading-relaxed mb-4 group-hover:-translate-y-1 transition-transform duration-500">
                   {item.description}
                 </p>
+
+                {/* Additional Hover Metadata */}
+                <div className="opacity-0 max-h-0 overflow-hidden group-hover:opacity-100 group-hover:max-h-40 group-hover:mt-4 transition-all duration-500 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mức độ ưu tiên</span>
+                    <span className={cn(
+                      "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md",
+                      item.priority === 'high' ? "bg-rose-50 text-rose-600" : item.priority === 'medium' ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
+                    )}>
+                      {item.priority === 'high' ? 'Cao' : item.priority === 'medium' ? 'Trung bình' : 'Thấp'}
+                    </span>
+                  </div>
+                  <button className="w-full py-2.5 mt-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 group/btn">
+                    Tài liệu chiến lược <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                  </button>
+                </div>
               </div>
 
-              <div className="relative z-10 pt-6 border-t border-slate-100 flex items-center justify-between">
+              <div className="relative z-10 pt-6 mt-6 border-t border-slate-100 flex items-center justify-between group-hover:opacity-0 group-hover:translate-y-4 group-hover:-mb-10 transition-all duration-500">
                 <div className="flex items-center gap-2">
                   <Clock size={14} className="text-slate-400" />
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.timeline}</span>

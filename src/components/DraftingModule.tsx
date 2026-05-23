@@ -47,7 +47,7 @@ export const DraftingModule: React.FC<DraftingModuleProps> = ({
   const [newRuleContent, setNewRuleContent] = useState('');
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [editRuleContent, setEditRuleContent] = useState('');
-  const { user, unitId } = useAuth();
+  const { user, unitId, googleDriveToken, signInWithGoogle } = useAuth();
   // ...
   const progress = useSimulatedProgress();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,7 +83,66 @@ export const DraftingModule: React.FC<DraftingModuleProps> = ({
     a.download = `VanBan_${status}_${new Date().toISOString().slice(0,10)}.md`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Đã xuất văn bản', 'success');
+    showToast('Đã xuất văn bản dưới dạng Markdown', 'success');
+  };
+
+  const handleExportToGoogleDocs = async () => {
+    if (!documentText.trim()) {
+      showToast('Không có nội dung để xuất.', 'warning');
+      return;
+    }
+    if (!user) {
+      showToast('Vui lòng đăng nhập.', 'warning');
+      return;
+    }
+
+    try {
+      if (!googleDriveToken) {
+        showToast('Đang kết nối Google Docs...', 'info');
+        await signInWithGoogle(true);
+        showToast('Đã xác thực Google Docs, vui lòng ấn lại nút Xuất.', 'success');
+        return;
+      }
+      
+      showToast('Đang tạo Google Docs...', 'info');
+
+      const boundary = "-------314159265358979323846";
+      const delimiter = "\r\n--" + boundary + "\r\n";
+      const close_delim = "\r\n--" + boundary + "--";
+
+      const metadata = {
+        name: `VanBan_ThamMuu_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}`,
+        mimeType: 'application/vnd.google-apps.document',
+        parents: ["1PYVbIAYivf3xrqxBc5YENp2C3kJwlqVR"]
+      };
+
+      const multipartRequestBody =
+        delimiter +
+        "Content-Type: application/json\r\n\r\n" +
+        JSON.stringify(metadata) +
+        delimiter +
+        "Content-Type: text/plain\r\n\r\n" +
+        documentText +
+        close_delim;
+
+      const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${googleDriveToken}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`
+        },
+        body: multipartRequestBody
+      });
+
+      if (res.ok) {
+         showToast('Đã xuất Google Docs thành công!', 'success');
+      } else {
+         throw new Error("API call failed");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Có lỗi khi tạo Google Docs. Vui lòng thử lại.', 'error');
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -391,9 +450,17 @@ ${documentText}
                 <button
                   onClick={handleExport}
                   className="p-3 text-slate-400 hover:text-blue-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
-                  title="Xuất văn bản"
+                  title="Xuất Markdown"
                 >
                   <Copy size={20} />
+                </button>
+
+                <button
+                  onClick={handleExportToGoogleDocs}
+                  className="p-3 text-slate-400 hover:text-blue-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow-md"
+                  title="Lưu vào Google Docs"
+                >
+                  <FileText size={20} />
                 </button>
 
                 <button

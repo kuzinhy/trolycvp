@@ -157,6 +157,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (requestDriveAccess) {
         provider.addScope('https://www.googleapis.com/auth/drive.readonly');
         provider.addScope('https://www.googleapis.com/auth/drive.metadata.readonly');
+        provider.addScope('https://www.googleapis.com/auth/drive');
+        provider.addScope('https://www.googleapis.com/auth/calendar');
+        provider.addScope('https://www.googleapis.com/auth/spreadsheets');
+        provider.addScope('https://www.googleapis.com/auth/documents');
       }
       const result = await signInWithPopup(auth, provider);
       

@@ -101,7 +101,7 @@ export const PartyAdvisory: React.FC = () => {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Tham mưu Chiến lược AI</h1>
           </div>
           <p className="text-slate-500 font-medium max-w-xl">
-            Trợ lý thông minh hỗ trợ gợi ý sinh hoạt chi bộ và tham mưu nhanh cho lãnh đạo dựa trên dữ liệu thực tế.
+            Trợ lý thông minh hỗ trợ gợi ý lịch công tác và tham mưu chiến lược, tự động hóa quy trình quản trị nội bộ Đảng ủy.
           </p>
         </div>
       </div>

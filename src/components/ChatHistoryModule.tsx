@@ -27,6 +27,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../hooks/useToast';
 import { cn } from '../lib/utils';
 
 interface ChatHistoryModuleProps {
@@ -46,7 +47,7 @@ export const ChatHistoryModule: React.FC<ChatHistoryModuleProps> = ({
   onExportToKnowledge,
   onClearAll
 }) => {
-  const { user } = useAuth();
+  const { user, googleDriveToken, signInWithGoogle } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'user' | 'model'>('all');
   const [selectedChat, setSelectedChat] = useState<any | null>(null);
@@ -54,6 +55,65 @@ export const ChatHistoryModule: React.FC<ChatHistoryModuleProps> = ({
   const [isClearing, setIsClearing] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const { showToast } = useToast();
+
+  const handleExportToDocs = async (chat: any) => {
+    if (!chat || !chat.content) return;
+    if (!user) {
+      showToast('Vui lòng đăng nhập.', 'warning');
+      return;
+    }
+    
+    try {
+      if (!googleDriveToken) {
+        showToast('Đang kết nối Google Docs...', 'info');
+        await signInWithGoogle(true);
+        showToast('Đã xác thực, vui lòng ấn lại.', 'success');
+        return;
+      }
+      
+      showToast('Đang xuất sang Google Docs...', 'info');
+
+      const boundary = "-------314159265358979323846";
+      const delimiter = "\r\n--" + boundary + "\r\n";
+      const close_delim = "\r\n--" + boundary + "--";
+
+      const metadata = {
+        name: `LichSuChat_${new Date(chat.timestamp).toLocaleDateString('vi-VN').replace(/\//g, '-')}`,
+        mimeType: 'application/vnd.google-apps.document',
+        parents: ["1PYVbIAYivf3xrqxBc5YENp2C3kJwlqVR"]
+      };
+
+      const markdownContent = `Ngày: ${new Date(chat.timestamp).toLocaleString('vi-VN')}\nVai trò: ${chat.role === 'model' ? 'AI Assistant' : 'Bí thư'}\n\nNội dung:\n${chat.content}`;
+
+      const multipartRequestBody =
+        delimiter +
+        "Content-Type: application/json\r\n\r\n" +
+        JSON.stringify(metadata) +
+        delimiter +
+        "Content-Type: text/plain\r\n\r\n" +
+        markdownContent +
+        close_delim;
+
+      const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${googleDriveToken}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`
+        },
+        body: multipartRequestBody
+      });
+
+      if (res.ok) {
+        showToast('Đã xuất sang Google Docs thành công!', 'success');
+      } else {
+        throw new Error('API failed');
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Lỗi xuất Google Docs.', 'error');
+    }
+  };
 
   const handleDownloadPDF = async (chat: any) => {
     alert('Tính năng xuất PDF hiện không khả dụng.');
@@ -427,6 +487,13 @@ export const ChatHistoryModule: React.FC<ChatHistoryModuleProps> = ({
                 </div>
 
                 <div className="flex items-center justify-center gap-4 pt-4">
+                  <button 
+                    onClick={() => handleExportToDocs(selectedChat)}
+                    className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                  >
+                    <FileText size={14} /> 
+                    Tải xuống Docs
+                  </button>
                   <button 
                     onClick={() => handleDownloadPDF(selectedChat)}
                     disabled={isExportingPDF}
