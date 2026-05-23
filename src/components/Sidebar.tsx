@@ -40,7 +40,8 @@ import {
   Lightbulb,
   BarChart3,
   StickyNote,
-  FileSignature
+  FileSignature,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { SPECIALIZED_TASKS, APP_VERSION } from '../constants';
@@ -690,6 +691,13 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                   onClick={() => onNavigate('history')} 
                   icon={<History size={16} />} 
                   label="LỊCH SỬ HỆ THỐNG" 
+                  collapsed={isCollapsed}
+                />
+                <NavButton 
+                  active={currentTab === 'user-manual'} 
+                  onClick={() => onNavigate('user-manual')} 
+                  icon={<BookOpen size={16} />} 
+                  label="HƯỚNG DẪN SỬ DỤNG" 
                   collapsed={isCollapsed}
                 />
               </div>

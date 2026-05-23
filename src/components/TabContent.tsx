@@ -47,6 +47,8 @@ const ConclusionCreatorModule = lazy(() => import('./ConclusionCreatorModule').t
 const EliteDashboardHome = lazy(() => import('./EliteDashboardHome').then(m => ({ default: m.EliteDashboardHome })));
 const TaskManagement = lazy(() => import('./TaskManagement').then(m => ({ default: m.TaskManagement })));
 const SystemUpdateModule = lazy(() => import('./admin/SystemUpdateModule').then(m => ({ default: m.SystemUpdateModule })));
+const SystemHistoryModule = lazy(() => import('./SystemHistoryModule').then(m => ({ default: m.SystemHistoryModule })));
+const UserManualModule = lazy(() => import('./UserManualModule').then(m => ({ default: m.UserManualModule })));
 
 interface TabContentProps {
   currentTab: string;
@@ -259,6 +261,12 @@ export const TabContent = memo(({
 
       case 'evaluation':
         return <EvaluationModule />;
+
+      case 'history':
+        return <SystemHistoryModule />;
+
+      case 'user-manual':
+        return <UserManualModule />;
 
       case 'chat':
       default:
