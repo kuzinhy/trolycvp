@@ -362,39 +362,41 @@ ${documentText}
         message="AI đang phân tích chuyên sâu văn bản của bạn..." 
       />
 
-      <div className="mb-8 flex items-end justify-between border-b border-slate-100 pb-6">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <Sparkles className="text-blue-600" size={32} />
-            Trợ lý Soạn thảo Chuyên sâu
-          </h2>
-          <p className="text-slate-500 mt-2 text-sm font-medium">Soạn thảo, hiệu đính, chuẩn hóa văn phong và kiểm tra tuân thủ quy tắc hành chính</p>
-          
-          <div className="flex items-center gap-1 mt-6 bg-slate-100/50 p-1 rounded-2xl border border-slate-200/60 w-fit">
-            {[
-              { id: 'compose', label: 'Soạn thảo Pro', icon: <PenTool size={14} /> },
-              { id: 'review', label: 'Kiểm tra văn bản', icon: <FileCheck size={14} /> },
-              { id: 'email', label: 'Soạn Email', icon: <Send size={14} /> },
-              { id: 'speech', label: 'Bài phát biểu', icon: <Mic size={14} /> },
-              { id: 'party-docs', label: 'Văn bản Đảng', icon: <UserCheck size={14} /> },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setMainTab(tab.id as any)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                  mainTab === tab.id 
-                    ? "bg-white text-blue-600 shadow-sm border border-slate-200/60" 
-                    : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
-                )}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
+      {mainTab !== 'speech' && (
+        <div className="mb-8 flex items-end justify-between border-b border-slate-100 pb-6">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+              <Sparkles className="text-blue-600" size={32} />
+              Trợ lý Soạn thảo Chuyên sâu
+            </h2>
+            <p className="text-slate-500 mt-2 text-sm font-medium">Soạn thảo, hiệu đính, chuẩn hóa văn phong và kiểm tra tuân thủ quy tắc hành chính</p>
+            
+            <div className="flex flex-wrap items-center gap-2 mt-4 bg-transparent w-full">
+              {[
+                { id: 'compose', label: 'Soạn thảo', icon: <PenTool size={14} /> },
+                { id: 'review', label: 'Kiểm duyệt', icon: <FileCheck size={14} /> },
+                { id: 'party-docs', label: 'Văn bản Đảng', icon: <UserCheck size={14} /> },
+                { id: 'email', label: 'Soạn Email', icon: <Send size={14} /> },
+                { id: 'speech', label: 'Diễn văn', icon: <Mic size={14} /> },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setMainTab(tab.id as any)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border",
+                    mainTab === tab.id 
+                      ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20" 
+                      : "bg-white/60 text-slate-500 border-slate-200 hover:bg-white hover:text-slate-800"
+                  )}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {mainTab === 'compose' ? (
         <div className="flex-1 overflow-hidden -mx-8 -mb-8">

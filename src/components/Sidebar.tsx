@@ -327,13 +327,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       collapsed={isCollapsed}
                     />
                   )}
-                  {(!searchTerm || "soạn bài phát biểu".includes(searchTerm.toLowerCase())) && (
+                  {(!searchTerm || "trợ lý họp thông minh".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
-                      active={currentTab === 'drafting-pro-speech'} 
-                      onClick={() => onNavigate('drafting-pro-speech')} 
+                      active={currentTab === 'meeting'} 
+                      onClick={() => onNavigate('meeting')} 
                       icon={<Mic size={16} />} 
-                      label="Soạn bài phát biểu" 
+                      label="Trợ lý họp thông minh" 
                       collapsed={isCollapsed}
+                      badge="Mới"
                     />
                   )}
                   {(!searchTerm || "tạo kết luận".includes(searchTerm.toLowerCase())) && (
@@ -492,6 +493,16 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       collapsed={isCollapsed}
                     />
                   )}
+                  {(!searchTerm || "bản đồ tri thức".includes(searchTerm.toLowerCase())) && (
+                    <NavButton 
+                      active={currentTab === 'knowledge-linker'} 
+                      onClick={() => onNavigate('knowledge-linker')} 
+                      icon={<BrainCircuit size={16} />} 
+                      label="Bản đồ Tri thức" 
+                      collapsed={isCollapsed}
+                      badge="Mới"
+                    />
+                  )}
                   {(!searchTerm || "tham mưu & sinh hoạt".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
                       active={currentTab === 'party-advisory'} 
@@ -622,7 +633,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
             active={currentTab === 'calendar'} 
             onClick={() => onNavigate('calendar')} 
             icon={<Calendar size={18} />} 
-            label="Lịch công tác" 
+            label="Lịch công tác liên thông" 
             collapsed={isCollapsed}
           />
         )}

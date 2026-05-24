@@ -175,10 +175,16 @@ export const TabContent = memo(({
       case 'drafting-pro':
       case 'review':
       case 'drafting-pro-review':
-      case 'drafting-pro-speech':
+      case 'meeting':
+      case 'knowledge-linker':
         return (
           <UtilitiesModule 
-            initialTab={(currentTab === 'drafting-pro' || currentTab === 'review' || currentTab === 'drafting-pro-review' || currentTab === 'drafting-pro-speech') ? 'drafting' : 'reporting'}
+            initialTab={
+              currentTab === 'drafting-pro' || currentTab === 'review' || currentTab === 'drafting-pro-review' || currentTab === 'drafting-pro-speech' ? 'drafting' : 
+              currentTab === 'meeting' ? 'meeting' :
+              currentTab === 'knowledge-linker' ? 'knowledge-linker' :
+              'reporting'
+            }
             initialMainTab={
               currentTab === 'drafting-pro' ? 'compose' : 
               currentTab === 'review' ? 'review' : 

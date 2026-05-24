@@ -154,7 +154,7 @@ export const UtilitiesModule: React.FC<UtilitiesModuleProps> = ({ initialTab, in
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
           >
-            <MeetingAssistant />
+            <MeetingAssistant knowledge={knowledge} />
           </motion.div>
         )}
         {activeTab === 'bulk-review' && draftingProps && (

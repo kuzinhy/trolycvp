@@ -3,7 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, FileText, Send, CheckCircle2, AlertCircle, Loader2, Copy, Download } from 'lucide-react';
 import { generateContentWithRetry } from '../lib/ai-utils';
 
-export const MeetingAssistant: React.FC = () => {
+interface MeetingAssistantProps {
+  knowledge?: any[];
+}
+
+export const MeetingAssistant: React.FC<MeetingAssistantProps> = ({ knowledge = [] }) => {
   const [rawNotes, setRawNotes] = useState('');
   const [summary, setSummary] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -85,22 +89,39 @@ export const MeetingAssistant: React.FC = () => {
     setSummary('');
 
     try {
+      const conclusionKnowledge = knowledge.filter(k => 
+        k.title.toLowerCase().includes('kết luận') || 
+        k.title.toLowerCase().includes('biên bản') ||
+        (k.tags && k.tags.some((t: string) => t.toLowerCase().includes('kết luận')))
+      );
+      
+      let knowledgeContext = '';
+      if (conclusionKnowledge.length > 0) {
+        knowledgeContext = '\n--- TÀI LIỆU THAM KHẢO VỀ VĂN PHONG (TỪ BỘ NÃO) ---\nDưới đây là các Thông báo kết luận / Biên bản cũ để bạn tham khảo văn phong, cấu trúc và cách hành văn mẫu:\n';
+        conclusionKnowledge.slice(0, 3).forEach((k, idx) => {
+          const contentStr = typeof k.content === 'string' ? k.content : (k.summary || '');
+          knowledgeContext += `\n[Mẫu ${idx + 1}: ${k.title}]\n${contentStr.substring(0, 1000)}${contentStr.length > 1000 ? '...' : ''}\n`;
+        });
+        knowledgeContext += '\n-> HÃY ÁP DỤNG VĂN PHONG VÀ CÁCH DÙNG TỪ CỦA CÁC MẪU TRÊN ĐỂ VIẾT BIÊN BẢN MỚI NÀY.';
+      }
+
       const prompt = `
-Bạn là một thư ký cuộc họp chuyên nghiệp. Hãy tóm tắt và tạo biên bản cuộc họp từ nội dung thô sau đây.
+Bạn là một Chuyên viên tham mưu, thư ký cuộc họp cấp ủy chuyên nghiệp. Hãy tóm tắt và tạo Thông báo kết luận / biên bản cuộc họp từ nội dung thô sau đây.
 Nội dung thô có thể là văn bản do nhận dạng giọng nói tạo ra, có thể có lỗi chính tả hoặc lủng củng. Hãy sắp xếp lại cho logic, rõ ràng và chuyên nghiệp.
 
 Nội dung thô:
 """
 ${rawNotes}
 """
+${knowledgeContext}
 
-Yêu cầu định dạng biên bản:
-1. TÓM TẮT CHUNG (1-2 câu ngắn gọn về mục đích/nội dung chính)
-2. CÁC ĐIỂM CHÍNH ĐÃ THẢO LUẬN (Sử dụng gạch đầu dòng)
-3. KẾT LUẬN & QUYẾT ĐỊNH (Rõ ràng, dứt khoát)
-4. PHÂN CÔNG NHIỆM VỤ (Ai làm gì, thời hạn bao giờ - nếu có)
+Yêu cầu định dạng văn bản:
+1. TÓM TẮT CHUNG (1-2 câu khái quát nội dung buổi làm việc)
+2. CÁC NỘI DUNG CHÍNH (Sắp xếp theo thứ tự mạch lạc)
+3. KẾT LUẬN & CHỈ ĐẠO CỦA CHỦ TRÌ (Rõ ràng, dứt khoát, dùng từ ngữ chỉ đạo sắc bén)
+4. TỔ CHỨC THỰC HIỆN / PHÂN CÔNG NHIỆM VỤ (Giao việc cụ thể: Ai làm gì, thời hạn hoàn thành)
 
-Hãy trình bày bằng tiếng Việt, văn phong trang trọng, chuyên nghiệp, phù hợp với môi trường cơ quan nhà nước hoặc doanh nghiệp.
+Hãy trình bày bằng tiếng Việt, văn phong trang trọng, chuyên nghiệp, mang tính chỉ đạo điều hành của cơ quan Đảng. Nếu có dữ liệu mẫu ở trên, bắt buộc phải học theo phong cách viết đó.
 `;
 
       const response = await generateContentWithRetry({
