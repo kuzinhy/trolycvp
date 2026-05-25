@@ -3,8 +3,9 @@ import { Meeting, Event, Birthday, Task } from '../constants';
 import { useNotifications } from './useNotifications';
 
 export function useReminders(meetings: Meeting[], events: Event[], birthdays: Birthday[], tasks: Task[] = []) {
-  const { addNotification } = useNotifications();
+  const { addNotification, triggerAmbient } = useNotifications();
   const processedReminders = useRef<Set<string>>(new Set());
+  const ambientReminders = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const checkReminders = () => {
@@ -81,6 +82,19 @@ export function useReminders(meetings: Meeting[], events: Event[], birthdays: Bi
       // Check Tasks
       tasks.forEach(task => {
         if (!task.deadline || task.status === 'Completed') return;
+        
+        // --- Ambient Notification for High Priority Tasks within 24h ---
+        if (task.priority === 'high') {
+          const taskDeadlineDate = new Date(`${task.deadline}T23:59:59`);
+          const timeToDeadline = taskDeadlineDate.getTime() - now.getTime();
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          const ambientId = `ambient-task-${task.id}-${task.deadline}`;
+          
+          if (timeToDeadline > 0 && timeToDeadline <= oneDayMs && !ambientReminders.current.has(ambientId)) {
+            triggerAmbient('Nhiệm vụ cấp bách sắp đến hạn', `"${task.title}" cần được hoàn thành trong vòng 24 giờ tới.`);
+            ambientReminders.current.add(ambientId);
+          }
+        }
         
         // Tasks default to 09:00 AM for deadline day reminder
         const taskDate = new Date(`${task.deadline}T09:00:00`);
@@ -208,5 +222,5 @@ export function useReminders(meetings: Meeting[], events: Event[], birthdays: Bi
     checkReminders(); // Initial check
 
     return () => clearInterval(interval);
-  }, [meetings, events, birthdays, addNotification]);
+  }, [meetings, events, birthdays, tasks, addNotification, triggerAmbient]);
 }

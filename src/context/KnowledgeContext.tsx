@@ -458,9 +458,11 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return showToast("Đã xác thực Google Drive, vui lòng ấn lại nút Đồng bộ (tải lại trang nếu cần).", "success");
       }
       
-      showToast("Đang tải dữ liệu từ Google Drive cá nhân...", "info");
+      showToast("Đang tải dữ liệu từ Thư mục Drive Bộ não dùng chung...", "info");
       
-      const res = await fetch('https://www.googleapis.com/drive/v3/files?q=mimeType="text/plain" or mimeType="application/vnd.google-apps.document"&pageSize=10', {
+      const folderId = '1CSYZkSJYlC7NeISPYqEKMZw2CFhFSyih';
+      const q = `'${folderId}' in parents and (mimeType="text/plain" or mimeType="application/vnd.google-apps.document")`;
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&pageSize=50&fields=files(id,name,mimeType)`, {
         headers: { Authorization: `Bearer ${googleDriveToken}` },
       });
       const data = await res.json();
@@ -471,7 +473,7 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const isDuplicate = aiKnowledge.some(k => k.title === `Drive: ${file.name}`);
           if (!isDuplicate) {
             try {
-              let textContent = `Từ bộ nhớ Drive cá nhân: ${file.name}`;
+              let textContent = `Từ Thư mục Bộ não dùng chung (Drive): ${file.name}`;
               if (file.mimeType === 'application/vnd.google-apps.document') {
                 const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}/export?mimeType=text/plain`, {
                   headers: { Authorization: `Bearer ${googleDriveToken}` }
@@ -483,7 +485,7 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 });
                 if (fileRes.ok) textContent = await fileRes.text();
               }
-              await processAndSaveKnowledge(`Drive: ${file.name}\n${textContent.substring(0, 3000)}`, ['drive-sync', 'personal'], 'Google Drive');
+              await processAndSaveKnowledge(`Drive: ${file.name}\n${textContent.substring(0, 3000)}`, ['drive-sync', 'shared-brain'], 'Google Drive');
               count++;
             } catch (err) {
               console.warn("Could not fetch drive file details", err);

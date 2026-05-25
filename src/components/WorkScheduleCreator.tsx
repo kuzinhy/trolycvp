@@ -549,7 +549,7 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
         const baseItem = {
           id: item.id || (Date.now().toString() + Math.random().toString(36).substring(2, 9)),
           title: item.content || '',
-          date: item.date || new Date().toISOString(),
+          date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
           time: item.time || '08:00',
           endTime: item.endTime || '09:00',
           location: item.location || '',
@@ -564,6 +564,7 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
         if (typeLower.includes('họp') || typeLower.includes('giao ban')) {
           meetingsToUpdate.push({
             ...baseItem,
+            name: item.content || '',
             type: 'internal',
             chairperson: item.chairperson || '',
             preparingUnit: item.preparingUnit || ''
@@ -579,7 +580,7 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
             ...baseItem,
             priority: item.priority || 'medium',
             assignee: item.chairperson || (item.participants && item.participants[0]) || 'Chưa phân công',
-            deadline: item.date || new Date().toISOString()
+            deadline: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
           });
         }
       });

@@ -84,7 +84,7 @@ const ScheduleItemCard = React.memo(({ item, type, onEdit, isConflict }: { item:
           </div>
           
           <h4 className="text-sm font-black text-slate-800 leading-snug group-hover:text-blue-700 transition-colors uppercase tracking-tight">
-            {item.content || item.title}
+            {item.name || item.content || item.title}
           </h4>
           
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">

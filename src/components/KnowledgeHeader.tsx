@@ -183,9 +183,9 @@ export const KnowledgeHeader: React.FC<KnowledgeHeaderProps> = memo(({
                     <RefreshCw className={`w-4 h-4 text-orange-400 ${isSyncingDrive ? 'animate-spin' : ''}`} />
                   </div>
                   <div className="text-left">
-                    <p className="text-xs font-bold text-white">Đồng bộ Google Drive Cá nhân</p>
+                    <p className="text-xs font-bold text-white">Đồng bộ Bộ não dùng chung (Drive)</p>
                     <p className="text-[9px] text-slate-400 uppercase tracking-widest">
-                      Kết nối ổ cứng riêng làm bộ não phụ
+                      Kết nối ổ cứng dùng chung lấy tri thức
                     </p>
                   </div>
                 </div>

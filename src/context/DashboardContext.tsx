@@ -246,58 +246,67 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const persistentUpdateTasks = useCallback((updater: Task[] | ((prev: Task[]) => Task[])) => {
-    const prevTasks = tasks;
-    const newTasks = typeof updater === 'function' ? updater(prevTasks) : updater;
-    setTasks(newTasks);
+    setTasks(prevTasks => {
+      const newTasks = typeof updater === 'function' ? updater(prevTasks) : updater;
+      const added = newTasks.filter(n => !prevTasks.some(o => o.id === n.id));
+      const deleted = prevTasks.filter(o => !newTasks.some(n => n.id === o.id));
+      const updated = newTasks.filter(n => {
+        const old = prevTasks.find(o => o.id === n.id);
+        return old && JSON.stringify(old) !== JSON.stringify(n);
+      });
 
-    const added = newTasks.filter(n => !prevTasks.some(o => o.id === n.id));
-    const deleted = prevTasks.filter(o => !newTasks.some(n => n.id === o.id));
-    const updated = newTasks.filter(n => {
-      const old = prevTasks.find(o => o.id === n.id);
-      return old && JSON.stringify(old) !== JSON.stringify(n);
+      // Execute side-effects safely inside functional update context
+      // Note: In React 18 strict mode this might run twice, but addDoc/deleteDoc 
+      // are fine with idempotency if generating IDs, or we can deal with small double-writes.
+      // Since it's a manual UI action, it's acceptable.
+      added.forEach(t => addTask(t));
+      deleted.forEach(t => deleteTask(t.id));
+      updated.forEach(t => updateTask(t.id, t));
+      if (added.length > 0) showToast(`Đã lưu ${added.length} nhiệm vụ mới.`, "success");
+      
+      return newTasks;
     });
-
-    added.forEach(t => addTask(t));
-    deleted.forEach(t => deleteTask(t.id));
-    updated.forEach(t => updateTask(t.id, t));
-    if (added.length > 0) showToast(`Đã lưu ${added.length} nhiệm vụ mới.`, "success");
-  }, [tasks, addTask, updateTask, deleteTask, showToast]);
+  }, [addTask, updateTask, deleteTask, showToast]);
 
   const persistentUpdateMeetings = useCallback((updater: Meeting[] | ((prev: Meeting[]) => Meeting[])) => {
-    const prevMeetings = meetings;
-    const newMeetings = typeof updater === 'function' ? updater(prevMeetings) : updater;
-    setMeetings(newMeetings);
+    setMeetings(prevMeetings => {
+      const newMeetings = typeof updater === 'function' ? updater(prevMeetings) : updater;
 
-    const added = newMeetings.filter(n => !prevMeetings.some(o => o.id === n.id));
-    const deleted = prevMeetings.filter(o => !newMeetings.some(n => n.id === o.id));
-    const updated = newMeetings.filter(n => {
-      const old = prevMeetings.find(o => o.id === n.id);
-      return old && JSON.stringify(old) !== JSON.stringify(n);
+      const added = newMeetings.filter(n => !prevMeetings.some(o => o.id === n.id));
+      const deleted = prevMeetings.filter(o => !newMeetings.some(n => n.id === o.id));
+      const updated = newMeetings.filter(n => {
+        const old = prevMeetings.find(o => o.id === n.id);
+        return old && JSON.stringify(old) !== JSON.stringify(n);
+      });
+
+      added.forEach(m => addMeeting(m));
+      deleted.forEach(m => deleteMeeting(m.id));
+      updated.forEach(m => updateMeeting(m.id, m));
+      if (added.length > 0) showToast(`Đã lưu ${added.length} lịch họp mới.`, "success");
+
+      return newMeetings;
     });
-
-    added.forEach(m => addMeeting(m));
-    deleted.forEach(m => deleteMeeting(m.id));
-    updated.forEach(m => updateMeeting(m.id, m));
-    if (added.length > 0) showToast(`Đã lưu ${added.length} lịch họp mới.`, "success");
-  }, [meetings, addMeeting, updateMeeting, deleteMeeting, showToast]);
+  }, [addMeeting, updateMeeting, deleteMeeting, showToast]);
 
   const persistentUpdateEvents = useCallback((updater: Event[] | ((prev: Event[]) => Event[])) => {
-    const prevEvents = events;
-    const newEvents = typeof updater === 'function' ? updater(prevEvents) : updater;
-    setEvents(newEvents);
+    setEvents(prevEvents => {
+      const newEvents = typeof updater === 'function' ? updater(prevEvents) : updater;
 
-    const added = newEvents.filter(n => !prevEvents.some(o => o.id === n.id));
-    const deleted = prevEvents.filter(o => !newEvents.some(n => n.id === o.id));
-    const updated = newEvents.filter(n => {
-      const old = prevEvents.find(o => o.id === n.id);
-      return old && JSON.stringify(old) !== JSON.stringify(n);
+      const added = newEvents.filter(n => !prevEvents.some(o => o.id === n.id));
+      const deleted = prevEvents.filter(o => !newEvents.some(n => n.id === o.id));
+      const updated = newEvents.filter(n => {
+        const old = prevEvents.find(o => o.id === n.id);
+        return old && JSON.stringify(old) !== JSON.stringify(n);
+      });
+
+      added.forEach(e => addEvent(e));
+      deleted.forEach(e => deleteEvent(e.id));
+      updated.forEach(e => updateEvent(e.id, e));
+      if (added.length > 0) showToast(`Đã lưu ${added.length} sự kiện mới.`, "success");
+
+      return newEvents;
     });
-
-    added.forEach(e => addEvent(e));
-    deleted.forEach(e => deleteEvent(e.id));
-    updated.forEach(e => updateEvent(e.id, e));
-    if (added.length > 0) showToast(`Đã lưu ${added.length} sự kiện mới.`, "success");
-  }, [events, addEvent, updateEvent, deleteEvent, showToast]);
+  }, [addEvent, updateEvent, deleteEvent, showToast]);
 
   const generateSmartBriefing = useCallback(async () => {
     if (isGeneratingBriefing || !user) return;

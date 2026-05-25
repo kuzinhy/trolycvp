@@ -6,7 +6,7 @@ import {
   List, ListOrdered, Heading1, Heading2, Table as TableIcon, Image as ImageIcon,
   Undo, Redo, Type, ChevronLeft, ChevronRight, Wand2, Trash2, FileDown, 
   CheckCircle2, AlertCircle, Loader2, MoreVertical, Clock, Languages, 
-  Eraser, FileType, FileOutput, FileInput, Send, Columns
+  Eraser, FileType, FileOutput, FileInput, Send, Columns, BookOpen, BookText, X, CheckSquare, Square
 } from 'lucide-react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
@@ -301,6 +301,7 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
         case 'expand': prompt = `Hãy mở rộng và diễn đạt chi tiết hơn đoạn văn bản sau theo văn phong Đảng và Nhà nước. Chế độ soạn thảo: ${draftingMode === 'general' ? 'Chung' : draftingMode === 'resolution' ? 'Nghị quyết' : draftingMode === 'report' ? 'Báo cáo' : 'Tờ trình'}:\n\n${selectedText}`; break;
         case 'spellcheck': prompt = `Hãy kiểm tra lỗi chính tả, ngữ pháp và chuẩn hóa các thuật ngữ hành chính trong đoạn văn bản sau. Trả về bản đã sửa:\n\n${selectedText}`; break;
         case 'standardize': prompt = `Hãy chuẩn hóa đoạn văn bản sau theo đúng thể thức văn bản hành chính (Nghị định 30/2020/NĐ-CP). Chế độ soạn thảo: ${draftingMode === 'general' ? 'Chung' : draftingMode === 'resolution' ? 'Nghị quyết' : draftingMode === 'report' ? 'Báo cáo' : 'Tờ trình'}:\n\n${selectedText}`; break;
+        case 'spellcheck_enhance': prompt = `Hãy kiểm tra tổng thể lỗi chính tả, ngữ pháp của đoạn văn bản sau, sửa lại cho đúng và nâng cấp toàn bộ văn phong hành chính cho trang trọng, chuyên nghiệp hơn, phù hợp với tiêu chuẩn văn bản của cơ quan Đảng và Nhà nước. Hãy sửa trực tiếp vào văn bản và chỉ trả về đoạn văn bản đã được hoàn thiện (giữ nguyên định dạng HTML nếu có):\n\n${selectedText}`; break;
         default: prompt = `Với vai trò là trợ lý soạn thảo văn bản chuyên nghiệp, hãy thực hiện yêu cầu sau: ${action}. Chế độ soạn thảo: ${draftingMode}. Nội dung văn bản:\n\n${selectedText}`;
       }
 
@@ -327,6 +328,62 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
       editor.commands.insertContent(aiFeedback);
     }
     setAiFeedback('');
+  };
+
+  const [isAddingCitation, setIsAddingCitation] = useState(false);
+  const [showCitationModal, setShowCitationModal] = useState(false);
+  const [citationOptions, setCitationOptions] = useState<string[]>([]);
+  const [selectedCitations, setSelectedCitations] = useState<Set<number>>(new Set());
+
+  const handleAddCitation = async () => {
+    if (!aiFeedback) return;
+    setIsAddingCitation(true);
+    try {
+      const context = aiKnowledge?.map(k => `Tiêu đề: ${k.title}\nNội dung tóm tắt: ${k.content.substring(0, 1000)}`).join('\n\n') || '';
+      
+      const prompt = `Bạn là chuyên gia về thể thức văn bản Đảng. Dựa vào đoạn văn bản đang được đề xuất sửa chữa sau:
+---
+${aiFeedback}
+---
+
+Hãy tìm NHỮNG CĂN CỨ tương thích nhất từ Kho tri thức sau để trích dẫn:
+${context}
+
+Yêu cầu trả về: Mỗi căn cứ viết trên 1 dòng riêng biệt, bắt đầu bằng dấu gạch ngang "- Căn cứ ". KHÔNG thêm bất kỳ giải thích, đánh số hay văn bản nào khác. Nếu không tìm thấy, hãy trả về đúng 1 dòng: "- Căn cứ [Văn bản pháp quy có liên quan]..."`;
+      
+      const response = await generateContentWithRetry({
+        model: 'gemini-3.1-pro-preview',
+        contents: [{ parts: [{ text: prompt }] }]
+      });
+
+      const citationText = response.text || '';
+      const options = citationText.split('\n').map(line => line.trim()).filter(line => line.startsWith('- Căn cứ'));
+      
+      if (options.length > 0) {
+        setCitationOptions(options);
+        setSelectedCitations(new Set(options.map((_, idx) => idx))); // Select all by default
+        setShowCitationModal(true);
+      } else {
+        showToast('Không tìm thấy căn cứ phù hợp', 'info');
+      }
+    } catch (err) {
+      showToast('Lỗi khi tìm căn cứ', 'error');
+    } finally {
+      setIsAddingCitation(false);
+    }
+  };
+
+  const applySelectedCitations = () => {
+    const selectedText = Array.from(selectedCitations)
+      .sort()
+      .map(idx => citationOptions[idx])
+      .join('\n');
+    
+    if (selectedText) {
+      setAiFeedback(prev => prev + '\n\n**Căn cứ pháp lý theo đề xuất:**\n' + selectedText);
+      showToast('Đã chèn trích dẫn căn cứ', 'success');
+    }
+    setShowCitationModal(false);
   };
 
   const filteredDocs = documents.filter(d => 
@@ -562,12 +619,21 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
                         <div className="text-sm text-indigo-900 leading-relaxed max-h-[300px] overflow-y-auto custom-scrollbar prose prose-sm prose-indigo">
                           <Markdown>{aiFeedback}</Markdown>
                         </div>
-                        <button 
-                          onClick={applyAIResult}
-                          className="w-full mt-4 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-md shadow-indigo-600/20"
-                        >
-                          Áp dụng vào văn bản
-                        </button>
+                        <div className="flex gap-2 w-full mt-4">
+                          <button 
+                            onClick={applyAIResult}
+                            className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-md shadow-indigo-600/20"
+                          >
+                            Áp dụng
+                          </button>
+                          <button 
+                            onClick={handleAddCitation}
+                            disabled={isAddingCitation}
+                            className="flex-1 py-2.5 bg-white border border-indigo-200 text-indigo-700 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center gap-2"
+                          >
+                            {isAddingCitation ? <Loader2 size={14} className="animate-spin" /> : <BookOpen size={14} />} Trích dẫn căn cứ
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -812,9 +878,18 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
 
         {/* Editor Content */}
         <div className={cn("flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 p-8 flex gap-4", layout === 'split' ? "flex-row" : "justify-center")}>
-          <div className={cn("bg-white shadow-xl border border-slate-200 min-h-[1056px] p-[2.5cm] tiptap-editor-container relative group transition-all duration-500", layout === 'split' ? "w-1/2" : "w-full max-w-[850px]")}>
+          <div className={cn("bg-white shadow-2xl shadow-slate-200/50 border border-slate-100 hover:border-indigo-200 hover:shadow-indigo-100/40 hover:-translate-y-0.5 rounded-3xl min-h-[1056px] p-6 flex flex-col tiptap-editor-container relative group transition-all duration-500", layout === 'split' ? "w-1/2" : "w-full max-w-[850px]")}>
             {currentDoc ? (
               <>
+                <button
+                  onClick={() => handleAIAction('spellcheck_enhance')}
+                  disabled={isAIProcessing}
+                  title="Sửa lỗi & Nâng cấp văn phong toàn văn bản"
+                  className="absolute top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:pointer-events-none opacity-0 group-hover:opacity-100 focus:opacity-100"
+                >
+                  {isAIProcessing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  <span className="text-xs font-bold uppercase tracking-wider">AI Rà soát & Nâng cấp</span>
+                </button>
                 <input 
                   type="text"
                   value={currentDoc.title}
@@ -866,6 +941,13 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
         .tiptap-editor-container .ProseMirror {
           min-height: 800px;
           outline: none;
+          font-family: 'Times New Roman', Times, serif;
+          font-size: 14pt;
+          line-height: 1.8;
+          color: #0f172a;
+        }
+        .tiptap-editor-container .ProseMirror p {
+          margin-bottom: 1em;
         }
         .tiptap-editor-container .ProseMirror p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
@@ -913,6 +995,90 @@ export const ComposePro: React.FC<ComposeProProps> = ({ showToast, aiKnowledge }
           }
         }
       `}</style>
+      
+      {/* Citation Modal */}
+      <AnimatePresence>
+        {showCitationModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <BookOpen size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-lg">Chọn Căn cứ Pháp lý Tương thích</h3>
+                    <p className="text-sm text-slate-500">AI đã rà soát kho tri thức và đề xuất các căn cứ sau.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowCitationModal(false)}
+                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50">
+                <div className="space-y-3">
+                  {citationOptions.map((option, idx) => {
+                    const isSelected = selectedCitations.has(idx);
+                    return (
+                      <div 
+                        key={idx}
+                        onClick={() => {
+                          const newCitations = new Set(selectedCitations);
+                          if (isSelected) newCitations.delete(idx);
+                          else newCitations.add(idx);
+                          setSelectedCitations(newCitations);
+                        }}
+                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
+                          isSelected 
+                            ? 'border-indigo-500 bg-indigo-50/50 shadow-sm' 
+                            : 'border-slate-200 bg-white hover:border-indigo-300'
+                        }`}
+                      >
+                        <div className={`mt-0.5 ${isSelected ? 'text-indigo-600' : 'text-slate-300'}`}>
+                          {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
+                        </div>
+                        <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                          {option.replace('- ', '')}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3 rounded-b-3xl">
+                <button 
+                  onClick={() => setShowCitationModal(false)}
+                  className="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors text-sm"
+                >
+                  Hủy bỏ
+                </button>
+                <button 
+                  onClick={applySelectedCitations}
+                  disabled={selectedCitations.size === 0}
+                  className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition-colors disabled:opacity-50 flex items-center gap-2 text-sm shadow-md shadow-indigo-600/20"
+                >
+                  <CheckCircle2 size={18} /> Chèn {selectedCitations.size} căn cứ
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

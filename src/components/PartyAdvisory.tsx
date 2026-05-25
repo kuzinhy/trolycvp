@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { 
   Lightbulb, 
   Sparkles, 
@@ -32,29 +34,40 @@ export const PartyAdvisory: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AdvisoryResult | null>(null);
   const [query, setQuery] = useState('');
+  const [customApiKey, setCustomApiKey] = useState('');
 
   const generateAdvisory = async () => {
     setIsAnalyzing(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKeyToUse = customApiKey.trim() || process.env.GEMINI_API_KEY;
+      if (!apiKeyToUse) {
+        throw new Error("Không có API Key. Vui lòng nhập Token hệ thống hoặc kiểm tra cấu hình chung.");
+      }
+      
+      const ai = new GoogleGenAI({ apiKey: apiKeyToUse });
       let prompt = '';
       
+      const citationInstruction = "QUAN TRỌNG: Bạn PHẢI trích dẫn rõ nguồn gốc (như: Theo Chỉ thị/Nghị quyết số..., trên Báo Điện tử Đảng Cộng sản, Cổng thông tin Chính phủ...) cho các thông tin, chủ trương đưa ra để đảm bảo tính tin cậy tuyệt đối.";
+      
       if (activeTab === 'meeting') {
-        prompt = `Hãy gợi ý nội dung sinh hoạt chi bộ cho tháng hiện tại (Tháng 3/2026). 
-           Dựa trên các nhiệm vụ chính trị trọng tâm của Đảng hiện nay.
+        const currentDate = format(new Date(), 'MM/yyyy', { locale: vi });
+        prompt = `Bạn là Trợ lý tham mưu chuyên nghiệp của cơ quan Đảng. Hãy gợi ý nội dung sinh hoạt chi bộ cho thời điểm hiện tại (Tháng ${currentDate}). 
+           Dựa trên các nhiệm vụ chính trị trọng tâm, các định hướng của Trung ương, Thành ủy, địa phương và các vấn đề thời sự nổi bật nhất hiện nay.
            Hãy gợi ý:
-           1. Chủ đề sinh hoạt chuyên đề sát thực tế.
-           2. Nội dung trọng tâm cần thảo luận.
+           1. Chủ đề sinh hoạt chuyên đề sát với thời gian thực và tình hình thực tế.
+           2. Nội dung trọng tâm cần thảo luận (gắn với các vấn đề đang 'nóng' cần giải quyết).
            3. Các giải pháp thực hiện cụ thể cho chi bộ.
-           4. Các văn bản cần quán triệt.`;
+           4. Các văn bản chỉ đạo mới nhất cần quán triệt.
+           ${citationInstruction}`;
       } else if (activeTab === 'briefing') {
-        prompt = `Tham mưu nhanh cho Bí thư về nội dung chỉ đạo trong tuần này (Tuần 14/2026).
+        prompt = `Tham mưu nhanh cho Bí thư về nội dung chỉ đạo trong tuần này.
            Câu hỏi/Yêu cầu: "${query || 'Tuần này nên tập trung chỉ đạo gì?'}"
            Hãy phân tích tình hình thời sự, các chỉ đạo cấp trên và dữ liệu địa phương (giả định) để gợi ý:
            1. Các nhiệm vụ trọng tâm cần chỉ đạo ngay.
            2. Nội dung phát biểu/chỉ đạo gợi ý.
            3. Các rủi ro cần lưu ý.
-           4. Các đơn vị cần đôn đốc.`;
+           4. Các đơn vị cần đôn đốc.
+           ${citationInstruction}`;
       } else if (activeTab === 'strategic') {
         prompt = `Bạn là Trợ lý Tham mưu Chiến lược cho Bí thư Đảng ủy. 
            Nhiệm vụ: Đề xuất các giải pháp tham mưu cho Bí thư Đảng ủy để thực hiện hiệu quả nhiệm vụ: '${query || '[MÔ TẢ NHIỆM VỤ CỤ THỂ]'}'
@@ -62,7 +75,8 @@ export const PartyAdvisory: React.FC = () => {
            1. Nội dung đề xuất cần ngắn gọn, có trọng tâm và mang tính thực tiễn cao.
            2. Phân tích các bước thực hiện then chốt.
            3. Đề xuất các giải pháp đột phá hoặc giải quyết nút thắt.
-           4. Dự báo các khó khăn và cách khắc phục.`;
+           4. Dự báo các khó khăn và cách khắc phục.
+           ${citationInstruction}`;
       }
 
       const model = ai.models.generateContent({
@@ -146,18 +160,19 @@ export const PartyAdvisory: React.FC = () => {
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             <div className="space-y-4">
               <h3 className="font-black text-slate-900 uppercase tracking-wider text-sm">
-                {activeTab === 'meeting' ? 'Cấu hình Gợi ý' : activeTab === 'briefing' ? 'Nội dung yêu cầu' : 'Mô tả nhiệm vụ cụ thể'}
+                {activeTab === 'meeting' ? 'Trí tuệ nhân tạo Tự động' : activeTab === 'briefing' ? 'Nội dung yêu cầu' : 'Mô tả nhiệm vụ cụ thể'}
               </h3>
               
               {activeTab === 'meeting' ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Thời điểm</p>
-                    <p className="text-sm font-bold text-slate-700">Tháng 03/2026 - Quý I</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nhiệm vụ chính trị</p>
-                    <p className="text-sm font-bold text-slate-700">Đại hội Đảng các cấp, Chuyển đổi số, Phát triển kinh tế xanh.</p>
+                  <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-start gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg text-blue-600 mt-0.5">
+                      <Sparkles size={16} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-blue-900 mb-1">Tự động hóa hoàn toàn</p>
+                      <p className="text-xs text-blue-700/80 leading-relaxed font-medium">Hệ thống AI sẽ tự động phân tích thời gian thực (tháng hiện tại), liên kết các chỉ đạo mới nhất của Trung ương, Thành ủy và các điểm nóng thời sự để đề xuất nội dung sinh hoạt phù hợp nhất.</p>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -170,6 +185,19 @@ export const PartyAdvisory: React.FC = () => {
                   />
                 </div>
               )}
+              
+              <div className="pt-2 border-t border-slate-100">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
+                  Sử dụng GEMINI TOKEN riêng (Tuỳ chọn)
+                </label>
+                <input
+                  type="password"
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder="Nhập API Key nếu sử dụng token khác..."
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-xs font-medium"
+                />
+              </div>
             </div>
 
             <button
@@ -219,15 +247,16 @@ export const PartyAdvisory: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl border border-indigo-200 shadow-[0_0_40px_-15px_rgba(99,102,241,0.2)] space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-transparent blur-3xl rounded-full pointer-events-none" />
+                  <div className="flex items-center justify-between relative z-10">
                     <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">{result.title}</h2>
-                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
                       <CheckCircle2 size={20} />
                     </div>
                   </div>
 
-                  <div className="prose prose-slate max-w-none">
+                  <div className="prose prose-slate max-w-none relative z-10">
                     <p className="text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">{result.content}</p>
                   </div>
 
@@ -275,26 +304,60 @@ export const PartyAdvisory: React.FC = () => {
                 </div>
               </motion.div>
             ) : isAnalyzing ? (
-              <div className="bg-white p-12 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center space-y-6 h-full min-h-[500px]">
-                <div className="relative">
-                  <div className="w-20 h-20 bg-amber-100 rounded-full animate-ping absolute inset-0" />
-                  <div className="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center text-white relative z-10">
-                    <Sparkles size={40} className="animate-pulse" />
+              <div className="bg-[#fafafd]/50 backdrop-blur-xl p-12 rounded-3xl border border-indigo-100 shadow-sm flex flex-col items-center justify-center text-center space-y-6 h-full min-h-[500px] relative overflow-hidden">
+                {/* Tech background elements */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-[-50%] border-[0.5px] border-indigo-200/40 rounded-full opacity-30"
+                  style={{ backgroundImage: 'radial-gradient(circle, transparent 50%, rgba(99,102,241,0.1) 100%)' }}
+                />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                  className="absolute w-[150%] h-[150%] border-[1px] border-blue-200/30 rounded-full opacity-30"
+                  style={{ borderStyle: 'dashed' }}
+                />
+                <div className="relative z-10 space-y-8">
+                  <div className="w-24 h-24 mx-auto bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center text-white relative shadow-2xl shadow-indigo-500/30 overflow-hidden">
+                    <motion.div
+                      animate={{ y: ['-100%', '100%'] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent blur-sm"
+                    />
+                    <Zap size={40} className="relative z-10" />
                   </div>
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">AI đang phân tích dữ liệu chiến lược</h3>
-                  <p className="text-slate-500 font-medium max-w-xs mx-auto">Vui lòng đợi trong giây lát, trợ lý đang tổng hợp các chỉ đạo và tình hình thực tế...</p>
+                  <div>
+                    <motion.h3 
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      className="text-xl font-black text-slate-800 uppercase tracking-tight mb-3"
+                    >
+                      AI đang phân tích dữ liệu chiến lược
+                    </motion.h3>
+                    <p className="text-slate-500 font-medium max-w-sm mx-auto">
+                      Hệ thống đang tổng hợp dữ liệu thực tế, các chỉ đạo mới nhất và trích xuất tri thức từ hệ thống...
+                    </p>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-slate-50 rounded-3xl border border-dashed border-slate-300 p-12 flex flex-col items-center justify-center text-center space-y-6 h-full min-h-[500px]">
-                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
-                  <Lightbulb size={40} />
+              <div className="bg-white/40 backdrop-blur-md rounded-3xl border border-dashed border-indigo-200/70 p-12 flex flex-col items-center justify-center text-center space-y-6 h-full min-h-[500px]">
+                <div className="relative">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-0 bg-indigo-100/50 rounded-full blur-xl"
+                  />
+                  <div className="w-20 h-20 bg-slate-50/80 backdrop-blur-sm rounded-full flex items-center justify-center text-indigo-300 relative z-10">
+                    <Sparkles size={40} />
+                  </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-400 uppercase tracking-tight mb-2">Sẵn sàng tham mưu</h3>
-                  <p className="text-slate-400 font-medium max-w-xs mx-auto">Chọn chức năng bên trái và nhấn nút để nhận các gợi ý chiến lược từ AI.</p>
+                  <h3 className="text-xl font-black text-slate-700 uppercase tracking-tight mb-2">Hệ thống sẵn sàng tư vấn</h3>
+                  <p className="text-slate-500 font-medium max-w-sm mx-auto">
+                    Trí tuệ nhân tạo đã được tối ưu hóa cho công tác tham mưu. Kết quả được căn chỉnh phù hợp với văn phong chính trị, pháp lý cơ quan Đảng.
+                  </p>
                 </div>
               </div>
             )}

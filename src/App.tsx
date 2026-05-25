@@ -165,6 +165,7 @@ function AppContent() {
 
 // ...
 import { useUserPreferences } from './context/UserPreferencesContext';
+import { SciFiBackground } from './components/SciFiBackground';
 
 import { trackUserPresence } from './lib/presence';
 
@@ -287,11 +288,12 @@ function AuthenticatedApp() {
       </div>
     }>
       <div className={cn(
-        "flex h-screen bg-slate-50 transition-colors duration-500 os-grid relative focus:outline-none",
+        "flex h-screen bg-transparent transition-colors duration-500 os-grid relative focus:outline-none",
         preferences.sidebarPosition === 'right' && "flex-row-reverse"
       )}>
-        <div className="os-scanline" />
-        <div className="os-noise" />
+        <SciFiBackground />
+        <div className="os-scanline pointer-events-none" />
+        <div className="os-noise pointer-events-none" />
         
       <ConfirmationModal
         isOpen={pendingTab !== null}
