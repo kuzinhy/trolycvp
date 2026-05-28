@@ -126,7 +126,7 @@ export function useChat(
     setIsLearning(true);
     try {
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [
           {
             role: 'user',
@@ -259,7 +259,7 @@ LƯU Ý QUAN TRỌNG:
       }
 
       const responseStream = await generateContentStreamWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [
           {
             role: 'user',

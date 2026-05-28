@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BarChart3, Download, FileText, RefreshCw, PieChart as PieChartIcon, TrendingUp, CheckCircle2, Clock, AlertCircle, X, Search, Calendar, Tag, ChevronRight, Layers, Brain } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart3, Download, FileText, RefreshCw, PieChart as PieChartIcon, TrendingUp, CheckCircle2, Clock, AlertCircle, X, Search, Calendar, Tag, ChevronRight, Layers, Brain, Activity } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, AreaChart, Area, CartesianGrid } from 'recharts';
 import { generateContentWithRetry } from '../lib/ai-utils';
+import { db } from '../lib/firebase';
+import { collection, query, getDocs, where, Timestamp } from 'firebase/firestore';
 import { cn } from '../lib/utils';
 
 interface ReportingModuleProps {
@@ -70,10 +72,70 @@ export const ReportingModule: React.FC<ReportingModuleProps> = ({ tasks = [], kn
     setIsGenerating(true);
     try {
       let prompt = '';
-      let model = 'gemini-3-flash-preview';
+      let model = 'gemini-3.5-flash';
       
       if (generationMode === 'auto') {
-        prompt = `
+        if (reportType === 'system_activity') {
+          // Fetch access logs for the past 30 days
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          
+          const logsQuery = query(
+            collection(db, 'access_logs'),
+            where('timestamp', '>=', Timestamp.fromDate(thirtyDaysAgo))
+          );
+          
+          let logData: any[] = [];
+          try {
+            const snapshot = await getDocs(logsQuery);
+            logData = snapshot.docs.map(doc => doc.data());
+          } catch (e) {
+            console.warn("Index missing for access_logs or permission denied, fetching all instead", e);
+            const fallbackQuery = query(collection(db, 'access_logs'));
+            const fallbackSnapshot = await getDocs(fallbackQuery);
+            logData = fallbackSnapshot.docs
+              .map(doc => doc.data())
+              .filter(d => d.timestamp && typeof d.timestamp.toDate === 'function' && d.timestamp.toDate() >= thirtyDaysAgo);
+          }
+
+          // Aggregate analytics
+          const actionCounts: Record<string, number> = {};
+          const moduleCounts: Record<string, number> = {};
+          let totalActivity = 0;
+
+          logData.forEach(log => {
+            totalActivity++;
+            const act = log.action || 'Khác';
+            const mod = log.module || 'Hệ thống';
+            actionCounts[act] = (actionCounts[act] || 0) + 1;
+            moduleCounts[mod] = (moduleCounts[mod] || 0) + 1;
+          });
+
+          const topActions = Object.entries(actionCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+          const topModules = Object.entries(moduleCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+          prompt = `
+Bạn là một chuyên gia quản trị và phân tích hệ thống. Hãy viết một báo cáo phân tích xu hướng hoạt động hệ thống trong tháng vừa qua dựa trên dữ liệu nhật ký truy cập (access_logs).
+
+**Dữ liệu tổng hợp (30 ngày qua):**
+- Tổng số lượt tương tác/truy cập: ${totalActivity}
+- Top 5 hành động phổ biến nhất: 
+${topActions.map(a => `   + ${a[0]}: ${a[1]} lượt`).join('\n')}
+- Top 5 phân hệ được sử dụng nhiều nhất:
+${topModules.map(m => `   + ${m[0]}: ${m[1]} lượt`).join('\n')}
+
+**Yêu cầu báo cáo:**
+- Tiêu đề: BÁO CÁO XU HƯỚNG HOẠT ĐỘNG HỆ THỐNG TRONG THÁNG (TÓM TẮT).
+- Sử dụng tiếng Việt trang trọng, phong cách chuyên nghiệp.
+- Cấu trúc gồm: 
+  I. TỔNG QUAN TÌNH HÌNH TRUY CẬP (nhấn mạnh sự sôi động hoặc tập trung vào đâu).
+  II. CHI TIẾT TƯƠNG TÁC THEO PHÂN HỆ VÀ HÀNH ĐỘNG.
+  III. ĐÁNH GIÁ CHUNG VÀ ĐỀ XUẤT (tối ưu hóa phân hệ nào, lưu ý bảo mật hoặc hiệu suất nếu cần).
+Trình bày bằng format Markdown đẹp mắt.
+`;
+          model = 'gemini-3.1-pro-preview';
+        } else {
+          prompt = `
 Bạn là một trợ lý phân tích dữ liệu chuyên nghiệp. Hãy viết một báo cáo tổng hợp (loại báo cáo: ${reportType}) dựa trên các số liệu sau:
 
 1. Tình hình nhiệm vụ:
@@ -91,6 +153,7 @@ Yêu cầu:
 - Cấu trúc rõ ràng: Tiêu đề, Tóm tắt số liệu, Đánh giá chung, Đề xuất/Khuyến nghị.
 - Nhấn mạnh vào tỷ lệ hoàn thành và các công việc quá hạn (nếu có).
 `;
+        }
       } else {
         model = 'gemini-3.1-pro-preview';
         prompt = `Bạn là chuyên gia văn phòng Đảng ủy. Hãy soạn thảo một báo cáo tổng kết chuyên nghiệp dựa trên các thông tin sau:
@@ -338,6 +401,7 @@ Yêu cầu:
                 <option value="weekly">Báo cáo tuần</option>
                 <option value="monthly">Báo cáo tháng</option>
                 <option value="quarterly">Báo cáo quý</option>
+                <option value="system_activity">Xu hướng hệ thống (Access Logs)</option>
               </select>
             </div>
           ) : (

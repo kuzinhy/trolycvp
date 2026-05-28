@@ -456,7 +456,7 @@ HÃY TRẢ VỀ MỘT MẢNG JSON các ScheduleItem đã được điều chỉn
 Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
 
       const model = ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
         config: { responseMimeType: "application/json" }
       });
@@ -654,7 +654,7 @@ Chỉ trả về JSON mảng các đối tượng đã thay đổi.`;
       - Chỉ trả về JSON duy nhất.`;
 
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
         config: { responseMimeType: "application/json" }
       });
@@ -978,7 +978,7 @@ Cấu trúc: { date (YYYY-MM-DD), time (HH:mm), endTime (HH:mm), content, chairp
 Chỉ trả về JSON.`;
 
       const model = ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
         config: { responseMimeType: "application/json" }
       });
@@ -1073,7 +1073,7 @@ Cấu trúc mỗi mục: { id, date (YYYY-MM-DD), time (HH:mm), endTime (HH:mm),
 Chỉ trả về JSON.`;
 
       const model = ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
         config: { responseMimeType: "application/json" }
       });

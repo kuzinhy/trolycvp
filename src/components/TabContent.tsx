@@ -175,6 +175,7 @@ export const TabContent = memo(({
       case 'drafting-pro':
       case 'review':
       case 'drafting-pro-review':
+      case 'drafting-pro-speech':
       case 'meeting':
       case 'knowledge-linker':
         return (

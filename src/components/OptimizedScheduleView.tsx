@@ -284,7 +284,7 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
       - Chỉ trả về JSON duy nhất.`;
 
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
         config: { responseMimeType: "application/json" }
       });

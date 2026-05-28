@@ -40,7 +40,7 @@ export const SmartEmailAssistant: React.FC<{ aiKnowledge: any[], showToast: (mes
 
     try {
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [
           {
             parts: [

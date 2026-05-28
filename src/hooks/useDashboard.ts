@@ -96,7 +96,7 @@ export function useDashboard(
       Lưu ý: Sử dụng Markdown để trình bày (in đậm các mốc thời gian, tên nhiệm vụ). Chỉ trả về nội dung bản tin.`;
 
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
       });
 

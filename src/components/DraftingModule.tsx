@@ -226,7 +226,7 @@ export const DraftingModule: React.FC<DraftingModuleProps> = ({
 Hãy kiểm tra văn bản dưới đây dựa trên các tiêu chí sau:
 1. Quy tắc bắt buộc:
 ${activeRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
-${complianceCheck ? '2. Tuân thủ quy định Đảng: Kiểm tra chặt chẽ các thuật ngữ, thể thức văn bản theo quy định của Đảng (ví dụ: Quy định 66-QĐ/TW về thể thức văn bản của Đảng).' : ''}
+${complianceCheck ? '2. Tuân thủ quy định Đảng: Kiểm tra chặt chẽ các thuật ngữ, thể thức văn bản theo quy định của Đảng (ví dụ: Hướng dẫn 05-HD/VPTW và Quy định 399-QĐ/TW về thể loại, thẩm quyền, thể thức văn bản của Đảng).' : ''}
 3. Mẫu văn bản: ${template !== 'none' ? `Sử dụng mẫu: ${template}` : 'Không áp dụng mẫu cụ thể.'}
 
 Thông tin bổ sung:

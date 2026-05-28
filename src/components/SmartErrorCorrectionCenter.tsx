@@ -246,7 +246,7 @@ export const SmartErrorCorrectionCenter: React.FC = () => {
         Yêu cầu: Trả về một đoạn văn ngắn gọn (khoảng 3-4 câu), chuyên nghiệp, mang tính thực thi cao bằng tiếng Việt. Tập trung vào giải pháp kỹ thuật cụ thể.`;
         
         const result = await generateContentWithRetry({
-          model: "gemini-3-flash-preview",
+          model: "gemini-3.5-flash",
           contents: [{ parts: [{ text: prompt }] }]
         });
         

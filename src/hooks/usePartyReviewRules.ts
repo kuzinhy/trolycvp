@@ -27,18 +27,18 @@ export function usePartyReviewRules() {
           {
             id: 'rule-1',
             category: 'party_rule',
-            title: 'Quy định 66-QĐ/TW',
-            description: 'Về thể thức văn bản của Đảng.',
+            title: 'Hướng dẫn 05-HD/VPTW (2026)',
+            description: 'Thể thức bản sao, lề giấy, phông chữ.',
             isActive: true,
-            content: 'Tuân thủ nghiêm ngặt Quy định 66-QĐ/TW về thể thức: Căn lề lề trái 30-35mm, lề phải 15-20mm, lề trên 20-25mm, lề dưới 20-25mm. Font chữ chân phương (Time New Roman).'
+            content: 'Tuân thủ Hướng dẫn 05-HD/VPTW: Lề trái 30mm, lề phải 15mm, lề trên 20mm, lề dưới 20mm. Font chữ Times New Roman (TCVN 6909:2001), màu đen. Ghi chú đúng thẩm quyền ký.'
           },
           {
             id: 'rule-2',
             category: 'party_rule',
-            title: 'Ngôn từ Chính trị',
-            description: 'Sử dụng thuật ngữ Đảng chính xác.',
+            title: 'Quy định 399-QĐ/TW',
+            description: 'Thể loại, thẩm quyền ban hành.',
             isActive: true,
-            content: 'Sử dụng các thuật ngữ chính trị chuẩn mực (ví dụ: "nâng cao năng lực lãnh đạo", "sức chiến đấu của tổ chức Đảng"). Tuyệt đối không dùng tiếng lóng, từ ngữ không chính thống.'
+            content: 'Áp dụng Quy định 399-QĐ/TW (2026) về loại văn bản Đảng. Sử dụng các thuật ngữ chính trị chuẩn mực, tuyệt đối không dùng tiếng lóng. Đúng chức danh thẩm quyền ban hành.'
           },
           {
             id: 'rule-3',

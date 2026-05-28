@@ -1036,6 +1036,31 @@ app.post("/api/news/serpapi", async (req, res) => {
   }
 });
 
+import Parser from 'rss-parser';
+
+// Proxy for RSS parser
+app.post("/api/news/rss", async (req, res) => {
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: "Missing RSS URL" });
+  }
+
+  try {
+    const parser = new Parser({
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      }
+    });
+
+    const feed = await parser.parseURL(url);
+    res.json(feed);
+  } catch (error: any) {
+    console.error(`RSS Parser Error for ${url}:`, error.message);
+    res.status(500).json({ error: "Failed to parse RSS feed", details: error.message });
+  }
+});
+
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });

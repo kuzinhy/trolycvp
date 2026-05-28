@@ -45,7 +45,7 @@ export const SmartTaskManager: React.FC = () => {
       (Chỉ trả về JSON, không có định dạng khác)`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
         config: { responseMimeType: 'application/json' }
       });

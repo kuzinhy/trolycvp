@@ -154,7 +154,7 @@ export const KnowledgeForm: React.FC<KnowledgeFormProps> = memo(({
       Trả về JSON: { "tags": ["tag1", "tag2"], "summary": "tóm tắt" }`;
       
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-lite-preview',
+        model: 'gemini-3.1-flash-lite',
         contents: prompt,
         config: { responseMimeType: 'application/json' }
       });

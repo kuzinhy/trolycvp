@@ -124,7 +124,7 @@ export const PartyDocumentChecker: React.FC = () => {
       .join('\n');
 
     try {
-      const prompt = `Bạn là một Chuyên gia Thư ký Đảng uỷ và Ngôn ngữ học chính trị, tuân thủ Quy định 66-QĐ/TW.
+      const prompt = `Bạn là một Chuyên gia Thư ký Đảng uỷ và Ngôn ngữ học chính trị, tuân thủ chặt chẽ Hướng dẫn 05-HD/VPTW (năm 2026) và Quy định 399-QĐ/TW (năm 2026).
       NHIỆM VỤ: Rà soát và chỉnh lỗi văn bản Đảng dựa trên các quy tắc sau:
       ${activeRulesContent}
 
@@ -208,7 +208,7 @@ export const PartyDocumentChecker: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-[#2c7a36] px-4 py-1.5 rounded-md text-[11px] font-bold flex items-center gap-2 shadow-sm">
-            <CheckCircle2 size={14} /> Chuẩn Quy định 66-QĐ/TW
+            <CheckCircle2 size={14} /> Chuẩn HD 05-HD/VPTW & QĐ 399
           </div>
         </div>
       </div>
@@ -334,7 +334,7 @@ export const PartyDocumentChecker: React.FC = () => {
                         <Loader2 size={32} className="animate-spin text-rose-500" />
                         <div className="text-center">
                           <p className="text-sm font-bold uppercase tracking-widest">Đang rà soát trí tuệ nhân tạo</p>
-                          <p className="text-[10px] text-slate-400 mt-1">Đang đối chiếu dữ liệu với Quy định 66 và Điều lệ Đảng...</p>
+                          <p className="text-[10px] text-slate-400 mt-1">Đang đối chiếu dữ liệu với Hướng dẫn 05-HD/VPTW và Quy định 399-QĐ/TW...</p>
                         </div>
                       </div>
                       {[1, 2, 3].map(i => (

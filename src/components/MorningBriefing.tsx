@@ -59,7 +59,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({ tasks, meeting
         5. Chỉ trả về nội dung bản tin.`;
 
         const response = await generateContentWithRetry({
-          model: 'gemini-3-flash-preview',
+          model: 'gemini-3.5-flash',
           contents: [{ parts: [{ text: prompt }] }]
         });
 

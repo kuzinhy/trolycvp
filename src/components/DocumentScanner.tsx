@@ -31,7 +31,7 @@ export const DocumentScanner: React.FC = () => {
       }`;
       
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: prompt
       });
       const jsonResult = JSON.parse(response.text || '{}');

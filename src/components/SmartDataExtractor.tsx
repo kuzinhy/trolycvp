@@ -45,7 +45,7 @@ export const SmartDataExtractor: React.FC = () => {
     try {
       if (mode === 'general') {
         const response = await generateContentWithRetry({
-          model: "gemini-3.1-flash-preview",
+          model: "gemini-3.5-flash",
           contents: [{ parts: [{ text: `Phân tích văn bản sau và trích xuất dữ liệu, định dạng JSON:\n\n${text}` }] }],
           config: {
             responseMimeType: "application/json",
@@ -71,7 +71,7 @@ export const SmartDataExtractor: React.FC = () => {
         })}`;
 
         const response = await generateContentWithRetry({
-          model: "gemini-3.1-flash-preview",
+          model: "gemini-3.5-flash",
           contents: [{ parts: [{ text: `Bạn là trợ lý AI. Hãy phân tích văn bản sau để trích xuất các mục lịch họp, sự kiện, hoặc nhiệm vụ công việc. Định dạng trả về là JSON.\n\n${text}${contextStr}` }] }],
           config: {
             responseMimeType: "application/json",

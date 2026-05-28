@@ -59,7 +59,7 @@ export function useConclusionCreator() {
       const knowledgeContext = buildGraphRagContext(graphRagQuery, aiKnowledge, 12000);
 
       const prompt = `
-        BẠN LÀ: Một Chuyên gia Tham mưu cao cấp cho Thường trực Đảng uỷ phường tại Việt Nam, am hiểu sâu sắc Quy định 66-QĐ/TW về thể thức văn bản của Đảng. 
+        BẠN LÀ: Một Chuyên gia Tham mưu cao cấp cho Thường trực Đảng uỷ phường tại Việt Nam, am hiểu sâu sắc Hướng dẫn 05-HD/VPTW và Quy định 399-QĐ/TW về thể thức, phân loại văn bản của Đảng. 
         NHIỆM VỤ: Soạn thảo "Dàn ý Chiến lược và Nội dung Cốt lõi" cho Thông báo kết luận cuộc họp.
         PHONG CÁCH: Quyết liệt, thực chất, bám sát thực tiễn cơ sở, sử dụng ngôn ngữ chỉ đạo sắc bén của Đảng.
 
@@ -71,10 +71,10 @@ export function useConclusionCreator() {
         - Loại hình: ${meetingType}
         
         BỐI CẢNH ĐỊA PHƯƠNG & CHỈ ĐẠO CẤP TRÊN (Dữ liệu tri thức):
-        ${knowledgeContext || "Sử dụng kiến thức nghiệp vụ tham mưu Đảng uỷ phường tiêu chuẩn và tinh thần Quy định 66-QĐ/TW."}
+        ${knowledgeContext || "Sử dụng kiến thức nghiệp vụ tham mưu Đảng uỷ phường tiêu chuẩn và tinh thần Hướng dẫn 05-HD/VPTW."}
 
         YÊU CẦU CHI TIẾT:
-        1. Xây dựng dàn ý 4 phần đúng chuẩn Quy định 66:
+        1. Xây dựng dàn ý 4 phần đúng chuẩn HD 05 và QĐ 399:
            - I. ĐÁNH GIÁ CHUNG: Phải nêu bật được kết quả đạt được và đặc biệt là những "điểm nghẽn", tồn tại tại cơ sở.
            - II. NHIỆM VỤ TRỌNG TÂM: Đưa ra các giải pháp cụ thể, có định hướng thực chất, không nói suông.
            - III. TỔ CHỨC THỰC HIỆN: Giao nhiệm vụ rõ người, rõ việc, rõ thời gian hoàn thành.
@@ -82,7 +82,7 @@ export function useConclusionCreator() {
         2. Dưới mỗi mục, viết 3-4 dòng nội dung mẫu có tính suy luận logic từ tên cuộc họp và bối cảnh địa phương.
         3. Tuyệt đối không dùng văn mẫu sáo rỗng. Hãy liên hệ với các nghị quyết, chỉ thị có trong tri thức nếu phù hợp.
 
-        Sản phẩm: Văn bản thuần túy, có hệ thống mục rõ ràng, ngôn ngữ hành chính Đảng chuẩn mực theo Quy định 66-QĐ/TW.
+        Sản phẩm: Văn bản thuần túy, có hệ thống mục rõ ràng, ngôn ngữ hành chính Đảng chuẩn mực theo Hướng dẫn 05-HD/VPTW.
       `;
 
       const response = await generateContentWithRetry({
@@ -114,7 +114,7 @@ export function useConclusionCreator() {
         : "CHẾ ĐỘ TIÊU CHUẨN: Biên soạn chuyên nghiệp, chuẩn phong thái tham mưu, đầy đủ cả lý luận và thực tiễn, định hướng hành động rõ ràng.";
 
       const prompt = `
-        BẠN LÀ: Trợ lý tham mưu cấp ủy thực chất, am hiểu sâu sắc về công tác Đảng, tình hình địa phương và Quy định 66-QĐ/TW. 
+        BẠN LÀ: Trợ lý tham mưu cấp ủy thực chất, am hiểu sâu sắc về công tác Đảng, tình hình địa phương và HD 05-HD/VPTW. 
         VAI TRÒ: Một "bộ não" suy luận thông minh, hỗ trợ Thường trực Đảng uỷ ra quyết định và ban hành kết luận sắc bén, thực chất, chuẩn thể thức Đảng.
 
         BỐI CẢNH ĐƠN VỊ: ${organization}. 
@@ -122,7 +122,7 @@ export function useConclusionCreator() {
         THÀNH PHẦN THAM DỰ: ${selectedParticipants.join(', ') || 'Cơ cấu thông thường'}.
         
         DỮ LIỆU THAM CHIẾU (Tri thức địa phương/Nghị quyết/Chỉ thị):
-        ${knowledgeContext || "Sử dụng quy định chung về công tác Đảng cơ sở, Điều lệ Đảng và Quy định 66-QĐ/TW."}
+        ${knowledgeContext || "Sử dụng quy định chung về công tác Đảng cơ sở, Điều lệ Đảng và HD 05-HD/VPTW."}
 
         NỘI DUNG NGƯỜI DÙNG CUNG CẤP: "${rawText}"
 
@@ -137,8 +137,8 @@ export function useConclusionCreator() {
 
         MỖI PHƯƠNG ÁN CẦN:
         1. Title: Tiêu đề thể hiện rõ tinh thần chỉ đạo (ví dụ: "Chỉ đạo quyết liệt về GPMB").
-        2. Content: Nội dung biên tập chuẩn văn phong Đảng theo Quy định 66-QĐ/TW (chuẩn mực, quyết liệt, trọng tâm).
-        3. Reasoning: Giải thích lý do tại sao lại đề xuất hướng này (Ví dụ: "Bám sát Quy định 66-QĐ/TW và tình hình thực tế là...").
+        2. Content: Nội dung biên tập chuẩn văn phong Đảng theo HD 05-HD/VPTW (chuẩn mực, quyết liệt, trọng tâm).
+        3. Reasoning: Giải thích lý do tại sao lại đề xuất hướng này (Ví dụ: "Bám sát HD 05-HD/VPTW và tình hình thực tế là...").
 
         ĐỊNH DẠNG JSON TRẢ VỀ:
         [
@@ -202,14 +202,14 @@ export function useConclusionCreator() {
       const others = segments.filter(s => s.category === 'general').map(s => s.selectedVersion).join('\n');
 
       const combinedContent = `
-        BỐI CẢNH HÀNH CHÍNH (Tuân thủ Quy định 66-QĐ/TW):
+        BỐI CẢNH HÀNH CHÍNH (Tuân thủ Quy định 399-QĐ/TW và HD 05-HD/VPTW):
         - Đơn vị ban hành: ${organization}
         - Chủ trì cuộc họp: Thường trực Đảng uỷ
         - Ngày họp: ${meetingDate}
         - Thành phần: ${participants}
         
         DÀN Ý ĐỊNH HƯỚNG:
-        ${initialDraft || "Sử dụng dàn ý kết luận họp Đảng tiêu chuẩn theo Quy định 66-QĐ/TW."}
+        ${initialDraft || "Sử dụng dàn ý kết luận họp Đảng tiêu chuẩn theo Hệ thống quy định mới."}
 
         CÁC NỘI DUNG CHỈ ĐẠO CHI TIẾT ĐÃ ĐƯỢC PHÊ DUYỆT:
         I. VỀ ĐÁNH GIÁ TÌNH HÌNH:
@@ -227,10 +227,10 @@ export function useConclusionCreator() {
       const prompt = `
         HÃY ĐÓNG VAI: Chánh Văn phòng Đảng uỷ phường, chuyên gia biên tập văn bản chỉ đạo cao cấp.
         NHIỆM VỤ: Hoàn thiện Thông báo kết luận cuộc họp "${meetingTitle}" của đơn vị "${organization}".
-        XÁC TÍN VĂN BẢN: Phải tuyệt đối tuân thủ Quy định 66-QĐ/TW về thể thức văn bản của Đảng.
+        XÁC TÍN VĂN BẢN: Phải tuyệt đối tuân thủ Hướng dẫn 05-HD/VPTW và Quy định 399-QĐ/TW về thể thức, thể loại văn bản của Đảng.
 
         YÊU CẦU BIÊN TẬP:
-        1. KẾT CẤU: Chặt chẽ, logic, đúng chuẩn Quy định 66-QĐ/TW.
+        1. KẾT CẤU: Chặt chẽ, logic, đúng chuẩn HD 05 và QĐ 399.
         2. NGÔN NGỮ: Sử dụng khẩu lệnh mạnh mẽ, mang tính hành động (như: "Yêu cầu", "Tập trung", "Kiên quyết", "Kịp thời").
         3. TIÊU ĐỀ CHUẨN ĐẢNG: "THÔNG BÁO Kết luận của Thường trực Đảng uỷ tại cuộc họp [${meetingTitle}]".
         4. TÍNH CHIẾN LƯỢC: Lồng ghép các nhiệm vụ bổ sung vào dàn ý định hướng một cách mượt mà, tạo thành một chỉnh thể văn bản thống nhất.

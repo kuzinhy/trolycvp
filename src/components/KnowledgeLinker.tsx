@@ -36,7 +36,7 @@ export const KnowledgeLinker: React.FC<KnowledgeLinkerProps> = ({ knowledge }) =
       const prompt = `Từ khóa tìm kiếm quan tâm: "${query || 'Tất cả chủ đề'}".\nDưới đây là cơ sở tri thức hiện tại của hệ thống:\n${knowledgeContext}\n\nHãy đóng vai trò "Trình Kết nối tri thức" (Knowledge Linker) để phân tích và tìm ra các mối liên hệ ẩn, sự tương đồng và liên kết logic giữa các mục tri thức này. Trả về JSON với định dạng:\n{\n  "summary": "Tóm tắt ngắn gọn",\n  "relationships": [{ "source": "Tên chủ đề/mục A", "target": "Tên chủ đề/mục B", "reason": "Lý do liên kết", "type": "Tương đồng / Nhân quả / Trái ngược" }],\n  "insights": ["Phát hiện 1", "Phát hiện 2"]\n}`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: prompt
       });
       const parsed = parseAIResponse(response.text);

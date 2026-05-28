@@ -56,7 +56,7 @@ Nội dung cần xử lý:
 ${contentToAnalyze}`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: prompt,
         config: { responseMimeType: "application/json" }
       });

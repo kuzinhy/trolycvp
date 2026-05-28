@@ -30,7 +30,7 @@ export async function generateDirectiveDraft(analysis: { alignmentScore: number,
   const prompt = `Dựa trên kết quả phân tích: ${JSON.stringify(analysis)} và bối cảnh: ${context}, hãy soạn thảo một văn bản chỉ đạo ngắn gọn, quyết liệt để khắc phục các khoảng trống và thúc đẩy tiến độ.`;
   
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.5-flash",
     contents: prompt,
   });
   

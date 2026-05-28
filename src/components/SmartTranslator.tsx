@@ -38,7 +38,7 @@ export const SmartTranslator: React.FC = () => {
       };
 
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{
           parts: [{
             text: `Hãy đóng vai một biên dịch viên chuyên nghiệp. Dịch đoạn văn bản sau sang ${langMap[targetLang]}.

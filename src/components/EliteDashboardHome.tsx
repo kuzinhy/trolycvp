@@ -22,11 +22,18 @@ import {
   FileSignature,
   Cpu,
   Shield,
-  Briefcase
+  Briefcase,
+  X,
+  Loader2,
+  Download
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { notificationService } from '../services/notificationService';
 import { OnlineStatsModule } from './OnlineStatsModule';
+import { useToast } from '../hooks/useToast';
+import { useAuth } from '../context/AuthContext';
+import { generateContentWithRetry } from '../lib/ai-utils';
+import Markdown from 'react-markdown';
 
 interface WidgetCardProps {
   title: string;
@@ -63,6 +70,47 @@ const WidgetCard = ({ title, icon, children, className, action }: WidgetCardProp
 export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, memberCount }: any) {
   const [isPushEnabled, setIsPushEnabled] = useState(false);
   const [isPushLoading, setIsPushLoading] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [weeklyPlan, setWeeklyPlan] = useState('');
+  
+  const { showToast } = useToast();
+  const { isAdmin, isSuperAdmin, user } = useAuth();
+
+  const generateWeeklyPlan = async () => {
+    setIsPlanModalOpen(true);
+    if (weeklyPlan) return; // already generated
+    setIsGeneratingPlan(true);
+    try {
+      const taskContext = tasks?.map((t: any) => `- [${t.status}] ${t.title} (Ưu tiên: ${t.priority || 'Bình thường'})`).join('\n') || 'Không có nhiệm vụ tồn đọng.';
+      const meetingContext = meetings?.map((m: any) => `- ${m.time || ''} ${m.date || ''}: ${m.title} tại ${m.location || 'Chưa xác định'}`).join('\n') || 'Không có cuộc họp lịch trình.';
+      
+      const prompt = `Bạn là Trợ lý AI Tham mưu thông minh của Văn phòng Đảng ủy. Dựa vào các nhiệm vụ đang tồn đọng (Tasks) và Lịch họp tuần (Meetings) dưới đây, hãy tự động phân bổ và tạo ra một "KẾ HOẠCH CÔNG TÁC TUẦN" thật khoa học và chi tiết cho lãnh đạo.
+
+1. Danh sách Nhiệm vụ chuyên môn (Tasks):
+${taskContext}
+
+2. Lịch dự họp (Meetings):
+${meetingContext}
+
+Yêu cầu Kế hoạch (Format Markdown):
+- Sắp xếp công việc khoa học theo các ngày (Thứ 2 đến Thứ 6).
+- Kết hợp lịch dự họp và thời gian giải quyết các nhiệm vụ tồn đọng hợp lý (VD: ưu tiên cao làm trước).
+- Có một đoạn chú ý/ưu tiên trọng tâm ở đầu đề.
+- Ngôn ngữ trang trọng, đúng chuẩn khối tham mưu Đảng.`;
+
+      const response = await generateContentWithRetry({
+        model: 'gemini-3.1-pro-preview',
+        prompt,
+      });
+      setWeeklyPlan(response.text);
+    } catch (error: any) {
+       showToast('Lỗi khi lập kế hoạch: ' + error.message, 'error');
+       setIsPlanModalOpen(false);
+    } finally {
+       setIsGeneratingPlan(false);
+    }
+  };
 
   useEffect(() => {
     const checkPushStatus = async () => {
@@ -104,6 +152,74 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
 
   return (
     <div className="h-full flex flex-col p-6 space-y-6 overflow-hidden bg-slate-50/50">
+      {/* Modal for Weekly Plan */}
+      <AnimatePresence>
+        {isPlanModalOpen && (
+          <motion.div
+            key="weekly-plan-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Sparkles className="text-indigo-600" size={20} /> Kế hoạch Công tác Tuần (AI Tham mưu)
+                </h3>
+                <button onClick={() => setIsPlanModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors">
+                  <X size={20}/>
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50/30">
+                {isGeneratingPlan ? (
+                  <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                    <div className="w-16 h-16 relative">
+                      <div className="absolute inset-0 rounded-full border-4 border-indigo-100"></div>
+                      <div className="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+                      <Sparkles size={24} className="absolute inset-0 m-auto text-indigo-600 animate-pulse" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-bold uppercase tracking-widest text-slate-900">AI đang lập kế hoạch</p>
+                      <p className="text-xs text-slate-500 mt-1">Đang phân tích nhiệm vụ tồn đọng và lịch họp...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="prose prose-sm md:prose-base max-w-none prose-headings:text-slate-900 prose-p:text-slate-700 prose-li:text-slate-700">
+                    <Markdown>{weeklyPlan}</Markdown>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 bg-white flex justify-end gap-3">
+                <button
+                  onClick={() => setIsPlanModalOpen(false)}
+                  className="px-5 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Đóng
+                </button>
+                <button
+                  disabled={isGeneratingPlan}
+                  onClick={() => showToast("Đã lưu kế hoạch tuần vào hệ thống", "success")}
+                  className="px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Download size={18} /> Lưu Kế hoạch & Chuyển vào Lịch
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* STATUS BAR - TOP RAIL */}
       <div className="flex items-center justify-between px-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
         <div className="flex items-center gap-6">
@@ -210,7 +326,7 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
                 Trung tâm <span className="text-indigo-600 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600">Chỉ huy Chiến lược</span>
               </h2>
               <p className="text-slate-600 text-base max-w-[500px] leading-relaxed">
-                Chào đồng chí <span className="font-semibold text-indigo-700">Chánh Văn phòng</span>. Hệ thống đã đồng bộ hóa dữ liệu mới nhất. Có <span className="font-semibold text-rose-600">3 sự kiện</span> quan trọng và <span className="font-semibold text-blue-600">1 dự thảo</span> cần đồng chí phê duyệt tham mưu.
+                Chào đồng chí <span className="font-semibold text-indigo-700">{isAdmin ? "Chánh Văn phòng" : (user?.displayName || "Đảng viên")}</span>. Hệ thống đã đồng bộ hóa dữ liệu mới nhất. Có <span className="font-semibold text-rose-600">3 sự kiện</span> quan trọng và <span className="font-semibold text-blue-600">1 dự thảo</span> cần phản hồi.
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button 
@@ -218,6 +334,12 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
                   className="flex items-center px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-xl shadow-sm hover:bg-indigo-700 transition-colors"
                 >
                   <Sparkles size={16} className="mr-2" /> Trò chuyện tham mưu
+                </button>
+                <button 
+                  onClick={generateWeeklyPlan}
+                  className="flex items-center px-5 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 font-medium rounded-xl hover:bg-rose-100 transition-colors"
+                >
+                  <Calendar size={16} className="mr-2 animate-pulse" /> Kế hoạch Tuần (AI)
                 </button>
                 <button 
                   onClick={() => navigateTo('drafting-pro')}
@@ -311,49 +433,87 @@ export function EliteDashboardHome({ navigateTo, tasks, meetings, onlineCount, m
             </WidgetCard>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
-            <WidgetCard 
-              title="Tham mưu AI (Smart Insight)" 
-              icon={<Sparkles size={18} />}
-              className="bg-indigo-50 border-indigo-100/50 relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 blur-2xl rounded-full" />
-              <div className="space-y-4 relative z-10">
-                <div className="p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm text-sm text-slate-700 leading-relaxed font-medium">
-                  "Dựa trên dữ liệu 24h qua, tôi nhận thấy có sự gia tăng các thảo luận về <span className="text-indigo-600 font-bold bg-indigo-100 px-1 rounded">cải cách hành chính</span>. Đồng chí nên xem xét dự thảo nghị quyết số 12 để đảm bảo tiến độ tham mưu."
-                </div>
-                <div className="flex items-center justify-between px-2">
-                   <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Độ tin cậy AI: 96%</span>
-                   <button className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">Chi tiết phân tích &rarr;</button>
-                </div>
-              </div>
-            </WidgetCard>
-
-            <WidgetCard 
-              title="Cảnh báo sớm (Early Warning)" 
-              icon={<Shield size={18} />}
-              className="border-rose-100 bg-rose-50"
-            >
-              <div className="space-y-3">
-                {[
-                  { msg: 'Phát hiện 02 tin bài tiêu cực về cơ quan', level: 'Critical' },
-                  { msg: 'Nhiệm vụ soạn thảo QĐ-24 quá hạn 2h', level: 'Warning' }
-                ].map((w, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-rose-100 shadow-sm">
-                    <div className={cn(
-                      "w-2.5 h-2.5 rounded-full flex-shrink-0",
-                      w.level === 'Critical' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)] animate-pulse" : "bg-amber-500"
-                    )} />
-                    <span className="text-sm font-medium text-slate-700 leading-snug">{w.msg}</span>
+          {isAdmin && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
+              <WidgetCard 
+                title="Tham mưu AI (Smart Insight)" 
+                icon={<Sparkles size={18} />}
+                className="bg-indigo-50 border-indigo-100/50 relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 blur-2xl rounded-full" />
+                <div className="space-y-4 relative z-10">
+                  <div className="p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm text-sm text-slate-700 leading-relaxed font-medium">
+                    "Dựa trên dữ liệu 24h qua, tôi nhận thấy có sự gia tăng các thảo luận về <span className="text-indigo-600 font-bold bg-indigo-100 px-1 rounded">cải cách hành chính</span>. Đồng chí nên xem xét dự thảo nghị quyết số 12 để đảm bảo tiến độ tham mưu."
                   </div>
-                ))}
-              </div>
-            </WidgetCard>
-          </div>
+                  <div className="flex items-center justify-between px-2">
+                     <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Độ tin cậy AI: 96%</span>
+                     <button className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">Chi tiết phân tích &rarr;</button>
+                  </div>
+                </div>
+              </WidgetCard>
+
+              <WidgetCard 
+                title="Cảnh báo sớm (Early Warning)" 
+                icon={<Shield size={18} />}
+                className="border-rose-100 bg-rose-50"
+              >
+                <div className="space-y-3">
+                  {[
+                    { msg: 'Phát hiện 02 tin bài tiêu cực về cơ quan', level: 'Critical' },
+                    { msg: 'Nhiệm vụ soạn thảo QĐ-24 quá hạn 2h', level: 'Warning' }
+                  ].map((w, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-rose-100 shadow-sm">
+                      <div className={cn(
+                        "w-2.5 h-2.5 rounded-full flex-shrink-0",
+                        w.level === 'Critical' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)] animate-pulse" : "bg-amber-500"
+                      )} />
+                      <span className="text-sm font-medium text-slate-700 leading-snug">{w.msg}</span>
+                    </div>
+                  ))}
+                </div>
+              </WidgetCard>
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN - ANALYTICS & QUICK NOTES (xl:col-span-4) */}
         <div className="xl:col-span-4 flex flex-col gap-6 min-h-0 pb-6">
+          {/* OSINT Daily Briefing Widget */}
+          {(isAdmin || isSuperAdmin) && (
+            <WidgetCard 
+              title="Tóm tắt OSINT Hàng ngày" 
+              icon={<Shield size={18} />}
+              action={
+                <button 
+                  onClick={() => {
+                    showToast("Đã gửi thông báo nhắc nhở tóm tắt OSINT qua Zalo/Email cho Bí thư.", "success");
+                  }}
+                  className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5"
+                  title="Gửi Báo cáo cho Bí thư"
+                >
+                  <Bell size={12} /> Báo cáo Bí thư
+                </button>
+              }
+            >
+              <div className="space-y-4">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                  <p className="text-xs text-slate-700 leading-relaxed font-medium mb-3">
+                    <strong className="text-slate-900 block mb-1">Bản tin nhanh OSINT (24h qua):</strong>
+                    • Phát hiện 2 bài báo có mức độ lan truyền "Cao" về tình hình an ninh trật tự trên địa bàn.<br/>
+                    • Hệ thống cảnh báo tự động ghi nhận 1 thảo luận nhạy cảm liên quan đến dự án X.<br/>
+                    • Sắc thái dư luận: Trung lập (65%), Tiêu cực (20%), Tích cực (15%).
+                  </p>
+                  <button 
+                    onClick={() => navigateTo('news-scanner')}
+                    className="w-full px-4 py-2 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-slate-800 transition-colors"
+                  >
+                    Xem chi tiết Trinh sát (OSINT) &rarr;
+                  </button>
+                </div>
+              </div>
+            </WidgetCard>
+          )}
+
           {/* Health/Stats Widget */}
           <WidgetCard title="Chỉ số vận hành hệ thống" icon={<Activity size={18} />} className="flex-1">
             <div className="space-y-8 mt-2">

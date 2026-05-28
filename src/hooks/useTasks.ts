@@ -221,7 +221,7 @@ export function useTasks(showToast: (message: string, type?: ToastType) => void)
       Danh sách nhiệm vụ: ${JSON.stringify(tasks.filter(t => t.status !== 'Completed').map(t => ({ id: t.id, title: t.title, description: t.description, deadline: t.deadline })))}`;
 
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
         config: { responseMimeType: "application/json" }
       });

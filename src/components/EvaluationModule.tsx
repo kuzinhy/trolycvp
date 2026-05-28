@@ -42,6 +42,7 @@ import {
   Trash2,
   Edit2,
   UploadCloud,
+  Database,
   Brain
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -79,65 +80,77 @@ interface Evaluation {
 }
 
 // --- Components ---
-const OfficerRow = memo(({ 
+const OfficerChip = memo(({ 
   officer, 
   evaluation, 
   onSelect, 
   onEdit, 
   onDelete, 
-  canManage 
+  canManage,
+  isSelected
 }: { 
-  officer: Officer, 
-  evaluation?: Evaluation, 
-  onSelect: (officer: Officer) => void,
-  onEdit: (officer: Officer) => void,
-  onDelete: (id: string) => void,
-  canManage: boolean
+  officer: Officer;
+  evaluation?: Evaluation;
+  onSelect: (officer: Officer) => void;
+  onEdit: (officer: Officer) => void;
+  onDelete: (id: string) => void;
+  canManage: boolean;
+  isSelected: boolean;
 }) => (
-  <tr className="hover:bg-slate-50 cursor-pointer group" onClick={() => onSelect(officer)}>
-    <td className="px-6 py-4">
-      <div className="font-medium text-slate-900">{officer.name}</div>
-      <div className="text-[10px] text-slate-500 uppercase font-bold">{officer.position}</div>
-    </td>
-    <td className="px-6 py-4 text-slate-600 font-bold">{officer.unitId}</td>
-    <td className="px-6 py-4">
-      <div className="flex items-center gap-2">
-        <span className={cn("text-lg font-black", 
-          evaluation ? (evaluation.score >= 80 ? 'text-emerald-600' : evaluation.score >= 65 ? 'text-blue-600' : 'text-amber-600') : 'text-slate-300'
-        )}>
-          {evaluation?.score || '--'}
-        </span>
+  <div 
+    onClick={() => onSelect(officer)}
+    className={cn(
+      "flex-shrink-0 w-64 p-3 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between select-none",
+      isSelected 
+        ? "bg-slate-900 border-slate-900 shadow-xl shadow-slate-900/20 text-white" 
+        : "bg-white border-slate-200 hover:border-blue-400 hover:shadow-lg"
+    )}
+  >
+    <div className="flex justify-between items-start">
+      <div className="overflow-hidden pr-2">
+        <h4 className={cn("font-bold text-sm truncate", isSelected ? "text-white" : "text-slate-900")}>
+          {officer.name}
+        </h4>
+        <p className={cn("text-[10px] uppercase font-black tracking-widest mt-0.5 truncate", isSelected ? "text-slate-400" : "text-slate-500")}>
+          {officer.position} • {officer.unitId}
+        </p>
       </div>
-    </td>
-    <td className="px-6 py-4">
-      <span className={cn("px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider", 
-        evaluation ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
+      <div className={cn(
+        "flex items-center justify-center w-8 h-8 rounded-full font-black text-xs shrink-0 shadow-sm",
+        evaluation ? (
+          evaluation.score >= 80 ? "bg-emerald-500 text-white" : 
+          evaluation.score >= 65 ? "bg-blue-500 text-white" : "bg-amber-500 text-white"
+        ) : (isSelected ? "bg-white/10 text-slate-400" : "bg-slate-100 text-slate-400")
       )}>
-        {evaluation ? 'Đã đánh giá' : 'Chưa có'}
-      </span>
-    </td>
-    <td className="px-6 py-4 text-right">
-      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        {canManage && (
-          <>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onEdit(officer); }}
-              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-            >
-              <Edit2 size={14} />
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onDelete(officer.id); }}
-              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-            >
-              <Trash2 size={14} />
-            </button>
-          </>
-        )}
-        <ChevronRight size={16} className="text-slate-300" />
+        {evaluation?.score || '--'}
       </div>
-    </td>
-  </tr>
+    </div>
+    
+    <div className="flex items-center justify-between mt-3 pt-3 border-t border-dashed border-slate-200/20">
+      <span className={cn(
+        "text-[9px] font-black uppercase tracking-wider",
+        isSelected ? "text-slate-300" : (evaluation ? "text-emerald-600" : "text-slate-400")
+      )}>
+        {evaluation ? 'Đã đánh giá' : 'Chưa đánh giá'}
+      </span>
+      {canManage && (
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onEdit(officer); }}
+            className={cn("p-1.5 rounded-lg transition-all", isSelected ? "hover:bg-white/20 text-slate-300" : "hover:bg-blue-50 text-slate-400 hover:text-blue-600")}
+          >
+            <Edit2 size={12} />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onDelete(officer.id); }}
+            className={cn("p-1.5 rounded-lg transition-all", isSelected ? "hover:bg-white/20 text-slate-300" : "hover:bg-rose-50 text-slate-400 hover:text-rose-600")}
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
 ));
 
 // --- Officer Form Modal ---
@@ -257,8 +270,8 @@ interface EvaluationModuleProps {
   isAdmin?: boolean;
 }
 
-export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge = [], isSuperAdmin = false, unitId = '', isAdmin = false }) => {
-  const { user } = useAuth();
+export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge = [] }) => {
+  const { user, isAdmin, isSuperAdmin, unitId } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -313,7 +326,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
       Yêu cầu: Ngôn ngữ khách quan, xây dựng, mang tính khích lệ và định hướng phát triển.`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
       });
       
@@ -348,7 +361,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
       - Trả về danh sách các câu nhận xét để người dùng chọn.`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
       });
       
@@ -394,7 +407,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
       Ngôn ngữ: Khách quan, công tâm, chuyên nghiệp.`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
       });
       
@@ -491,7 +504,7 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
       const prompt = `Trích xuất danh sách cán bộ từ văn bản sau. Trả về định dạng JSON array, mỗi object có các trường: name (Họ và tên), gender (Giới tính), dob (Ngày sinh), cccd (CCCD), position (Chức vụ). Nếu không có thông tin, để chuỗi rỗng. Không trả về markdown, chỉ trả về mảng JSON.\n\nVăn bản:\n${text}`;
       
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
@@ -526,6 +539,56 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
     } finally {
       setIsUploadingPdf(false);
       if (e.target) e.target.value = '';
+    }
+  };
+
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleImportFromDocs = async () => {
+    if (!user) return;
+    setIsImporting(true);
+    try {
+      const mockOfficers = [
+        {"name": "Nguyễn Minh Huy", "gender": "Nam", "dob": "6/8/1988", "cccd": "74088008063", "position": "Chánh Văn phòng"},
+        {"name": "Lê Thị Kiều Oanh", "gender": "Nữ", "dob": "10/8/1988", "cccd": "74188000270", "position": "Phó Chánh Văn phòng"},
+        {"name": "Trần Quốc Bảo", "gender": "Nam", "dob": "9/12/1980", "cccd": "74080000147", "position": "Phó Chánh Văn phòng"},
+        {"name": "Nguyễn Thị Thu Phương", "gender": "Nữ", "dob": "11/7/1983", "cccd": "38183021458", "position": "Chuyên viên"},
+        {"name": "Nguyễn Hồng Tú", "gender": "Nam", "dob": "8/19/1983", "cccd": "74083006763", "position": "Chuyên viên"},
+        {"name": "Nguyễn Khánh Linh", "gender": "Nam", "dob": "6/26/1990", "cccd": "74090000380", "position": "Chuyên viên"},
+        {"name": "Lê Hồng Quân", "gender": "Nam", "dob": "13/11/1997", "cccd": "74097006479", "position": "Chuyên viên"},
+        {"name": "Nguyễn Đình Cảnh", "gender": "Nam", "dob": "6/6/1994", "cccd": "74094002863", "position": "Chuyên viên"},
+        {"name": "Bồ Thị Ngọc Linh", "gender": "Nữ", "dob": "5/12/1990", "cccd": "74190001980", "position": "Chuyên viên"},
+        {"name": "Nguyễn Thị Thanh Loan", "gender": "Nữ", "dob": "11/25/1988", "cccd": "74188007309", "position": "Chuyên viên"},
+        {"name": "Nguyễn Thị Thùy Linh", "gender": "Nữ", "dob": "5/29/1986", "cccd": "74186002864", "position": "Chuyên viên"},
+        {"name": "Lê Minh Trí", "gender": "Nam", "dob": "4/29/1989", "cccd": "74089000698", "position": "Chuyên viên"},
+        {"name": "Đỗ Thị Thanh Sang", "gender": "Nữ", "dob": "4/26/1982", "cccd": "74182002173", "position": "Chuyên viên"},
+        {"name": "Nguyễn Thị Thanh Tuyền", "gender": "Nữ", "dob": "3/25/1987", "cccd": "74187005498", "position": "Chuyên viên"},
+        {"name": "Lê Thị Hằng Nga", "gender": "Nữ", "dob": "2/18/1980", "cccd": "74180000398", "position": "Chuyên viên"},
+        {"name": "Chu Lê Anh Thư", "gender": "Nữ", "dob": "12/17/2001", "cccd": "74301001489", "position": "Chuyên viên"},
+        {"name": "Hồ Trung Tín", "gender": "Nam", "dob": "4/17/1993", "cccd": "74093004267", "position": "Chuyên viên"}
+      ];
+
+      const batch = writeBatch(db);
+      for (const officer of mockOfficers) {
+        const newOfficerRef = doc(collection(db, 'officers'));
+        batch.set(newOfficerRef, {
+          name: officer.name || '',
+          gender: officer.gender || '',
+          dob: officer.dob || '',
+          cccd: officer.cccd || '',
+          position: officer.position || '',
+          unitId: unitId || 'VP',
+          authorUid: user.uid,
+          createdAt: serverTimestamp()
+        });
+      }
+      await batch.commit();
+      alert('Đã đồng bộ danh sách cán bộ thành công!');
+    } catch (error) {
+      console.error('Error importing data:', error);
+      alert('Có lỗi xảy ra khi đồng bộ.');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -699,6 +762,14 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
           </div>
           {(isAdmin || isSuperAdmin) && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleImportFromDocs}
+                disabled={isImporting}
+                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+              >
+                {isImporting ? <Loader2 size={18} className="animate-spin" /> : <Database size={18} />}
+                Đồng bộ dữ liệu mẫu
+              </button>
               <input 
                 type="file" 
                 accept=".pdf" 
@@ -734,60 +805,48 @@ export const EvaluationModule: React.FC<EvaluationModuleProps> = ({ aiKnowledge 
         <StatCard icon={TrendingUp} label="Điểm TB Quý" value={stats.avgScore} color="text-purple-600" bgColor="bg-purple-50" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Officer List */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                  type="text"
-                  placeholder="Tìm kiếm cán bộ..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+      <div className="space-y-6">
+        {/* Top Area: Officer List */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text"
+                placeholder="Tìm kiếm cán bộ (Tên, Đơn vị, Chức vụ)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
+              />
+            </div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest px-3 py-1 bg-slate-100 rounded-lg shrink-0">
+              {filteredOfficers.length} cán bộ
+            </div>
+          </div>
+          <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar snap-x">
+            {filteredOfficers.map(o => (
+              <div key={o.id} className="snap-start">
+                <OfficerChip 
+                  officer={o} 
+                  evaluation={evaluations.find(e => e.officerId === o.id)}
+                  isSelected={selectedOfficer?.id === o.id}
+                  onSelect={handleSelectOfficer}
+                  onEdit={handleEditOfficer}
+                  onDelete={confirmDelete}
+                  canManage={isAdmin || isSuperAdmin}
                 />
               </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                  <tr>
-                    <th className="px-6 py-3">Cán bộ</th>
-                    <th className="px-6 py-3">Đơn vị</th>
-                    <th className="px-6 py-3">Điểm</th>
-                    <th className="px-6 py-3">Trạng thái</th>
-                    <th className="px-6 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredOfficers.map(o => (
-                    <OfficerRow 
-                      key={o.id} 
-                      officer={o} 
-                      evaluation={evaluations.find(e => e.officerId === o.id)}
-                      onSelect={handleSelectOfficer}
-                      onEdit={handleEditOfficer}
-                      onDelete={confirmDelete}
-                      canManage={isAdmin || isSuperAdmin}
-                    />
-                  ))}
-                  {filteredOfficers.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-medium italic">
-                        Không tìm thấy cán bộ nào.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            ))}
+            {filteredOfficers.length === 0 && (
+              <div className="w-full py-8 text-center text-slate-400 font-medium italic">
+                Không tìm thấy cán bộ nào phù hợp.
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Column: Evaluation Details */}
-        <div className="lg:col-span-7">
+        {/* Bottom Area: Evaluation Details */}
+        <div>
           <AnimatePresence mode="wait">
             {selectedOfficer ? (
               <motion.div 

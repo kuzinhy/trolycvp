@@ -106,7 +106,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLearning(true);
     try {
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{
           role: 'user',
           parts: [{ text: `Bạn là Hệ thống Quản trị Tri thức Elite. ${isExplicitRequest ? 'Người dùng yêu cầu bạn ghi nhớ thông tin quan trọng.' : 'Phân tích hội thoại sau để trích xuất kiến thức quan trọng.'} 
@@ -238,7 +238,7 @@ LƯU Ý QUAN TRỌNG VỀ DỮ LIỆU:
       `.trim();
 
       const responseStream = await generateContentStreamWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{
           role: 'user',
           parts: [{ text: `${instruction}\n\n${scheduleContext}\n\nKNOWLEDGE:\n${knowledgeContext || 'Chưa có thông tin.'}\n\nHISTORY:\n${messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n')}\n\nUSER: ${userMessage.content}` }]

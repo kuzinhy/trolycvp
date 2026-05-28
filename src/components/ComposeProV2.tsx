@@ -141,7 +141,7 @@ export const ComposeProV2: React.FC<ComposeProV2Props> = ({ showToast, aiKnowled
     try {
       const prompt = `Bạn là một CHUYÊN GIA THAM MƯU CAO CẤP, am hiểu sâu sắc về công tác Đảng và các quy định hành chính của Đảng Cộng sản Việt Nam.
 NHIỆM VỤ: Soạn thảo văn bản hành chính Đảng đúng chuẩn và sắc bén.
-QUY ĐỊNH CỐT LÕI: Phải tuân thủ nghiêm ngặt Quy định 66-QĐ/TW về thể thức văn bản của Đảng.
+QUY ĐỊNH CỐT LÕI: Phải tuân thủ nghiêm ngặt Hướng dẫn 05-HD/VPTW và Quy định 399-QĐ/TW về thể loại, thẩm quyền, thể thức văn bản của Đảng.
 
 THÔNG TIN VĂN BẢN:
 - Loại văn bản: ${metadata.loaiVanBan}
@@ -161,7 +161,7 @@ ${learnedPreferences.map(p => `- ${p}`).join('\n')}` : ''}
 YÊU CẦU BIÊN SOẠN:
 1. TRÌNH BÀY: Rõ ràng các mục (I, II, III...) và tiểu mục (1, 2, 3...). 
 2. VĂN PHONG: Quyết liệt, thực chất, súc tích, mang tính chỉ đạo/tham mưu cao. Tránh dùng từ ngữ sáo rỗng.
-3. PHÁP LÝ: Sử dụng các căn cứ pháp lý của Đảng (Quy định 66, Điều lệ Đảng, các Nghị quyết, Chỉ thị liên quan) một cách phù hợp và chính xác.
+3. PHÁP LÝ: Sử dụng các căn cứ pháp lý của Đảng (Quy định 399, HD 05, Điều lệ Đảng, các Nghị quyết, Chỉ thị liên quan) một cách phù hợp và chính xác.
 4. ĐỊA PHƯƠNG: Ngôn ngữ phải sát với cấp cơ sở (phường/xã), không được quá vĩ mô.
 5. KHÔNG bao gồm Quốc hiệu, Tiêu ngữ, Tên cơ quan (phần này đã được trình bày ở khung riêng).
 6. TRẢ VỀ: Chỉ trả về nội dung văn bản dưới dạng Markdown.
@@ -199,7 +199,7 @@ ${aiKnowledge.slice(0, 5).map(k => `- ${k.title}: ${k.content}`).join('\n')}
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-[#2c7a36] px-4 py-1.5 rounded-md text-[11px] font-bold flex items-center gap-2 shadow-sm">
-            <CheckCircle2 size={14} /> Chuẩn Quy định 66-QĐ/TW
+            <CheckCircle2 size={14} /> Chuẩn HD 05-HD/VPTW
           </div>
         </div>
       </div>

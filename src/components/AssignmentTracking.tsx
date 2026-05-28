@@ -297,7 +297,7 @@ export const AssignmentTracking: React.FC<AssignmentTrackingProps> = ({ tasks: s
       Văn phong: Ngắn gọn, đanh thép, rõ ràng, mang tính thực thi cao.`;
       
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
       });
       
@@ -401,7 +401,7 @@ YÊU CẦU BÁO CÁO (Trình bày bằng Markdown chuyên nghiệp):
 Văn phong: Khách quan, sắc sảo, mang tính quyết định, không dùng từ ngữ chung chung (như "cần cố gắng", "nên chú ý"). Phải chỉ rõ "Làm gì", "Ai làm", "Bao giờ xong".`;
 
       const result = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }]
       });
 
@@ -429,7 +429,7 @@ Văn phong: Khách quan, sắc sảo, mang tính quyết định, không dùng t
       Văn phong: Lãnh đạo, dứt khoát, đi thẳng vào trọng tâm. Không dùng gạch đầu dòng.`;
 
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{ parts: [{ text: prompt }] }],
       });
       

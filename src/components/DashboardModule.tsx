@@ -20,6 +20,7 @@ import { seedEvaluationData } from '../lib/seed-evaluation';
 import { StatCard } from './dashboard/StatCard';
 import { PerformanceChart } from './dashboard/PerformanceChart';
 import { CompetencyMatrix } from './dashboard/CompetencyMatrix';
+import { KeywordWordCloud } from './dashboard/KeywordWordCloud';
 
 // Lazy load dashboard sub-modules
 const WorkForecastingModal = lazy(() => import('./WorkForecastingModal').then(m => ({ default: m.WorkForecastingModal })));
@@ -384,6 +385,9 @@ export const DashboardModule = memo((props: DashboardModuleProps) => {
         <PerformanceChart data={performanceData} />
 
         <CompetencyMatrix data={competencyData} />
+
+        {/* Word Cloud v8.0 ELITE */}
+        <KeywordWordCloud knowledgeData={props.aiKnowledge} />
 
         {/* Strategic Roadmap v8.0 ELITE */}
         <StrategicRoadmap data={strategicGoals} />

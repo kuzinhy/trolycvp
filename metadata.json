@@ -1,5 +1,6 @@
 {
   "name": "Trợ lý Văn phòng cấp ủy",
   "description": "Hệ điều hành thông minh thế hệ thứ 8 với khả năng xử lý tri thức chuyên sâu, tự động hóa kết luận chiến lược và quản trị điều hành AI-Centric.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

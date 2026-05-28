@@ -274,7 +274,7 @@ export function useKnowledge(showToast: (message: string, type?: ToastType) => v
       
       const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
       const response = await genAI.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: prompt,
       });
       setSummarizedContent(response.text || '');

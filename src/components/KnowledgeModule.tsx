@@ -310,7 +310,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
     setIsAnalyzing(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const model = "gemini-3-flash-preview";
+      const model = "gemini-3.5-flash";
       
       const knowledgeSummary = aiKnowledge.map(k => `- ${k.title} (${k.category}): ${k.content.substring(0, 100)}...`).join('\n');
       

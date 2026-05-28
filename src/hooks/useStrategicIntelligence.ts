@@ -140,7 +140,7 @@ export function useStrategicIntelligence(showToast: (message: string, type?: Toa
       const situationContext = situations.slice(0, 5).map(s => `Tình hình (${s.category}): ${s.content}`).join('\n\n');
 
       const response = await generateContentWithRetry({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{
           role: 'user',
           parts: [{

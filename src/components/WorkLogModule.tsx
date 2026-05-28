@@ -39,6 +39,7 @@ import {
   deleteDoc
 } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { useKnowledgeContext } from '../context/KnowledgeContext';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
 import { useDashboard } from '../hooks/useDashboard';
 import { useTasks } from '../hooks/useTasks';
@@ -89,6 +90,7 @@ export const WorkLogModule: React.FC = () => {
   const { showToast: toastFn } = useToast();
   const { meetings, events } = useDashboard();
   const { tasks: calendarTasksList } = useTasks(() => {});
+  const { aiKnowledge } = useKnowledgeContext();
   
   const [tasks, setTasks] = useState<Task[]>(FIXED_TASKS);
   const [additionalTasks, setAdditionalTasks] = useState<Task[]>([]);
@@ -100,6 +102,7 @@ export const WorkLogModule: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAnalyzingKnowledge, setIsAnalyzingKnowledge] = useState(false);
   const [indexError, setIndexError] = useState<string | null>(null);
   
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -576,7 +579,7 @@ export const WorkLogModule: React.FC = () => {
       Hãy trả về nội dung nhật ký hoàn chỉnh.`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }]
       });
 
@@ -590,6 +593,81 @@ export const WorkLogModule: React.FC = () => {
       toastFn?.("Lỗi khi tự động sinh nhật ký", "error");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const analyzeKnowledgeForTasks = async () => {
+    if (isAnalyzingKnowledge) return;
+    if (!aiKnowledge || aiKnowledge.length === 0) {
+      toastFn?.("Chưa có tài liệu tri thức nào để phân tích.", "warning");
+      return;
+    }
+    
+    setIsAnalyzingKnowledge(true);
+    toastFn?.("Đang phân tích các tài liệu để trích xuất nhiệm vụ...", "info");
+    
+    try {
+      // Get the most recent or relevant knowledge docs, limit to avoid exceeding context
+      const docsContext = aiKnowledge.slice(0, 10).map((k: any) => `Tiêu đề: ${k.title}\nNội dung (trích): ${k.content.substring(0, 1000)}`).join('\n\n');
+      
+      const prompt = `Bạn là Trợ lý phân tích văn bản. Dưới đây là nội dung trích xuất từ các tài liệu/văn bản PDF mà người dùng đã tải lên:
+      
+${docsContext}
+
+Hãy phân tích và tìm ra CÁC CHỈ ĐẠO QUAN TRỌNG TỪ CẤP TRÊN, CÁC HẠNG MỤC CẦN THỰC HIỆN NGAY và đề xuất thành một danh sách các công việc cụ thể.
+PHẢI TRẢ VỀ CHÍNH XÁC ĐỊNH DẠNG JSON MẢNG:
+[
+  {
+    "task_name": "Tên công việc ngắn gọn (dưới 15 từ)",
+    "description": "Mô tả chi tiết công việc hoặc chỉ đạo",
+    "priority": "high" // chỉ được chọn "high", "medium", hoặc "low"
+  }
+]
+Không kèm markdown, chỉ trả về chuỗi JSON mảng hợp lệ. Nếu không tìm thấy nhiệm vụ nào, trả về mảng rỗng [].`;
+
+      const response = await generateContentWithRetry({
+        model: 'gemini-3.1-pro-preview',
+        contents: [{ parts: [{ text: prompt }] }]
+      });
+
+      const generatedText = response.text || '';
+      let jsonMatches = generatedText.match(/\[\s*\{.*\}\s*\]/s);
+      let parsedTasks: any[] = [];
+      
+      if (jsonMatches) {
+        try {
+          parsedTasks = JSON.parse(jsonMatches[0]);
+        } catch(e) {
+          console.error("Failed to parse extracted JSON tasks");
+        }
+      } else {
+        // Fallback cleanup if not matching the regex
+        try {
+           const cleanJson = generatedText.replace(/```json|```/g, '').trim();
+           parsedTasks = JSON.parse(cleanJson);
+        } catch(e) {
+           console.error("Fallback parsing failed", e);
+        }
+      }
+
+      if (parsedTasks && parsedTasks.length > 0) {
+        const newTasks: Task[] = parsedTasks.map((t: any) => ({
+          task_name: t.task_name || "Nhiệm vụ mới",
+          description: t.description || "",
+          priority: t.priority === 'high' || t.priority === 'medium' || t.priority === 'low' ? t.priority : 'medium',
+          status: 'not completed',
+          source: 'additional'
+        }));
+        setAdditionalTasks(prev => [...prev, ...newTasks]);
+        toastFn?.(`Đã đề xuất thêm ${newTasks.length} nhiệm vụ từ tài liệu tải lên!`, "success");
+      } else {
+        toastFn?.("Không tìm thấy nhiệm vụ/chỉ đạo mới nào từ tài liệu.", "info");
+      }
+    } catch (error) {
+      console.error("Error analyzing knowledge:", error);
+      toastFn?.("Lỗi khi phân tích tài liệu", "error");
+    } finally {
+      setIsAnalyzingKnowledge(false);
     }
   };
 
@@ -882,12 +960,22 @@ export const WorkLogModule: React.FC = () => {
                 <Plus size={20} className="text-blue-500" />
                 Nhiệm vụ phát sinh
               </h3>
-              <button 
-                onClick={addNewTask}
-                className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
-              >
-                <Plus size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={analyzeKnowledgeForTasks}
+                  disabled={isAnalyzingKnowledge}
+                  className="px-3 py-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest disabled:opacity-50"
+                  title="Tìm nhiệm vụ, chỉ đạo từ tài liệu đã tải lên"
+                >
+                  {isAnalyzingKnowledge ? <Zap size={14} className="animate-pulse" /> : <Sparkles size={14} />} Đề xuất AI
+                </button>
+                <button 
+                  onClick={addNewTask}
+                  className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3">

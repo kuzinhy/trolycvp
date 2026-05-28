@@ -35,7 +35,7 @@ export const Login: React.FC = () => {
             referrerPolicy="no-referrer"
           />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 mb-2 tracking-tighter uppercase">Trợ lý Văn phòng cấp ủy</h1>
+        <h1 className="text-xl md:text-[1.35rem] font-black text-slate-900 mb-2 tracking-tighter uppercase whitespace-nowrap">Trợ lý Văn phòng cấp ủy</h1>
         <p className="text-[10px] font-black text-slate-400 mb-8 uppercase tracking-[0.25em]">Trợ lý Chiến lược Đảng uỷ</p>
         
         {error && (

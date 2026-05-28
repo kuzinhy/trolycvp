@@ -106,7 +106,7 @@ export const GenZDecoder: React.FC = () => {
       - Trả về mảng JSON: [{ term, meaning, origin, example }].`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
           responseMimeType: 'application/json',
@@ -245,7 +245,7 @@ export const GenZDecoder: React.FC = () => {
       `;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
           responseMimeType: 'application/json',

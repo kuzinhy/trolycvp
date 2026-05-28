@@ -55,7 +55,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ knowledge, chatHistory, on
       Hãy viết theo phong cách chuyên nghiệp, khích lệ.`;
 
       const response = await generateContentWithRetry({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }]
       });
       setAiSummary(response.text || 'Không thể tạo tóm tắt lúc này.');

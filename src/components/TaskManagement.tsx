@@ -143,7 +143,7 @@ Trả về kết quả dưới dạng JSON với định dạng:
   "suggestion": "lời khuyên ngắn gọn"
 }`;
       const response = await generateContentWithRetry({
-        model: 'gemini-3.1-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
           responseMimeType: 'application/json',
@@ -248,7 +248,7 @@ Trả về kết quả dưới dạng JSON theo định dạng sau:
 }`;
 
         const response = await generateContentWithRetry({
-          model: 'gemini-3.1-flash-preview',
+          model: 'gemini-3.5-flash',
           contents: [{ parts: [{ text: prompt }] }],
           config: {
             responseMimeType: 'application/json',
