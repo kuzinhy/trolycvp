@@ -43,7 +43,6 @@ export const UserManualModule: React.FC = () => {
       color: 'bg-emerald-50',
       description: 'Phân tích dữ liệu lịch sử và tổng hợp xu hướng dư luận.',
       details: [
-        'Tin tức & Dư luận: Quét các nguồn nội bộ và dư luận trên không gian mạng liên quan đến đơn vị.',
         'Dự báo chiến lược: Nhìn vào số liệu quá khứ, dự báo về chất lượng Đảng viên hoặc rủi ro tiềm ẩn.',
         'Tham mưu & Sinh hoạt: Chuẩn bị nội dung sinh hoạt chi bộ định kỳ, chuyên đề.'
       ]

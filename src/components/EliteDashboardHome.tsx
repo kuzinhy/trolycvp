@@ -348,7 +348,7 @@ Yêu cầu Kế hoạch (Format Markdown):
                   <Terminal size={16} className="mr-2" /> Soạn thảo Nghị quyết
                 </button>
                 <button 
-                  onClick={() => navigateTo('conclusion-creator')}
+                  onClick={() => navigateTo('meeting-hub')}
                   className="flex items-center px-5 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium rounded-xl hover:bg-emerald-100 transition-colors"
                 >
                   <FileSignature size={16} className="mr-2" /> Kết luận họp nhanh

@@ -43,14 +43,14 @@ const AI_TEMPLATES = [
 export const ComposeProV2: React.FC<ComposeProV2Props> = ({ showToast, aiKnowledge }) => {
   const [step, setStep] = useState(1);
   const [metadata, setMetadata] = useState<DocMetadata>({
-    coQuanChuQuan: 'ĐẢNG ỦY KHỐI CÁC CƠ QUAN TỈNH',
-    coQuanBanHanh: 'VĂN PHÒNG ĐẢNG ỦY',
-    soHieu: '01/TB-VPĐU',
+    coQuanChuQuan: 'THÀNH ỦY THỦ DẦU MỘT',
+    coQuanBanHanh: 'ĐẢNG UỶ PHƯỜNG THỦ DẦU MỘT',
+    soHieu: '01/TB-ĐU',
     loaiVanBan: 'THÔNG BÁO',
-    diaDanh: 'Bình Dương',
+    diaDanh: 'Thủ Dầu Một',
     ngayBanHanh: new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
     veViec: 'Về việc triển khai nhiệm vụ trọng tâm tháng 05/2026',
-    maDonVi: 'VP',
+    maDonVi: 'ĐU',
     isLienTich: false,
     hinhThucVanBan: 'Văn bản Đảng (QĐ 66-QĐ/TW)'
   });
@@ -103,9 +103,9 @@ export const ComposeProV2: React.FC<ComposeProV2Props> = ({ showToast, aiKnowled
     if (selectedAiTemplate === 'dang-uy') {
       setMetadata(prev => ({
         ...prev,
-        coQuanChuQuan: 'TỈNH ỦY BÌNH DƯƠNG',
-        coQuanBanHanh: 'VĂN PHÒNG TỈNH ỦY',
-        maDonVi: 'VPTU',
+        coQuanChuQuan: 'THÀNH ỦY THỦ DẦU MỘT',
+        coQuanBanHanh: 'ĐẢNG UỶ PHƯỜNG THỦ DẦU MỘT',
+        maDonVi: 'ĐU',
         hinhThucVanBan: 'Văn bản Đảng (QĐ 66-QĐ/TW)'
       }));
     } else if (selectedAiTemplate === 'chinh-quyen') {

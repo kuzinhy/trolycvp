@@ -55,6 +55,14 @@ export function usePartyReviewRules() {
             description: 'Quy tắc về bố cục 4 phần.',
             isActive: true,
             content: 'Đảm bảo bố cục nghị quyết gồm: I. Tình hình và kết quả; II. Mục tiêu, nhiệm vụ và giải pháp; III. Tổ chức thực hiện; IV. Kiến nghị.'
+          },
+          {
+            id: 'rule-5',
+            category: 'format',
+            title: 'Trích dẫn VBQPPL',
+            description: 'Chuẩn hóa danh mục và trích dẫn theo thể thức pháp quy.',
+            isActive: true,
+            content: 'Chuẩn hóa cách trình bày danh mục và trích dẫn văn bản quy phạm pháp luật, bảo đảm thống nhất về số hiệu, tên cơ quan ban hành và ngày tháng ban hành.'
           }
         ];
         
@@ -62,7 +70,24 @@ export function usePartyReviewRules() {
           setDoc(doc(db, 'users', user.uid, 'party_review_rules', rule.id), rule);
         });
       } else {
-        setRules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ReviewRule)));
+        const snapshotRules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ReviewRule));
+        
+        // Auto-inject new rule for existing users
+        if (!snapshotRules.find(r => r.id === 'rule-5' || r.content.includes('trích dẫn văn bản quy phạm'))) {
+          const rule5: ReviewRule = {
+            id: 'rule-5',
+            category: 'format',
+            title: 'Trích dẫn VBQPPL',
+            description: 'Chuẩn hóa danh mục và trích dẫn theo thể thức pháp quy.',
+            isActive: true,
+            content: 'Chuẩn hóa cách trình bày danh mục và trích dẫn văn bản quy phạm pháp luật, bảo đảm thống nhất về số hiệu, tên cơ quan ban hành và ngày tháng ban hành.'
+          };
+          setDoc(doc(db, 'users', user.uid, 'party_review_rules', rule5.id), rule5)
+            .catch(err => handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/party_review_rules/${rule5.id}`));
+          snapshotRules.push(rule5);
+        }
+        
+        setRules(snapshotRules);
       }
     });
 

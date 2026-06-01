@@ -2,7 +2,6 @@ import { useEffect, useState, lazy, Suspense, memo, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SessionTimeoutProvider } from './context/SessionTimeoutContext';
 import { NotificationProvider } from './context/NotificationContext';
-import { NewsProvider } from './context/NewsContext';
 import { AnimatePresence, motion } from 'motion/react';
 import { Toast } from './components/ui/Toast';
 import { 
@@ -52,7 +51,6 @@ const AccessHistoryModule = lazy(() => import('./components/AccessHistoryModule'
 const SmartTaskManager = lazy(() => import('./components/SmartTaskManager').then(m => ({ default: m.SmartTaskManager })));
 const DocumentManagementModule = lazy(() => import('./components/DocumentManagementModule').then(m => ({ default: m.DocumentManagementModule })));
 const SmartErrorCorrectionCenter = lazy(() => import('./components/SmartErrorCorrectionCenter').then(m => ({ default: m.SmartErrorCorrectionCenter })));
-const NewsAndOpinionView = lazy(() => import('./components/NewsAndOpinionView').then(m => ({ default: m.NewsAndOpinionView })));
 const EvaluationModule = lazy(() => import('./components/EvaluationModule').then(m => ({ default: m.EvaluationModule })));
 const MorningBriefing = lazy(() => import('./components/MorningBriefing').then(m => ({ default: m.MorningBriefing })));
 const CommandFocusMode = lazy(() => import('./components/CommandFocusMode').then(m => ({ default: m.CommandFocusMode })));
@@ -69,12 +67,12 @@ import { useKnowledge } from './hooks/useKnowledge';
 import { useTasks } from './hooks/useTasks';
 import { useChat } from './hooks/useChat';
 import { useNotifications } from './hooks/useNotifications';
-import { useDashboard } from './hooks/useDashboard';
+
 import { useReminders } from './hooks/useReminders';
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useToast } from './hooks/useToast';
 import { useDraftingRules } from './hooks/useDraftingRules';
-import { useSystemScanner } from './hooks/useSystemScanner';
+
 import { HistoryProvider, useHistory } from './context/HistoryContext';
 // import { TaskProvider } from './context/TaskContext'; // Deleted
 import { MainBrainProvider } from './context/MainBrainProvider';
@@ -105,13 +103,11 @@ export default function App() {
   return (
     <UserPreferencesProvider>
       <NotificationProvider>
-        <NewsProvider>
-          <AuthProvider>
-            <SessionTimeoutProvider>
-              <AppContent />
-            </SessionTimeoutProvider>
-          </AuthProvider>
-        </NewsProvider>
+        <AuthProvider>
+          <SessionTimeoutProvider>
+            <AppContent />
+          </SessionTimeoutProvider>
+        </AuthProvider>
       </NotificationProvider>
     </UserPreferencesProvider>
   );
@@ -119,7 +115,6 @@ export default function App() {
 
 function AppContent() {
   const { user, isEmailVerified, loading } = useAuth();
-  useSystemScanner();
   
   useEffect(() => {
     if (user?.uid) {

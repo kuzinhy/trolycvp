@@ -704,7 +704,7 @@ Trả về kết quả dưới dạng JSON theo định dạng sau:
             >
               <ColumnHeader title="Chờ xử lý (Pending)" count={tasksByStatus['Pending'].length} colorClass="bg-slate-400" />
               <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-                {tasksByStatus['Pending'].map(task => <TaskCard key={task.id} task={task} />)}
+                {tasksByStatus['Pending'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
                 {tasksByStatus['Pending'].length === 0 && (
                   <div className="h-24 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-sm font-medium">
                     Kéo thả vào đây
@@ -721,7 +721,7 @@ Trả về kết quả dưới dạng JSON theo định dạng sau:
             >
               <ColumnHeader title="Đang thực hiện (In Progress)" count={tasksByStatus['In Progress'].length} colorClass="bg-indigo-500" />
               <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-                {tasksByStatus['In Progress'].map(task => <TaskCard key={task.id} task={task} />)}
+                {tasksByStatus['In Progress'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
                 {tasksByStatus['In Progress'].length === 0 && (
                   <div className="h-24 border-2 border-dashed border-indigo-200 rounded-xl flex items-center justify-center text-indigo-400 text-sm font-medium">
                     Kéo thả vào đây
@@ -738,7 +738,7 @@ Trả về kết quả dưới dạng JSON theo định dạng sau:
             >
               <ColumnHeader title="Đang xem xét (In Review)" count={tasksByStatus['In Review'].length} colorClass="bg-amber-500" />
               <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-                {tasksByStatus['In Review'].map(task => <TaskCard key={task.id} task={task} />)}
+                {tasksByStatus['In Review'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
                 {tasksByStatus['In Review'].length === 0 && (
                   <div className="h-24 border-2 border-dashed border-amber-200 rounded-xl flex items-center justify-center text-amber-400 text-sm font-medium">
                     Kéo thả vào đây
@@ -755,7 +755,7 @@ Trả về kết quả dưới dạng JSON theo định dạng sau:
             >
               <ColumnHeader title="Tạm hoãn (On Hold)" count={tasksByStatus['On Hold'].length} colorClass="bg-slate-500" />
               <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-                {tasksByStatus['On Hold'].map(task => <TaskCard key={task.id} task={task} />)}
+                {tasksByStatus['On Hold'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
                 {tasksByStatus['On Hold'].length === 0 && (
                   <div className="h-24 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-sm font-medium">
                     Kéo thả vào đây
@@ -772,7 +772,7 @@ Trả về kết quả dưới dạng JSON theo định dạng sau:
             >
               <ColumnHeader title="Hoàn thành (Completed)" count={tasksByStatus['Completed'].length} colorClass="bg-emerald-500" />
               <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-                {tasksByStatus['Completed'].map(task => <TaskCard key={task.id} task={task} />)}
+                {tasksByStatus['Completed'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
                 {tasksByStatus['Completed'].length === 0 && (
                   <div className="h-24 border-2 border-dashed border-emerald-200 rounded-xl flex items-center justify-center text-emerald-400 text-sm font-medium">
                     Kéo thả vào đây
@@ -840,10 +840,10 @@ Trả về kết quả dưới dạng JSON theo định dạng sau:
                       </td>
                     </tr>
                   ) : (
-                    sortTasks(filteredTasks).map(task => {
+                    sortTasks(filteredTasks).map((task, k) => {
                       const isOverdue = new Date(task.deadline) < new Date(new Date().setHours(0, 0, 0, 0)) && task.status !== 'Completed';
                       return (
-                        <tr key={task.id} className={cn("hover:bg-slate-50 transition-colors group", selectedTasks.has(task.id) && "bg-indigo-50/30")}>
+                        <tr key={`${task.id || 'tsk'}-${k}`} className={cn("hover:bg-slate-50 transition-colors group", selectedTasks.has(task.id) && "bg-indigo-50/30")}>
                           <td className="p-4">
                             <input 
                               type="checkbox" 

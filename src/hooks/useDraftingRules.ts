@@ -30,7 +30,8 @@ export function useDraftingRules(showToast: (msg: string, type?: ToastType) => v
           { id: '5', content: 'Kiểm tra lỗi chính tả, dấu câu (dấu phẩy, dấu chấm, dấu ngoặc) đúng vị trí.', isActive: true },
           { id: '6', content: 'Sử dụng đúng các thuật ngữ chuyên môn của Đảng và Nhà nước.', isActive: true },
           { id: '7', content: 'Đảm bảo tính logic và sự thống nhất về nội dung giữa các phần trong văn bản.', isActive: true },
-          { id: '8', content: 'Trình bày bảng biểu, danh sách (nếu có) đúng quy chuẩn kỹ thuật.', isActive: true }
+          { id: '8', content: 'Trình bày bảng biểu, danh sách (nếu có) đúng quy chuẩn kỹ thuật.', isActive: true },
+          { id: '9', content: 'Chuẩn hóa cách trình bày danh mục và trích dẫn văn bản quy phạm pháp luật, bảo đảm thống nhất về số hiệu, chức danh cơ quan ban hành và ngày tháng.', isActive: true }
         ];
         
         // Save default rules to Firestore
@@ -39,7 +40,17 @@ export function useDraftingRules(showToast: (msg: string, type?: ToastType) => v
             .catch(err => handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/drafting_rules/${rule.id}`));
         });
       } else {
-        setRules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DraftingRule)));
+        const snapshotRules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DraftingRule));
+        
+        // Auto-inject new rule for existing users
+        if (!snapshotRules.find(r => r.id === '9' || r.content.includes('Chuẩn hóa cách trình'))) {
+          const rule9 = { id: '9', content: 'Chuẩn hóa cách trình bày danh mục và trích dẫn văn bản quy phạm pháp luật, bảo đảm thống nhất về số hiệu, chức danh cơ quan ban hành và ngày tháng.', isActive: true };
+          setDoc(doc(db, 'users', user.uid, 'drafting_rules', rule9.id), rule9)
+            .catch(err => handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/drafting_rules/${rule9.id}`));
+          snapshotRules.push(rule9);
+        }
+        
+        setRules(snapshotRules);
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, `users/${user.uid}/drafting_rules`);

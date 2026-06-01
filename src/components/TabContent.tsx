@@ -32,7 +32,6 @@ const SmartTaskManager = lazy(() => import('./SmartTaskManager').then(m => ({ de
 const DocumentManagementModule = lazy(() => import('./DocumentManagementModule').then(m => ({ default: m.DocumentManagementModule })));
 const SmartErrorCorrectionCenter = lazy(() => import('./SmartErrorCorrectionCenter').then(m => ({ default: m.SmartErrorCorrectionCenter })));
 const AssignmentTracking = lazy(() => import('./AssignmentTracking').then(m => ({ default: m.AssignmentTracking })));
-const NewsAndOpinionView = lazy(() => import('./NewsAndOpinionView').then(m => ({ default: m.NewsAndOpinionView })));
 const EvaluationModule = lazy(() => import('./EvaluationModule').then(m => ({ default: m.EvaluationModule })));
 const RoadmapModule = lazy(() => import('./RoadmapModule').then(m => ({ default: m.RoadmapModule })));
 const GenZDecoder = lazy(() => import('./GenZDecoder').then(m => ({ default: m.GenZDecoder })));
@@ -40,9 +39,9 @@ const PartyDocumentChecker = lazy(() => import('./PartyDocumentChecker').then(m 
 const ResolutionTracker = lazy(() => import('./ResolutionTracker').then(m => ({ default: m.ResolutionTracker })));
 const PartyAdvisory = lazy(() => import('./PartyAdvisory').then(m => ({ default: m.PartyAdvisory })));
 const WorkScheduleCreator = lazy(() => import('./WorkScheduleCreator').then(m => ({ default: m.WorkScheduleCreator })));
-const StrategicIntelligenceModule = lazy(() => import('./StrategicIntelligenceModule').then(m => ({ default: m.StrategicIntelligenceModule })));
 const TodoAssistant = lazy(() => import('./TodoAssistant').then(m => ({ default: m.TodoAssistant })));
 const TaskJournalModule = lazy(() => import('./TaskJournalModule').then(m => ({ default: m.TaskJournalModule })));
+const MeetingHub = lazy(() => import('./MeetingHub').then(m => ({ default: m.MeetingHub })));
 const ConclusionCreatorModule = lazy(() => import('./ConclusionCreatorModule').then(m => ({ default: m.ConclusionCreatorModule })));
 const EliteDashboardHome = lazy(() => import('./EliteDashboardHome').then(m => ({ default: m.EliteDashboardHome })));
 const TaskManagement = lazy(() => import('./TaskManagement').then(m => ({ default: m.TaskManagement })));
@@ -176,14 +175,10 @@ export const TabContent = memo(({
       case 'review':
       case 'drafting-pro-review':
       case 'drafting-pro-speech':
-      case 'meeting':
-      case 'knowledge-linker':
         return (
           <UtilitiesModule 
             initialTab={
-              currentTab === 'drafting-pro' || currentTab === 'review' || currentTab === 'drafting-pro-review' || currentTab === 'drafting-pro-speech' ? 'drafting' : 
-              currentTab === 'meeting' ? 'meeting' :
-              currentTab === 'knowledge-linker' ? 'knowledge-linker' :
+              currentTab === 'drafting-pro' || currentTab === 'review' || currentTab === 'drafting-pro-review' || currentTab === 'drafting-pro-speech' ? 'drafting' :
               'reporting'
             }
             initialMainTab={
@@ -231,6 +226,9 @@ export const TabContent = memo(({
           />
         );
 
+      case 'meeting-hub':
+        return <MeetingHub />;
+
       case 'conclusion-creator':
         return (
           <ConclusionCreatorModule 
@@ -248,14 +246,8 @@ export const TabContent = memo(({
       case 'access-history':
         return <AccessHistoryModule />;
 
-      case 'strategic':
-        return <StrategicIntelligenceModule aiKnowledge={knowledge.aiKnowledge} showToast={showToast} />;
-
       case 'party-advisory':
         return <PartyAdvisory />;
-
-      case 'news':
-        return <NewsAndOpinionView />;
 
       case 'forecasting':
         return <StrategicForecastingView />;

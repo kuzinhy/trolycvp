@@ -10,6 +10,7 @@ export interface BackupData {
     events: any[];
     birthdays: any[];
     party_documents: any[];
+    task_journals?: any[];
     user_preferences: any;
   };
 }
@@ -24,6 +25,7 @@ export async function createBackup(userId: string, unitId: string): Promise<Back
       events: [],
       birthdays: [],
       party_documents: [],
+      task_journals: [],
       user_preferences: null
     }
   };
@@ -49,7 +51,12 @@ export async function createBackup(userId: string, unitId: string): Promise<Back
   const knowledgeSnap = await getDocs(knowledgeQuery);
   backup.data.party_documents = knowledgeSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  // 6. Fetch User Preferences
+  // 6. Fetch Task Journals
+  const journalsQuery = query(collection(db, 'task_journals'), where('authorUid', '==', userId));
+  const journalsSnap = await getDocs(journalsQuery);
+  backup.data.task_journals = journalsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  // 7. Fetch User Preferences
   const prefSnap = await getDocs(collection(db, 'users', userId, 'preferences'));
   if (!prefSnap.empty) {
     backup.data.user_preferences = prefSnap.docs[0].data();
@@ -92,6 +99,16 @@ export async function restoreBackup(userId: string, unitId: string, backup: Back
     const { id, ...data } = item;
     batch.set(doc(db, 'party_documents', id), { ...data, unitId }); // Ensure unitId matches
   });
+
+  // Restore Task Journals
+  if (backup.data.task_journals) {
+    const journalsSnap = await getDocs(query(collection(db, 'task_journals'), where('authorUid', '==', userId)));
+    journalsSnap.docs.forEach(d => batch.delete(d.ref));
+    backup.data.task_journals.forEach(item => {
+      const { id, ...data } = item;
+      batch.set(doc(db, 'task_journals', id), { ...data, authorUid: userId }); 
+    });
+  }
 
   // Restore Preferences
   if (backup.data.user_preferences) {

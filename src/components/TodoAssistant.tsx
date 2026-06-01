@@ -258,8 +258,8 @@ const TaskDetailModal = ({
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Phụ thuộc vào nhiệm vụ (Dependencies)</label>
                   <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-3 bg-slate-50 rounded-xl border border-slate-200 custom-scrollbar">
-                    {allTasks.filter(t => t.id !== task.id).map(t => (
-                      <label key={t.id} className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer group">
+                    {allTasks.filter(t => t.id !== task.id).map((t, idx) => (
+                      <label key={`${t.id || 'dep'}-${idx}`} className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer group">
                         <input 
                           type="checkbox"
                           checked={dependencies.includes(t.id)}
@@ -293,7 +293,8 @@ const TaskDetailModal = ({
                     <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border", getPriorityStyles(task.priority))}>
                       Ưu tiên: {task.priority === 'high' ? 'Cao' : task.priority === 'medium' ? 'TB' : 'Thấp'}
                     </span>
-                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border", getStatusStyles(task.status))}>
+                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-1", getStatusStyles(task.status))}>
+                      {task.status === 'Completed' ? <CheckCircle2 size={12} /> : task.status === 'In Progress' ? <Timer size={12} /> : <AlertCircle size={12} />}
                       Trạng thái: {task.status === 'Pending' ? 'Chờ xử lý' : task.status === 'In Progress' ? 'Đang thực hiện' : 'Hoàn thành'}
                     </span>
                   </div>
@@ -520,6 +521,15 @@ const StickyNote = React.memo(({
           >
             <Timer size={16} />
           </button>
+          {task.status !== 'Completed' && (
+            <button 
+              onClick={handleComplete}
+              className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-all active:scale-95"
+              title="Đánh dấu đã hoàn thành"
+            >
+              <CheckCircle2 size={16} />
+            </button>
+          )}
           <button 
             onClick={handleDeleteClick}
             className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-all active:scale-95"
@@ -528,6 +538,12 @@ const StickyNote = React.memo(({
             <Trash2 size={16} />
           </button>
         </div>
+
+        {task.status === 'Completed' && (
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none scale-150 transform">
+            <CheckCircle2 size={120} className="text-emerald-700" />
+          </div>
+        )}
 
         <div className="flex items-start gap-4">
           {/* Status Checkbox-style button */}
@@ -551,8 +567,14 @@ const StickyNote = React.memo(({
               )}>
                 {task.title}
               </h3>
+              {task.status === 'Completed' && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-200">
+                  <CheckCircle2 size={10} />
+                  Hoàn thành
+                </div>
+              )}
               {isBlocked && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[8px] font-black uppercase tracking-widest">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[8px] font-black uppercase tracking-widest border border-amber-200">
                   <Clock size={10} />
                   Đang chờ
                 </div>
@@ -802,7 +824,8 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
           <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
             {[
               { id: 'all', label: 'Nhiệm vụ', icon: LayoutGrid },
-              { id: 'personal', label: 'Sổ tay cá nhân', icon: Sparkles },
+              { id: 'completed', label: 'Đã xong', icon: CheckCircle2 },
+              { id: 'personal', label: 'Sổ tay', icon: Sparkles },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -857,9 +880,9 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                 <AnimatePresence>
-                  {tasks.filter(t => t.status !== 'Completed').map(task => (
+                  {tasks.filter(t => activeFilter === 'completed' ? t.status === 'Completed' : t.status !== 'Completed').map((task, k) => (
                     <StickyNote 
-                      key={task.id} 
+                      key={`${task.id || 'tsk'}-${k}`} 
                       task={task} 
                       onUpdate={handleUpdateTask} 
                       onDelete={handleDeleteTask} 
@@ -871,7 +894,7 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
                   ))}
                 </AnimatePresence>
                 
-                {tasks.filter(t => t.status !== 'Completed').length === 0 && (
+                {tasks.filter(t => activeFilter === 'completed' ? t.status === 'Completed' : t.status !== 'Completed').length === 0 && (
                   <div className="col-span-full py-32 flex flex-col items-center justify-center text-slate-400">
                     <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-6 border border-slate-100 shadow-xl shadow-slate-200/50">
                       <LayoutGrid size={40} className="text-slate-100" />
@@ -996,9 +1019,9 @@ export const TodoAssistant: React.FC<TodoAssistantProps> = ({
                     </div>
                     <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {filteredSidebarTasks.map(task => (
+                        {filteredSidebarTasks.map((task, k) => (
                           <motion.div
-                            key={task.id}
+                            key={`${task.id || 'ftsk'}-${k}`}
                             layout
                             onClick={() => {
                               setSelectedTask(task);

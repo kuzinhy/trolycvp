@@ -1,5 +1,5 @@
 import React, { useMemo, useState, memo } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Calendar as CalendarIcon, 
   Clock, 
@@ -21,8 +21,12 @@ import {
   Loader2,
   Save,
   Brain,
-  Edit2
+  Edit2,
+  ClipboardList,
+  BookOpen
 } from 'lucide-react';
+import { db } from '../lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { Meeting, Task, Event } from '../constants';
 import { cn } from '../lib/utils';
 import { format, startOfWeek, addDays, subDays, isSameDay, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
@@ -205,6 +209,66 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
   const [selectedType, setSelectedType] = React.useState<'meeting' | 'task' | 'event' | null>(null);
   const [smartInput, setSmartInput] = React.useState('');
   const [isSmartProcessing, setIsSmartProcessing] = React.useState(false);
+  
+  const [taskToJournal, setTaskToJournal] = useState<any | null>(null);
+  const [journalCategory, setJournalCategory] = useState<'upper_level' | 'unit_task' | 'arising_task'>('unit_task');
+  const [isSavingJournal, setIsSavingJournal] = useState(false);
+
+  const confirmSaveToJournal = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      alert("Lỗi: Không tìm thấy thông tin phiên đăng nhập.");
+      return;
+    }
+    if (!taskToJournal) return;
+    
+    try {
+      setIsSavingJournal(true);
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+      const currentQuarter = Math.ceil(currentMonth / 3);
+
+      const dTitle = taskToJournal.name || taskToJournal.title || 'Không có tiêu đề';
+      const dDesc = taskToJournal.description ? `\n\n${taskToJournal.description}` : '';
+      
+      let safeDeadlineStr = '';
+      if (taskToJournal.date || taskToJournal.deadline) {
+        const parsedDeadline = new Date(taskToJournal.date || taskToJournal.deadline);
+        if (!isNaN(parsedDeadline.getTime())) {
+          safeDeadlineStr = parsedDeadline.toLocaleDateString('vi-VN');
+        }
+      }
+
+      const payload = {
+        categoryId: journalCategory || 'unit_task',
+        content: String(dTitle) + String(dDesc),
+        implementingDoc: '',
+        assignee: taskToJournal.chairperson || user.displayName || user.email || 'Chưa xác định',
+        deadline: safeDeadlineStr,
+        progress: 'Đang triển khai',
+        results: '',
+        authorUid: user.uid,
+        unitId: 'vp-dang-uy',
+        year: currentYear,
+        quarter: currentQuarter,
+        month: currentMonth,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      await addDoc(collection(db, 'task_journals'), payload);
+      
+      setIsSavingJournal(false);
+      setTaskToJournal(null);
+      showToast('Đã chèn nội dung vào Sổ tay Thống kê Nhiệm vụ', 'success');
+    } catch (error: any) {
+      console.error('Save to journal failed:', error);
+      setIsSavingJournal(false);
+      alert(`Lỗi khi lưu vào Sổ tay: ${error.message || 'Vui lòng kiểm tra kết nối mạng và quyền Firestore.'}`);
+    }
+  };
 
   const { preferences } = useUserPreferences();
   const { user, googleDriveToken, signInWithGoogle } = useAuth();
@@ -779,9 +843,9 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
                     </div>
                   )}
                   
-                  {dayEvents.map(e => (
+                  {dayEvents.map((e, k) => (
                     <div 
-                      key={e.id} 
+                      key={`${e.id || 'evt'}-${k}`} 
                       onClick={() => { setSelectedItem(e); setSelectedType('event'); }}
                       className="group relative p-2 bg-rose-50 border border-rose-100 rounded-xl cursor-pointer hover:bg-rose-100 transition-colors"
                     >
@@ -796,9 +860,9 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
                     </div>
                   ))}
 
-                  {dayTasks.map(t => (
+                  {dayTasks.map((t, k) => (
                     <div 
-                      key={t.id} 
+                      key={`${t.id || 'task'}-${k}`} 
                       onClick={() => { setSelectedItem(t); setSelectedType('task'); }}
                       className="group relative p-2 bg-emerald-50 border border-emerald-100 rounded-xl cursor-pointer hover:bg-emerald-100 transition-colors"
                     >
@@ -814,8 +878,8 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
                   ))}
 
                    {dayMeetings.length > 0 ? (
-                    dayMeetings.map(m => (
-                      <div key={m.id} onClick={() => { setSelectedItem(m); setSelectedType('meeting'); }}>
+                    dayMeetings.map((m, k) => (
+                      <div key={`${m.id || 'mtg'}-${k}`} onClick={() => { setSelectedItem(m); setSelectedType('meeting'); }}>
                         <ScheduleItemCard 
                           item={m} 
                           type="meeting" 
@@ -1051,6 +1115,18 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
                   <Edit2 size={16} />
                   Chỉnh sửa
                 </button>
+                {selectedType !== 'task' && (
+                  <button
+                    onClick={() => {
+                      setTaskToJournal(selectedItem);
+                      setJournalCategory('unit_task');
+                    }}
+                    className="px-6 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors border border-emerald-100"
+                    title="Chèn nội dung vào Sổ tay Thống kê Nhiệm vụ"
+                  >
+                    <ClipboardList size={16} />
+                  </button>
+                )}
                 <button 
                   onClick={() => {
                     if (selectedType === 'meeting') handleDeleteMeeting(selectedItem.id);
@@ -1068,6 +1144,112 @@ export const OptimizedScheduleView: React.FC<OptimizedScheduleViewProps> = ({
           </motion.div>
         </div>
       )}
+
+      {/* --- Journal Modal --- */}
+      <AnimatePresence>
+        {taskToJournal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setTaskToJournal(null)}
+              className="absolute inset-0 bg-blue-950/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6"
+            >
+              <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <BookOpen size={24} className="text-emerald-500" />
+                Lưu vào Sổ tay Thống kê
+              </h3>
+              
+              <div className="mb-6">
+                <p className="text-sm text-slate-600 mb-3">
+                  Chọn mục (nhóm nhiệm vụ) để lưu thông tin <strong>"{taskToJournal.name || taskToJournal.title}"</strong>:
+                </p>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      name="journalCategory" 
+                      value="upper_level" 
+                      checked={journalCategory === 'upper_level'}
+                      onChange={() => setJournalCategory('upper_level')}
+                      className="mt-1 flex-shrink-0"
+                    />
+                    <div>
+                      <div className="font-semibold text-slate-800 text-sm">Mục I</div>
+                      <div className="text-xs text-slate-500">Thực hiện theo Chương trình/Kế hoạch/Nghị quyết của cấp trên</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      name="journalCategory" 
+                      value="unit_task" 
+                      checked={journalCategory === 'unit_task'}
+                      onChange={() => setJournalCategory('unit_task')}
+                      className="mt-1 flex-shrink-0"
+                    />
+                    <div>
+                      <div className="font-semibold text-slate-800 text-sm">Mục II</div>
+                      <div className="text-xs text-slate-500">Nhiệm vụ công tác của đơn vị</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      name="journalCategory" 
+                      value="arising_task" 
+                      checked={journalCategory === 'arising_task'}
+                      onChange={() => setJournalCategory('arising_task')}
+                      className="mt-1 flex-shrink-0"
+                    />
+                    <div>
+                      <div className="font-semibold text-slate-800 text-sm">Mục III</div>
+                      <div className="text-xs text-slate-500">Nhiệm vụ phát sinh theo chỉ đạo của cấp trên/đơn vị</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTaskToJournal(null); }}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmSaveToJournal}
+                  disabled={isSavingJournal}
+                  className={cn(
+                    "px-4 py-2 text-sm font-bold text-white bg-emerald-600 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2",
+                    isSavingJournal ? "opacity-70 cursor-not-allowed" : "hover:bg-emerald-700"
+                  )}
+                >
+                  {isSavingJournal ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Đang lưu...
+                    </>
+                  ) : (
+                    "Lưu vào Sổ tay"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

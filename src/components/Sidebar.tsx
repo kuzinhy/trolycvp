@@ -131,9 +131,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
   const [searchTerm, setSearchTerm] = React.useState('');
   const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({
     'ai-assistant': true,
-    'drafting-pro': currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'conclusion-creator',
+    'drafting-pro': currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'meeting-hub',
     'management': currentTab === 'dashboard' || currentTab === 'resolution-tracking' || currentTab === 'evaluation',
-    'operations': currentTab === 'party-advisory' || currentTab === 'news' || currentTab === 'forecasting' || currentTab === 'knowledge' || currentTab === 'strategic',
+    'operations': currentTab === 'party-advisory' || currentTab === 'forecasting' || currentTab === 'knowledge' || currentTab === 'strategic',
     'admin': currentTab === 'users' || currentTab === 'access-history' || currentTab === 'system-updates'
   });
 
@@ -265,7 +265,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
               onClick={() => toggleSection('drafting-pro')}
               className={cn(
                 "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group text-xs",
-                (expandedSections['drafting-pro'] || currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'reporting' || searchTerm) 
+                (expandedSections['drafting-pro'] || currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'reporting' || currentTab === 'meeting-hub' || searchTerm) 
                   ? "bg-indigo-50 text-indigo-700" 
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                 isCollapsed && "justify-center px-0"
@@ -274,7 +274,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "transition-all duration-200 shrink-0",
-                  (expandedSections['drafting-pro'] || currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'reporting' || searchTerm) 
+                  (expandedSections['drafting-pro'] || currentTab.startsWith('drafting-pro') || currentTab === 'invitation' || currentTab === 'email-assistant' || currentTab === 'review' || currentTab === 'reporting' || currentTab === 'meeting-hub' || searchTerm) 
                     ? "text-indigo-600" 
                     : "text-slate-400"
                 )}>
@@ -309,40 +309,21 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                       collapsed={isCollapsed}
                     />
                   )}
-                  {(!searchTerm || "soạn thảo ai".includes(searchTerm.toLowerCase())) && (
+                  {(!searchTerm || "soạn thảo ai".includes(searchTerm.toLowerCase()) || "rà soát văn bản đảng".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
-                      active={currentTab === 'drafting-pro'} 
+                      active={currentTab === 'drafting-pro' || currentTab === 'drafting-pro-review'} 
                       onClick={() => onNavigate('drafting-pro')} 
                       icon={<PenTool size={16} />} 
-                      label="Soạn thảo AI" 
+                      label="Soạn thảo & Rà soát" 
                       collapsed={isCollapsed}
                     />
                   )}
-                  {(!searchTerm || "rà soát văn bản đảng".includes(searchTerm.toLowerCase())) && (
+                  {(!searchTerm || "trợ lý họp thông minh".includes(searchTerm.toLowerCase()) || "tạo kết luận".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
-                      active={currentTab === 'drafting-pro-review'} 
-                      onClick={() => onNavigate('drafting-pro-review')} 
-                      icon={<FileCheck size={16} />} 
-                      label="Rà soát Văn bản Đảng" 
-                      collapsed={isCollapsed}
-                    />
-                  )}
-                  {(!searchTerm || "trợ lý họp thông minh".includes(searchTerm.toLowerCase())) && (
-                    <NavButton 
-                      active={currentTab === 'meeting'} 
-                      onClick={() => onNavigate('meeting')} 
+                      active={currentTab === 'meeting-hub'} 
+                      onClick={() => onNavigate('meeting-hub')} 
                       icon={<Mic size={16} />} 
-                      label="Trợ lý họp thông minh" 
-                      collapsed={isCollapsed}
-                      badge="Mới"
-                    />
-                  )}
-                  {(!searchTerm || "tạo kết luận".includes(searchTerm.toLowerCase())) && (
-                    <NavButton 
-                      active={currentTab === 'conclusion-creator'} 
-                      onClick={() => onNavigate('conclusion-creator')} 
-                      icon={<FileSignature size={16} />} 
-                      label="Tạo kết luận" 
+                      label="Hội họp & Kết luận" 
                       collapsed={isCollapsed}
                       badge="Mới"
                     />
@@ -484,40 +465,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden mt-1 ml-4 border-l border-slate-200/60 space-y-1 pl-2"
                 >
-                  {(!searchTerm || "tham mưu chiến lược".includes(searchTerm.toLowerCase())) && (
-                    <NavButton 
-                      active={currentTab === 'strategic'} 
-                      onClick={() => onNavigate('strategic')} 
-                      icon={<BrainCircuit size={16} />} 
-                      label="Tham mưu chiến lược" 
-                      collapsed={isCollapsed}
-                    />
-                  )}
-                  {(!searchTerm || "bản đồ tri thức".includes(searchTerm.toLowerCase())) && (
-                    <NavButton 
-                      active={currentTab === 'knowledge-linker'} 
-                      onClick={() => onNavigate('knowledge-linker')} 
-                      icon={<BrainCircuit size={16} />} 
-                      label="Bản đồ Tri thức" 
-                      collapsed={isCollapsed}
-                      badge="Mới"
-                    />
-                  )}
                   {(!searchTerm || "tham mưu & sinh hoạt".includes(searchTerm.toLowerCase())) && (
                     <NavButton 
                       active={currentTab === 'party-advisory'} 
                       onClick={() => onNavigate('party-advisory')} 
                       icon={<Lightbulb size={16} />} 
                       label="Tham mưu & Sinh hoạt" 
-                      collapsed={isCollapsed}
-                    />
-                  )}
-                  {(!searchTerm || "tin tức & dư luận".includes(searchTerm.toLowerCase())) && (
-                    <NavButton 
-                      active={currentTab === 'news'} 
-                      onClick={() => onNavigate('news')} 
-                      icon={<Newspaper size={16} />} 
-                      label="Tin tức & Dư luận" 
                       collapsed={isCollapsed}
                     />
                   )}

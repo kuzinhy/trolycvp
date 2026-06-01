@@ -22,7 +22,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '../constants';
 import { cn } from '../lib/utils';
-import { Calendar, Clock, Edit2, Check, X, GripVertical } from 'lucide-react';
+import { Calendar, Clock, Edit2, Check, X, GripVertical, CheckCircle2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 interface KanbanViewProps {
@@ -111,13 +111,18 @@ const KanbanCard = ({ task, onUpdate }: { task: Task, onUpdate: (id: string, upd
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-200 transition-all cursor-default relative",
+        "group bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-200 transition-all cursor-default relative overflow-hidden",
         task.priority === 'high' ? "border-l-4 border-l-rose-500" :
         task.priority === 'medium' ? "border-l-4 border-l-amber-500" :
         "border-l-4 border-l-slate-400"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      {task.status === 'Completed' && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-[0.05] pointer-events-none scale-150 transform z-0">
+          <CheckCircle2 size={80} className="text-emerald-700" />
+        </div>
+      )}
+      <div className="flex items-start justify-between gap-2 relative z-10">
         <div className="flex-1 min-w-0">
           <h4 className="text-sm font-bold text-slate-800 leading-snug mb-2 group-hover:text-indigo-700 transition-colors">
             {task.title}
@@ -262,8 +267,8 @@ export const KanbanView: React.FC<KanbanViewProps> = ({ tasks, updateTasks }) =>
               >
                 {tasks
                   .filter(task => task.status === column.id)
-                  .map(task => (
-                    <KanbanCard key={task.id} task={task} onUpdate={handleUpdateTask} />
+                  .map((task, k) => (
+                    <KanbanCard key={`${task.id || 'task'}-${k}`} task={task} onUpdate={handleUpdateTask} />
                   ))}
               </div>
             </SortableContext>

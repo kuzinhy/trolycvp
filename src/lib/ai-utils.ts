@@ -69,29 +69,25 @@ export const parseAIResponse = (text: string) => {
     cleanText = lines.join('\n').trim();
   }
   
-  // If still contains markdown markers (sometimes AI puts them in the middle or multiple blocks)
-  // Try to find the first { and last }
-  const firstBrace = cleanText.indexOf('{');
-  const lastBrace = cleanText.lastIndexOf('}');
-  const firstBracket = cleanText.indexOf('[');
-  const lastBracket = cleanText.lastIndexOf(']');
-
+  // Robustly extract JSON array or object using regex
+  // This looks for the first [ or { and the last matching ] or }
   let jsonCandidate = cleanText;
-  
-  if (firstBrace !== -1 && lastBrace !== -1) {
-    // Check if it's an object or array and pick the outermost one
-    if (firstBracket !== -1 && firstBracket < firstBrace) {
-      jsonCandidate = cleanText.substring(firstBracket, lastBracket + 1);
-    } else {
-      jsonCandidate = cleanText.substring(firstBrace, lastBrace + 1);
-    }
-  } else if (firstBracket !== -1 && lastBracket !== -1) {
-    jsonCandidate = cleanText.substring(firstBracket, lastBracket + 1);
+  const match = cleanText.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+  if (match) {
+    jsonCandidate = match[0];
   }
 
   try {
     return JSON.parse(jsonCandidate);
   } catch (e) {
+    // If exact parsing fails, try to repair truncated JSON arrays
+    if (jsonCandidate.startsWith('[') && !jsonCandidate.endsWith(']')) {
+      try {
+        // Attempt to close the last object and array
+        const repaired = jsonCandidate.replace(/,\s*[a-zA-Z0-9_"']+[\s:]*$/, '') + '}]';
+        return JSON.parse(repaired);
+      } catch (e2) {}
+    }
     console.error("Failed to parse AI JSON response:", e, "Original text:", text);
     throw new Error("Dữ liệu phản hồi từ AI không đúng định dạng JSON.");
   }

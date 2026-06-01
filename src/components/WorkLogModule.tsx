@@ -41,7 +41,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useKnowledgeContext } from '../context/KnowledgeContext';
 import { OperationType, handleFirestoreError } from '../lib/firestore-errors';
-import { useDashboard } from '../hooks/useDashboard';
+import { useDashboardContext } from '../context/DashboardContext';
 import { useTasks } from '../hooks/useTasks';
 import { useToast } from '../hooks/useToast';
 
@@ -88,7 +88,7 @@ const FIXED_TASKS: Task[] = [
 export const WorkLogModule: React.FC = () => {
   const { user, unitId, googleDriveToken, signInWithGoogle } = useAuth();
   const { showToast: toastFn } = useToast();
-  const { meetings, events } = useDashboard();
+  const { meetings, events } = useDashboardContext();
   const { tasks: calendarTasksList } = useTasks(() => {});
   const { aiKnowledge } = useKnowledgeContext();
   

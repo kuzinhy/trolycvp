@@ -212,57 +212,12 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
       {/* Header Consolidated */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
             <FileSignature size={20} />
           </div>
-          <div className="hidden sm:block">
-            <h1 className="text-lg font-black text-slate-900 tracking-tight uppercase leading-tight">Tạo Kết Luận</h1>
-            <p className="text-[8px] text-slate-400 font-bold tracking-widest uppercase font-mono">Strategic Drafting Engine</p>
-          </div>
-        </div>
-
-        {/* Compact Admin Bar in Header */}
-        <div className="flex-1 max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-2 px-4 border-l border-slate-100 ml-4">
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Ngày thực hiện</label>
-            <input 
-              type="date"
-              value={meetingDate}
-              onChange={(e) => setMeetingDate(e.target.value)}
-              className="bg-transparent text-[11px] font-bold text-slate-800 focus:outline-none w-full border-b border-transparent hover:border-slate-200"
-            />
-          </div>
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Loại hình</label>
-            <select 
-              value={meetingType}
-              onChange={(e) => setMeetingType(e.target.value)}
-              className="bg-transparent text-[11px] font-bold text-slate-800 focus:outline-none w-full appearance-none cursor-pointer border-b border-transparent hover:border-slate-200"
-            >
-              {MEETING_TYPES.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-0.5 min-w-0 col-span-2 md:col-span-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Đơn vị</label>
-            <input 
-              type="text"
-              value={organization}
-              onChange={(e) => setOrganization(e.target.value)}
-              className="bg-transparent text-[11px] font-bold text-slate-800 focus:outline-none w-full border-b border-transparent hover:border-slate-200 truncate"
-              placeholder="Nhập tên đơn vị..."
-            />
-          </div>
-          <div className="flex flex-col gap-0.5 min-w-0 md:col-span-1">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Tên cuộc họp</label>
-            <input 
-              type="text"
-              value={meetingTitle}
-              onChange={(e) => setMeetingTitle(e.target.value)}
-              className="bg-transparent text-[11px] font-bold text-slate-800 focus:outline-none w-full border-b border-transparent hover:border-slate-200 truncate"
-              placeholder="Nhập tên cuộc họp..."
-            />
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight leading-tight">Tạo Kết Luận</h1>
+            <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase font-mono">Công cụ biên soạn kết luận cuộc họp chuyên nghiệp</p>
           </div>
         </div>
 
@@ -327,40 +282,83 @@ export const ConclusionCreatorModule: React.FC<ConclusionCreatorModuleProps> = (
                 {/* Left Column: Input and Suggestions */}
                 <div className="lg:col-span-8 flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar pr-2">
                   
-                  {/* Strategic Linking Bar */}
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                        <Target size={16} />
+                  {/* Meeting Configuration Card */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col gap-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Layout size={16} className="text-slate-400" />
+                      <h2 className="text-xs font-black text-slate-700 uppercase tracking-widest font-mono">Thông tin cuộc họp & Liên kết</h2>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Tên cuộc họp</label>
+                        <input 
+                          type="text"
+                          value={meetingTitle}
+                          onChange={(e) => setMeetingTitle(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-400"
+                          placeholder="Ví dụ: Họp giao ban tháng 5..."
+                        />
                       </div>
-                      <div className="flex-1">
-                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Dự án chiến lược liên kết</label>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Ngày thực hiện</label>
+                        <input 
+                          type="date"
+                          value={meetingDate}
+                          onChange={(e) => setMeetingDate(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Loại hình</label>
+                        <select 
+                          value={meetingType}
+                          onChange={(e) => setMeetingType(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all cursor-pointer"
+                        >
+                          {MEETING_TYPES.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Đơn vị tổ chức</label>
+                        <input 
+                          type="text"
+                          value={organization}
+                          onChange={(e) => setOrganization(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                          placeholder="Đơn vị..."
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Dự án liên kết</label>
                         <select 
                           value={projectId}
                           onChange={(e) => setProjectId(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 text-[11px] font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                          className="w-full bg-indigo-50 border border-indigo-100/50 rounded-xl px-3 py-2 text-sm font-bold text-indigo-800 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all cursor-pointer"
                         >
-                          <option value="">-- Không liên kết dự án --</option>
+                          <option value="">-- Không liên kết --</option>
                           {STRATEGIC_PROJECTS.map(p => (
                             <option key={p.id} value={p.id}>[{p.code}] {p.title}</option>
                           ))}
                         </select>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                        <Link size={16} />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Liên kết tri thức tham chiếu</label>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Tài liệu tham chiếu</label>
                         <button 
                           onClick={() => setShowReferenceModal(true)}
-                          className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-100 hover:border-slate-200 transition-all text-left flex items-center justify-between"
+                          className="w-full bg-blue-50 border border-blue-100/50 rounded-xl px-3 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 transition-all text-left flex items-center justify-between"
                         >
-                          {referencedKnowledgeIds.length > 0 
-                            ? `Đã liên kết ${referencedKnowledgeIds.length} tài liệu` 
-                            : 'Chọn tài liệu tham chiếu...'}
-                          <Plus size={14} className="text-slate-400" />
+                          <span className="truncate">
+                            {referencedKnowledgeIds.length > 0 
+                              ? `Đã liên kết ${referencedKnowledgeIds.length} tài liệu` 
+                              : 'Chọn tài liệu...'}
+                          </span>
+                          <Link size={14} className="text-blue-500 shrink-0" />
                         </button>
                       </div>
                     </div>

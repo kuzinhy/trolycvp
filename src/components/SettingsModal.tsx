@@ -640,7 +640,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                         <div>
                           <h5 className="font-black text-sm uppercase tracking-widest">Ảnh chụp hệ thống</h5>
-                          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Lưu trạng thái hiện tại lên đám mây</p>
+                          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Lưu trạng thái (Nhiệm vụ, Tri thức, Sổ tay) lên mây</p>
                         </div>
                       </div>
                       <div className="space-y-3">
