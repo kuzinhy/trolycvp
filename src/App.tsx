@@ -423,6 +423,7 @@ function AuthenticatedApp() {
       <AnimatePresence>
         {showMorningBriefing && (
           <MorningBriefing 
+            key="morning-briefing"
             tasks={tasks}
             meetings={meetings}
             events={events}
@@ -431,6 +432,7 @@ function AuthenticatedApp() {
         )}
         {focusTask && (
           <CommandFocusMode 
+            key="command-focus"
             task={focusTask}
             onClose={() => setFocusTask(null)}
             onComplete={(id) => {
@@ -440,6 +442,7 @@ function AuthenticatedApp() {
           />
         )}
         <EliteCommandCenter 
+          key="elite-command-center"
           isOpen={isCommandCenterOpen}
           onClose={() => setIsCommandCenterOpen(false)}
           onNavigate={navigateTo}
@@ -447,6 +450,7 @@ function AuthenticatedApp() {
           tasks={tasks}
         />
         <NotebookModal 
+          key="notebook-modal"
           isOpen={isNotebookModalOpen}
           onClose={() => setIsNotebookModalOpen(false)}
         />

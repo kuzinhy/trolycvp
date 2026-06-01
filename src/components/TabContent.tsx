@@ -36,7 +36,6 @@ const EvaluationModule = lazy(() => import('./EvaluationModule').then(m => ({ de
 const RoadmapModule = lazy(() => import('./RoadmapModule').then(m => ({ default: m.RoadmapModule })));
 const GenZDecoder = lazy(() => import('./GenZDecoder').then(m => ({ default: m.GenZDecoder })));
 const PartyDocumentChecker = lazy(() => import('./PartyDocumentChecker').then(m => ({ default: m.PartyDocumentChecker })));
-const ResolutionTracker = lazy(() => import('./ResolutionTracker').then(m => ({ default: m.ResolutionTracker })));
 const PartyAdvisory = lazy(() => import('./PartyAdvisory').then(m => ({ default: m.PartyAdvisory })));
 const WorkScheduleCreator = lazy(() => import('./WorkScheduleCreator').then(m => ({ default: m.WorkScheduleCreator })));
 const TodoAssistant = lazy(() => import('./TodoAssistant').then(m => ({ default: m.TodoAssistant })));
@@ -254,9 +253,6 @@ export const TabContent = memo(({
 
       case 'assignment-tracking':
         return <AssignmentTracking tasks={dashboard.tasks} />;
-
-      case 'resolution-tracking':
-        return <ResolutionTracker />;
 
       case 'evaluation':
         return <EvaluationModule />;

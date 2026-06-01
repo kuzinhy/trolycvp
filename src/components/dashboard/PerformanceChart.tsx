@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { motion } from 'motion/react';
 import { 
   AreaChart, 
   Area, 
@@ -15,7 +16,11 @@ interface PerformanceChartProps {
 }
 
 export const PerformanceChart = memo(({ data }: PerformanceChartProps) => (
-  <div className="xl:col-span-8 os-card p-10 relative overflow-hidden min-h-[550px] bg-white border border-slate-200/60 shadow-sm">
+  <motion.div 
+    className="xl:col-span-8 os-card p-10 relative overflow-hidden min-h-[550px] bg-white border border-slate-200/60 shadow-sm"
+    whileHover={{ scale: 1.02, boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.1)' }}
+    transition={{ duration: 0.3 }}
+  >
     <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none" />
     <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] -ml-48 -mb-48 pointer-events-none" />
     
@@ -82,7 +87,7 @@ export const PerformanceChart = memo(({ data }: PerformanceChartProps) => (
         </AreaChart>
       </ResponsiveContainer>
     </div>
-  </div>
+  </motion.div>
 ));
 
 PerformanceChart.displayName = 'PerformanceChart';

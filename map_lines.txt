@@ -1,0 +1,390 @@
+src/components/GenZDecoder.tsx:59:      const loadedTerms = querySnapshot.docs.map(doc => ({
+src/components/GenZDecoder.tsx:80:        const trending = trendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GenZTerm[];
+src/components/GenZDecoder.tsx:233:      const context = terms.slice(0, 20).map(t => t.term).join(', ');
+src/components/GenZDecoder.tsx:399:            {[...trendingTerms, ...trendingTerms].map((item, idx) => (
+src/components/GenZDecoder.tsx:453:          {tabs.map(tab => (
+src/components/GenZDecoder.tsx:595:          {filteredTerms.map((item, idx) => (
+src/components/Sidebar.tsx:597:                {user?.displayName?.split(' ').map(n => n[0]).join('') || user?.email?.substring(0, 2).toUpperCase() || 'U'}
+src/components/SystemHistoryModule.tsx:66:            {logs.map((log, index) => (
+src/components/WorkLogModule.tsx:168:    const todayMeetings = meetings.filter(m => m.date === targetDateStr).map(m => ({
+src/components/WorkLogModule.tsx:176:    const todayEvents = events.filter(e => e.date === targetDateStr).map(e => ({
+src/components/WorkLogModule.tsx:184:    const todayCalendarTasks = calendarTasksList.filter(t => t.deadline === targetDateStr).map(t => ({
+src/components/WorkLogModule.tsx:239:    const todayMeetings = meetings.filter(m => m.date === targetDateStr).map(m => ({
+src/components/WorkLogModule.tsx:247:    const todayEvents = events.filter(e => e.date === targetDateStr).map(e => ({
+src/components/WorkLogModule.tsx:255:    const todayCalendarTasks = calendarTasksList.filter(t => t.deadline === targetDateStr).map(t => ({
+src/components/WorkLogModule.tsx:359:      let logs = querySnapshot.docs.map(doc => doc.data()) as any[];
+src/components/WorkLogModule.tsx:404:        const fixed = (log.tasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+src/components/WorkLogModule.tsx:405:        const additional = (log.additionalTasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+src/components/WorkLogModule.tsx:406:        const calendar = (log.calendarTasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+src/components/WorkLogModule.tsx:448:      let logs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+src/components/WorkLogModule.tsx:481:        const fixed = (log.tasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+src/components/WorkLogModule.tsx:482:        const additional = (log.additionalTasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+src/components/WorkLogModule.tsx:483:        const calendar = (log.calendarTasks || []).map((t: any) => `[${t.status === 'completed' ? 'x' : ' '}] ${t.task_name}`).join('; ');
+src/components/WorkLogModule.tsx:559:        ...tasks.map(t => `- [${t.status === 'completed' ? 'X' : ' '}] ${t.task_name}: ${t.description}`),
+src/components/WorkLogModule.tsx:560:        ...additionalTasks.map(t => `- [${t.status === 'completed' ? 'X' : ' '}] ${t.task_name}: ${t.description}`),
+src/components/WorkLogModule.tsx:561:        ...calendarTasks.map(t => `- [${t.status === 'completed' ? 'X' : ' '}] ${t.task_name}: ${t.description}`)
+src/components/WorkLogModule.tsx:611:      const docsContext = aiKnowledge.slice(0, 10).map((k: any) => `Tiêu đề: ${k.title}\nNội dung (trích): ${k.content.substring(0, 1000)}`).join('\n\n');
+src/components/WorkLogModule.tsx:654:        const newTasks: Task[] = parsedTasks.map((t: any) => ({
+src/components/WorkLogModule.tsx:825:            {tasks.map((task, index) => (
+src/components/WorkLogModule.tsx:896:              {calendarTasks.map((task, index) => (
+src/components/WorkLogModule.tsx:982:              {additionalTasks.map((task, index) => (
+src/components/WorkLogModule.tsx:1014:                          {(['high', 'medium', 'low'] as const).map((p) => (
+src/components/ComposeProV2.tsx:159:${learnedPreferences.map(p => `- ${p}`).join('\n')}` : ''}
+src/components/ComposeProV2.tsx:170:${aiKnowledge.slice(0, 5).map(k => `- ${k.title}: ${k.content}`).join('\n')}
+src/components/ComposeProV2.tsx:310:            {progressSteps.map((s, i) => (
+src/components/ComposeProV2.tsx:353:                        {learnedPreferences.map((pref, i) => (
+src/components/ComposeProV2.tsx:397:                      {AI_TEMPLATES.map((t, i) => (
+src/components/ComposeProV2.tsx:428:                      {DOCUMENT_TYPES.map((type, i) => (
+src/components/AICreateTasksModal.tsx:62:      const tasksWithMeta = parsedTasks.map((t: any, idx: number) => ({
+src/components/AICreateTasksModal.tsx:88:    setExtractedTasks(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
+src/components/AICreateTasksModal.tsx:170:                {extractedTasks.map((task, idx) => (
+src/components/ConclusionCreatorModule.tsx:319:                          {MEETING_TYPES.map(type => (
+src/components/ConclusionCreatorModule.tsx:345:                          {STRATEGIC_PROJECTS.map(p => (
+src/components/ConclusionCreatorModule.tsx:437:                            {[1, 2, 3].map(i => (
+src/components/ConclusionCreatorModule.tsx:445:                            suggestions.slice(0, 3).map((version, idx) => (
+src/components/ConclusionCreatorModule.tsx:468:                                      {(['evaluation', 'task', 'organization'] as const).map(cat => (
+src/components/ConclusionCreatorModule.tsx:536:                        {segments.map((segment, idx) => (
+src/components/ConclusionCreatorModule.tsx:764:                {BAN_THUONG_VU.map((name) => (
+src/components/ConclusionCreatorModule.tsx:868:                    {suggestions.map((version, idx) => (
+src/components/ConclusionCreatorModule.tsx:901:                            {(['evaluation', 'task', 'organization'] as const).map(cat => (
+src/components/ConclusionCreatorModule.tsx:1011:                  .map((k, idx) => {
+src/components/DraftingModule.tsx:185:        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+src/components/DraftingModule.tsx:217:    const activeRules = rules.filter(r => r.isActive).map(r => r.content);
+src/components/DraftingModule.tsx:228:${activeRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+src/components/DraftingModule.tsx:381:              ].map((tab) => (
+src/components/DraftingModule.tsx:558:                      {suggestions.map((s, i) => (
+src/components/DraftingModule.tsx:648:                  {rules.map((rule) => (
+src/components/dashboard/KeywordWordCloud.tsx:41:      .map(([text, value]) => ({ text, value }))
+src/components/dashboard/KeywordWordCloud.tsx:71:  const maxFreq = Math.max(...keywordFrequencies.map(k => k.value));
+src/components/dashboard/KeywordWordCloud.tsx:72:  const minFreq = Math.min(...keywordFrequencies.map(k => k.value));
+src/components/dashboard/KeywordWordCloud.tsx:91:          {keywordFrequencies.map((kw, i) => {
+src/components/dashboard/KeywordWordCloud.tsx:191:                    {relatedDocuments.map((doc, index) => (
+src/components/dashboard/KeywordWordCloud.tsx:207:                                {doc.tags.map((tag: string, tIndex: number) => (
+src/components/TaskJournalModule.tsx:335:              {(Object.keys(CATEGORY_LABELS) as CategoryId[]).map((categoryId) => (
+src/components/TaskJournalModule.tsx:351:                    groupedEntries[categoryId].map((entry, index) => (
+src/components/UtilitiesModule.tsx:63:        const currentIds = INITIAL_TABS.map(t => t.id);
+src/components/UtilitiesModule.tsx:64:        const savedIds = parsed.map((t: any) => t.id);
+src/components/UtilitiesModule.tsx:101:            {tabs.map((tab) => (
+src/components/StrategicForecastingView.tsx:63:        .map(s => s.url);
+src/components/StrategicForecastingView.tsx:70:      ${selectedSituations.map(s => `- ${s}`).join('\n')}
+src/components/StrategicForecastingView.tsx:170:                {STRATEGIC_SITUATIONS.map(situation => {
+src/components/StrategicForecastingView.tsx:253:                {SOURCES.map(source => {
+src/components/StrategicForecastingView.tsx:292:                {WEB_SOURCES.map(source => {
+src/components/DocumentScanner.tsx:71:              {result.actionItems.map((item, i) => <li key={i}>{item}</li>)}
+src/components/DocumentScanner.tsx:78:              {result.risks.map((risk, i) => <li key={i}>{risk}</li>)}
+src/components/KnowledgeItem.tsx:147:                onChange={(e) => setEditValue(prev => ({ ...prev, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) }))}
+src/components/SettingsModal.tsx:214:              ].map((tab) => (
+src/components/SettingsModal.tsx:291:                      ].map((item) => (
+src/components/SettingsModal.tsx:326:                      ].map((item) => (
+src/components/SettingsModal.tsx:487:                      ].map((item: any) => (
+src/components/SettingsModal.tsx:573:                        {[5, 15, 30, 45, 60, 120, 180, 240, 1440, 2880].map((mins) => {
+src/components/SettingsModal.tsx:686:                          snapshots.map((s) => (
+src/components/KnowledgeModule.tsx:315:      const knowledgeSummary = aiKnowledge.map(k => `- ${k.title} (${k.category}): ${k.content.substring(0, 100)}...`).join('\n');
+src/components/KnowledgeModule.tsx:538:                      {filteredKnowledge.map((item, index) => (
+src/components/KnowledgeModule.tsx:553:                      {filteredKnowledge.map((item, index) => (
+src/components/KnowledgeModule.tsx:695:              {logs.map((log) => (
+src/components/ChatModule.tsx:266:        {visibleActions.map(action => (
+src/components/ChatModule.tsx:436:                chatHistory.map((chat, originalIdx) => ({ chat, originalIdx }))
+src/components/ChatModule.tsx:438:                  .map(({ chat, originalIdx }) => (
+src/components/ChatModule.tsx:493:              {TASK_TYPES.map((task) => (
+src/components/ChatModule.tsx:516:              {filteredMessages.map((msg, idx) => (
+src/components/ChatModule.tsx:661:                            {msg.groundingMetadata.groundingChunks.map((chunk: any, i: number) => (
+src/components/AssignmentTracking.tsx:162:      const allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ViceChiefTask[];
+src/components/AssignmentTracking.tsx:179:      const usersList = snapshotUsers.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserInfo[];
+src/components/AssignmentTracking.tsx:331:      ...systemTasks.map(t => ({
+src/components/AssignmentTracking.tsx:339:      ...viceChief1Tasks.map(t => ({
+src/components/AssignmentTracking.tsx:349:      ...viceChief2Tasks.map(t => ({
+src/components/AssignmentTracking.tsx:609:                  .map(user => (
+src/components/AssignmentTracking.tsx:943:                    filterTasks(viceChief1Tasks, filter1, search1).map(task => {
+src/components/AssignmentTracking.tsx:1208:                    filterTasks(viceChief2Tasks, filter2, search2).map(task => {
+src/components/Header.tsx:45:      return todayBirthdays.map(b => b.name).join(', ');
+src/components/EvaluationModule.tsx:303:      const allEvals = allEvalsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Evaluation));
+src/components/EvaluationModule.tsx:317:      ${sortedEvals.map(s => `Quý ${s.quarter}/${s.year}: ${s.score} điểm - Nhận xét: ${s.feedback}`).join('\n')}
+src/components/EvaluationModule.tsx:390:      const evals1 = evals1Snap.docs.map(d => d.data() as Evaluation);
+src/components/EvaluationModule.tsx:391:      const evals2 = evals2Snap.docs.map(d => d.data() as Evaluation);
+src/components/EvaluationModule.tsx:396:      Dữ liệu: ${evals1.map(e => `Q${e.quarter}/${e.year}: ${e.score}`).join(', ')}
+src/components/EvaluationModule.tsx:399:      Dữ liệu: ${evals2.map(e => `Q${e.quarter}/${e.year}: ${e.score}`).join(', ')}
+src/components/EvaluationModule.tsx:435:        let loadedOfficers = snap.docs.map(d => ({ id: d.id, ...d.data() } as Officer));
+src/components/EvaluationModule.tsx:456:        const allEvals = snap.docs.map(d => ({ id: d.id, ...d.data() } as Evaluation));
+src/components/EvaluationModule.tsx:500:        const strings = content.items.map((item: any) => item.str);
+src/components/EvaluationModule.tsx:752:              {[1, 2, 3, 4].map(q => <option key={q} value={q}>{q}</option>)}
+src/components/EvaluationModule.tsx:760:              {[currentYear - 1, currentYear, currentYear + 1].map(y => <option key={y} value={y}>{y}</option>)}
+src/components/EvaluationModule.tsx:827:            {filteredOfficers.map(o => (
+src/components/EvaluationModule.tsx:1103:                {officers.filter(o => o.id !== selectedOfficer?.id).map(o => (
+src/components/NotificationDropdown.tsx:120:                    {(['all', 'info', 'success', 'warning', 'error'] as const).map((t) => (
+src/components/NotificationDropdown.tsx:140:                    {(['all', 'unread', 'read'] as const).map((s) => (
+src/components/NotificationDropdown.tsx:166:              {filteredNotifications.map((n) => (
+src/components/KnowledgeDetailModal.tsx:227:                        {item.tags.map((tag: string, idx: number) => (
+src/components/AIReviewModal.tsx:22:  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set((items || []).map((_, i) => i)));
+src/components/AIReviewModal.tsx:27:      setSelectedIndices(new Set(items.map((_, i) => i)));
+src/components/AIReviewModal.tsx:82:            {(items || []).map((item, idx) => {
+src/components/AIReviewModal.tsx:166:                          {item.tags.map((tag: string, tIdx: number) => (
+src/components/DocumentReaderModule.tsx:493:                          {analysisResult.warnings.map((warning: string, i: number) => (
+src/components/DocumentReaderModule.tsx:521:                        {analysisResult.action_items?.map((item: any, i: number) => (
+src/components/DocumentReaderModule.tsx:559:                                  {item.support_agency.map((agency: string, j: number) => (
+src/components/KanbanView.tsx:196:        updateTasks(prev => prev.map(t => 
+src/components/KanbanView.tsx:226:      updateTasks(prev => prev.map(t => 
+src/components/KanbanView.tsx:233:    updateTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+src/components/KanbanView.tsx:245:        {columns.map(column => (
+src/components/KanbanView.tsx:258:              items={tasks.filter(t => t.status === column.id).map(t => t.id)}
+src/components/KanbanView.tsx:270:                  .map((task, k) => (
+src/components/ProgressTracking.tsx:148:                  {(['all', 'completed', 'in_progress', 'pending'] as const).map((status) => (
+src/components/ProgressTracking.tsx:179:                    {filteredItems.map((item, index) => (
+src/components/RoadmapModule.tsx:127:        {roadmapData.map((item, index) => {
+src/components/RoadmapModule.tsx:189:                  {item.tags.map(tag => (
+src/components/UserList.tsx:36:      const loadedUsers = snapshot.docs.map(doc => ({
+src/components/UserList.tsx:62:  const processedUsers = users.map(u => ({ ...u, isOnline: getIsOnline(u) }));
+src/components/UserList.tsx:119:          {filteredUsers.map((user, idx) => (
+src/components/BulkReview.tsx:61:      setSelectedCriteria(criteria.filter(c => c.isActive).map(c => c.id));
+src/components/BulkReview.tsx:69:    const newFiles: FileResult[] = selectedFiles.map(file => ({
+src/components/BulkReview.tsx:91:    setFiles(prev => prev.map(f => {
+src/components/BulkReview.tsx:105:    const activeRules = rules.filter(r => r.isActive).map(r => r.content);
+src/components/BulkReview.tsx:110:      .map(c => `- ${c.label} (${c.category === 'party' ? 'Công tác Đảng' : c.category === 'leadership' ? 'Công tác Chỉ đạo' : 'Chung'})`).join('\n');
+src/components/BulkReview.tsx:116:      setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'processing' } : f));
+src/components/BulkReview.tsx:122:            setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'error', errorMsg: 'Không hỗ trợ .docx' } : f));
+src/components/BulkReview.tsx:163:        setFiles(prev => prev.map((f, idx) => idx === i ? { 
+src/components/BulkReview.tsx:174:        setFiles(prev => prev.map((f, idx) => idx === i ? { 
+src/components/BulkReview.tsx:327:                  {criteria.map((c) => (
+src/components/BulkReview.tsx:383:          {['party', 'leadership', 'general'].map((cat) => {
+src/components/BulkReview.tsx:393:                  {catCriteria.map(c => (
+src/components/BulkReview.tsx:433:            files.map((file, index) => (
+src/components/BulkReview.tsx:508:                        {file.errors?.map((err, i) => (
+src/components/BulkReview.tsx:528:                        {file.suggestions?.slice(0, 3).map((sug, i) => (
+src/components/UserManualModule.tsx:87:            {sections.map((section, idx) => (
+src/components/UserManualModule.tsx:103:                  {section.details.map((detail, dIdx) => (
+src/components/WorkScheduleCreator.tsx:273:        {items.map((item, idx) => (
+src/components/WorkScheduleCreator.tsx:384:            {conflicts.map((c, i) => <li key={i}>{c}</li>)}
+src/components/WorkScheduleCreator.tsx:453:${JSON.stringify(items.map(i => ({ id: i.id, date: i.date, time: i.time, endTime: i.endTime, content: i.content, chairperson: i.chairperson, location: i.location })), null, 2)}
+src/components/WorkScheduleCreator.tsx:469:        const updatedItems = items.map(item => {
+src/components/WorkScheduleCreator.tsx:522:          return prev.map(i => i.id === mappedItem.id ? mappedItem : i);
+src/components/WorkScheduleCreator.tsx:787:      const [h, m] = itemStart.split(':').map(Number);
+src/components/WorkScheduleCreator.tsx:800:        const [h, m] = otherStart.split(':').map(Number);
+src/components/WorkScheduleCreator.tsx:843:    const staffAllocation = targetStaff.map(staff => {
+src/components/WorkScheduleCreator.tsx:870:    setItems(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+src/components/WorkScheduleCreator.tsx:922:        [activeTab]: prev[activeTab].map(c => c === oldText ? newText : c)
+src/components/WorkScheduleCreator.tsx:954:        ? `\nTHÔNG TIN THAM KHẢO TỪ BỘ NÃO TRÍ TUỆ NHÂN TẠO:\n${aiKnowledge.slice(0, 10).map(k => `- ${k.title}: ${k.summary || k.content}`).join('\n')}\n(Sử dụng thông tin trên để hoàn thiện các thành phần còn thiếu như cơ quan phụ trách, nội dung, địa điểm).` 
+src/components/WorkScheduleCreator.tsx:1042:        ? `\nTHÔNG TIN THAM KHẢO (Đóng vai trò như bộ não, chứa thói quen, cách tổ chức lịch, cơ quan phụ trách):\n${aiKnowledge.slice(0, 10).map(k => `- ${k.title}: ${k.summary || k.content}`).join('\n')}\n` 
+src/components/WorkScheduleCreator.tsx:1055:${JSON.stringify(items.map(i => ({
+src/components/WorkScheduleCreator.tsx:1086:        const updatedItems = items.map(item => {
+src/components/WorkScheduleCreator.tsx:1318:                {templates.map((t, i) => (
+src/components/WorkScheduleCreator.tsx:1370:                const publishedItems = items.map(item => ({ ...item, status: 'published' as const }));
+src/components/WorkScheduleCreator.tsx:1452:                {stats.staffAllocation.map(item => (
+src/components/WorkScheduleCreator.tsx:1482:                templates.map((t, i) => (
+src/components/WorkScheduleCreator.tsx:1506:                {weekDays.map((day, dayIdx) => {
+src/components/WorkScheduleCreator.tsx:1528:                          items={dayItems.map(i => i.id)}
+src/components/WorkScheduleCreator.tsx:1531:                          {dayItems.map(item => (
+src/components/WorkScheduleCreator.tsx:1568:                    {filteredItems.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(item => (
+src/components/WorkScheduleCreator.tsx:1601:                            {item.participants.slice(0, 2).map((p, pIdx) => (
+src/components/WorkScheduleCreator.tsx:1691:                    ].map(tab => {
+src/components/WorkScheduleCreator.tsx:1711:                      {customChips[activeTab].map(chip => (
+src/components/WorkScheduleCreator.tsx:1971:                              {STAFF_LIST.map(s => <option key={s} value={s}>{s}</option>)}
+src/components/WorkScheduleCreator.tsx:1985:                              {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+src/components/WorkScheduleCreator.tsx:2002:                              {WORK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+src/components/WorkScheduleCreator.tsx:2016:                              {PREPARING_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+src/components/WorkScheduleCreator.tsx:2025:                          {editingItem.participants.map((p, pIdx) => (
+src/components/WorkScheduleCreator.tsx:2081:                                {preferences.reminderSettings.customIntervals.map(mins => (
+src/components/StrategicProgressChart.tsx:52:        ].map((stat, i) => (
+src/components/StrategicProgressChart.tsx:87:          {ongoingTasks.map((task, index) => {
+src/components/UserManagementModule.tsx:177:        const logs = snapshot.docs.map(doc => {
+src/components/UserManagementModule.tsx:214:    return usersList.map(u => {
+src/components/UserManagementModule.tsx:246:      units: new Set(usersList.map(u => u.unitId).filter(Boolean)).size,
+src/components/UserManagementModule.tsx:269:        const users = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+src/components/UserManagementModule.tsx:305:      const history = snapshot.docs.map(doc => {
+src/components/UserManagementModule.tsx:341:      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+src/components/UserManagementModule.tsx:353:      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, unitId: newUnitId } : u));
+src/components/UserManagementModule.tsx:365:      setSelectedUserIds(new Set(filteredUsers.map(u => u.id)));
+src/components/UserManagementModule.tsx:383:      const promises = Array.from(selectedUserIds).map(userId => 
+src/components/UserManagementModule.tsx:387:      setUsersList(prev => prev.map(u => selectedUserIds.has(u.id) ? { ...u, isDisabled: !status } : u));
+src/components/UserManagementModule.tsx:434:        const promises = filteredUsers.map(u => 
+src/components/UserManagementModule.tsx:461:      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, isDisabled: !currentStatus } : u));
+src/components/UserManagementModule.tsx:471:    const rows = filteredUsers.map(u => [
+src/components/UserManagementModule.tsx:481:      + rows.map(e => e.join(",")).join("\n");
+src/components/UserManagementModule.tsx:593:                {Array.from(new Set(usersList.map(u => u.unitId).filter(Boolean))).map(unit => (
+src/components/UserManagementModule.tsx:660:                  {Array.from(new Set(usersList.map(u => u.unitId).filter(Boolean))).map(unit => <option key={unit} value={unit}>{unit}</option>)}
+src/components/UserManagementModule.tsx:667:                  {usersList.map(u => <option key={u.id} value={u.id}>{u.displayName || u.email}</option>)}
+src/components/UserManagementModule.tsx:742:                {filteredUsers.map((u, idx) => (
+src/components/UserManagementModule.tsx:886:                    {userAccessLogs.map(log => (
+src/components/UserManagementModule.tsx:961:                  {notificationHistory.map((notif) => (
+src/components/EliteCommandCenter.tsx:80:  const filteredGroups = query ? commandGroups.map(group => ({
+src/components/EliteCommandCenter.tsx:154:                  filteredGroups.map((group, gIdx) => (
+src/components/EliteCommandCenter.tsx:158:                        {group.items.map((item, iIdx) => {
+src/components/PerformanceAnalytics.tsx:94:    return Object.entries(days).map(([name, value]) => ({ 
+src/components/PerformanceAnalytics.tsx:190:                  {statusData.map((entry, index) => (
+src/components/PendingKnowledgeList.tsx:38:          {items.map((item, index) => (
+src/components/admin/SystemUpdateModule.tsx:61:            {issues.map(issue => (
+src/components/admin/SystemUpdateModule.tsx:110:            {suggestions.map(s => (
+src/components/AccessHistoryModule.tsx:207:                {Object.entries(MODULE_LABELS).map(([key, label]) => (
+src/components/AccessHistoryModule.tsx:228:              {filteredLogs.map((log, index) => {
+src/components/SmartTranslator.tsx:99:              ].map(lang => (
+src/components/SmartTranslator.tsx:123:              ].map(t => (
+src/components/KnowledgeForm.tsx:314:                {driveFiles.map(file => (
+src/components/KnowledgeForm.tsx:409:                    {KNOWLEDGE_CATEGORIES.map(cat => (
+src/components/KnowledgeForm.tsx:420:                    onChange={(e) => setNewKnowledge(prev => ({ ...prev, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) }))}
+src/components/TeamChatModule.tsx:268:                    filteredMessages.map((msg, index) => {
+src/components/SpeechAssistant.tsx:268:                        {TONES.map(tone => (
+src/components/SpeechAssistant.tsx:301:                          {AUDIENCES.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+src/components/SpeechAssistant.tsx:313:                          {DURATIONS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
+src/components/SpeechAssistant.tsx:329:                            {STYLES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+src/components/SpeechAssistant.tsx:336:                            {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+src/components/SpeechAssistant.tsx:349:                          {FOCUS_AREAS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
+src/components/SpeechAssistant.tsx:366:                        ].map(opt => (
+src/components/DashboardModule.tsx:95:          {[1, 2, 3].map(i => (
+src/components/DashboardModule.tsx:122:      {data.map((goal, i) => (
+src/components/DashboardModule.tsx:412:              {props.tasks.slice(0, 4).map((task, i) => (
+src/components/DashboardModule.tsx:452:              {props.meetings.slice(0, 4).map((meeting, i) => (
+src/components/DashboardModule.tsx:490:              {props.chatHistory.slice(0, 6).map((chat, i) => (
+src/components/StaffBirthdayReminder.tsx:133:          upcomingBirthdays.map(b => (
+src/components/EliteDashboardHome.tsx:85:      const taskContext = tasks?.map((t: any) => `- [${t.status}] ${t.title} (Ưu tiên: ${t.priority || 'Bình thường'})`).join('\n') || 'Không có nhiệm vụ tồn đọng.';
+src/components/EliteDashboardHome.tsx:86:      const meetingContext = meetings?.map((m: any) => `- ${m.time || ''} ${m.date || ''}: ${m.title} tại ${m.location || 'Chưa xác định'}`).join('\n') || 'Không có cuộc họp lịch trình.';
+src/components/EliteDashboardHome.tsx:262:            {[1, 2, 3].map(i => (
+src/components/EliteDashboardHome.tsx:279:        {stats.map((stat, i) => (
+src/components/EliteDashboardHome.tsx:373:                {tasks?.slice(0, 5).map((task: any, i: number) => (
+src/components/EliteDashboardHome.tsx:408:                {meetings?.slice(0, 5).map((meeting: any, i: number) => (
+src/components/EliteDashboardHome.tsx:464:                  ].map((w, idx) => (
+src/components/EliteDashboardHome.tsx:546:                ].map((p, i) => (
+src/components/EliteDashboardHome.tsx:577:              ].map((note, i) => (
+src/components/ChatHistoryModule.tsx:255:                {(['all', 'user', 'model'] as const).map((role) => (
+src/components/ChatHistoryModule.tsx:270:                {(['all', 'today', 'week', 'month'] as const).map((period) => (
+src/components/ChatHistoryModule.tsx:298:              {groupedHistory.map(([date, chats]) => (
+src/components/ChatHistoryModule.tsx:306:                    {chats.map((chat) => (
+src/components/PartyDocumentChecker.tsx:123:      .map(r => `- ${r.title}: ${r.content}`)
+src/components/PartyDocumentChecker.tsx:322:                          ].map((item, i) => (
+src/components/PartyDocumentChecker.tsx:340:                      {[1, 2, 3].map(i => (
+src/components/PartyDocumentChecker.tsx:377:                          {issues.map((issue, idx) => (
+src/components/PartyDocumentChecker.tsx:460:                    {rules.map((rule) => (
+src/components/SmartDataExtractor.tsx:69:          existingMeetings: meetings.map(m => ({ date: m.date, time: m.time, name: m.name })),
+src/components/SmartDataExtractor.tsx:70:          existingTasks: tasks.map(t => ({ deadline: t.deadline, name: t.title }))
+src/components/SmartDataExtractor.tsx:261:                  {scheduleData.warnings.map((w, i) => <li key={i}>{w}</li>)}
+src/components/SmartDataExtractor.tsx:272:                  {scheduleData.meetings.map((meeting, i) => (
+src/components/SmartDataExtractor.tsx:304:                  {scheduleData.tasks.map((task, i) => (
+src/components/SmartDataExtractor.tsx:384:                    {analysis.entities.map((entity, i) => (
+src/components/QuickNotes.tsx:95:    saveNotes(notes.map(n => n.id === id ? { 
+src/components/QuickNotes.tsx:156:              {notes.map((note, index) => {
+src/components/QuickNotes.tsx:190:                            {noteColors.map((c, i) => (
+src/components/QuickNotes.tsx:268:                    {noteColors.map((c, i) => (
+src/components/SmartErrorCorrectionCenter.tsx:73:        .map(doc => ({
+src/components/SmartErrorCorrectionCenter.tsx:274:    setErrors(prev => prev.map(e => e.id === errorId ? { ...e, status: 'fixing' } : e));
+src/components/SmartErrorCorrectionCenter.tsx:366:    const reportData = filteredAndSortedErrors.map(e => ({
+src/components/SmartErrorCorrectionCenter.tsx:685:                    filteredAndSortedErrors.map((error) => (
+src/components/SmartErrorCorrectionCenter.tsx:880:                    {selectedError.log?.map((line, i) => (
+src/components/ReportingModule.tsx:91:            logData = snapshot.docs.map(doc => doc.data());
+src/components/ReportingModule.tsx:97:              .map(doc => doc.data())
+src/components/ReportingModule.tsx:123:${topActions.map(a => `   + ${a[0]}: ${a[1]} lượt`).join('\n')}
+src/components/ReportingModule.tsx:125:${topModules.map(m => `   + ${m[0]}: ${m[1]} lượt`).join('\n')}
+src/components/ReportingModule.tsx:291:                    {taskStatusData.map((entry, index) => (
+src/components/ReportingModule.tsx:341:                  {taskPriorityData.map((entry, index) => (
+src/components/ReportingModule.tsx:466:                    selectedTasks.map((task, index) => (
+src/components/KnowledgeHeader.tsx:95:              {KNOWLEDGE_CATEGORIES.map(cat => (
+src/components/SmartTaskManager.tsx:56:        updateTasks(tasks.map(t => 
+src/components/SmartTaskManager.tsx:61:                subTasks: analysis.steps.map((st: string) => ({ title: st, description: '', status: 'Pending' })) 
+src/components/SmartTaskManager.tsx:113:    const worksheet = XLSX.utils.json_to_sheet(tasks.map(t => ({
+src/components/SmartTaskManager.tsx:147:        {tasks.map(task => (
+src/components/DocumentManagementModule.tsx:234:          ].map(tab => (
+src/components/DocumentManagementModule.tsx:312:                    localFiles.map((file) => (
+src/components/DocumentManagementModule.tsx:353:                ].map((stat, i) => (
+src/components/DocumentManagementModule.tsx:380:                    {MOCK_DOCUMENTS.filter(d => d.status === 'reviewing').map(doc => (
+src/components/DocumentManagementModule.tsx:406:                    {MOCK_SEAL_LOGS.map(log => (
+src/components/DocumentManagementModule.tsx:472:                    {filteredDocs.map(doc => (
+src/components/DocumentManagementModule.tsx:555:                    {MOCK_SEAL_LOGS.map(log => (
+src/components/DocumentManagementModule.tsx:641:                    {selectedDoc.workflow.map((step, idx) => (
+src/components/DocumentManagementModule.tsx:673:                      {selectedDoc.attachments.map((file, i) => (
+src/components/TodoAssistant.tsx:240:                      {reminderSettings?.customIntervals && Array.from(new Set<number>(reminderSettings.customIntervals)).map((mins: number) => (
+src/components/TodoAssistant.tsx:261:                    {allTasks.filter(t => t.id !== task.id).map((t, idx) => (
+src/components/TodoAssistant.tsx:789:      const updated = prev.map(t => t.id === id ? { ...t, ...updates } : t);
+src/components/TodoAssistant.tsx:829:            ].map(tab => (
+src/components/TodoAssistant.tsx:883:                  {tasks.filter(t => activeFilter === 'completed' ? t.status === 'Completed' : t.status !== 'Completed').map((task, k) => (
+src/components/TodoAssistant.tsx:989:                        {(['all', 'pending', 'completed', 'overdue'] as const).map(f => (
+src/components/TodoAssistant.tsx:1022:                        {filteredSidebarTasks.map((task, k) => (
+src/components/SmartEmailAssistant.tsx:151:                  {suggestions.map((s, i) => (
+src/components/KnowledgeGraph.tsx:27:    const nodes: Node[] = data.map((item, idx) => ({
+src/components/TaskManagement.tsx:69:      setSelectedTasks(new Set(filteredTasks.map(t => t.id)));
+src/components/TaskManagement.tsx:86:    const updatedTasks = tasks.map(t => selectedTasks.has(t.id) ? { ...t, status } : t);
+src/components/TaskManagement.tsx:312:    const updatedTasks = tasks.map(t => t.id === editingId ? { ...t, ...formData } : t);
+src/components/TaskManagement.tsx:391:      const updatedTasks = tasks.map(t => 
+src/components/TaskManagement.tsx:652:            {(['all', 'high', 'medium', 'low'] as const).map((priority) => (
+src/components/TaskManagement.tsx:707:                {tasksByStatus['Pending'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+src/components/TaskManagement.tsx:724:                {tasksByStatus['In Progress'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+src/components/TaskManagement.tsx:741:                {tasksByStatus['In Review'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+src/components/TaskManagement.tsx:758:                {tasksByStatus['On Hold'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+src/components/TaskManagement.tsx:775:                {tasksByStatus['Completed'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+src/components/TaskManagement.tsx:843:                    sortTasks(filteredTasks).map((task, k) => {
+src/components/TaskManagement.tsx:860:                                  const updatedTasks = tasks.map(t => t.id === task.id ? { ...t, status: newStatus } : t);
+src/components/TaskManagement.tsx:1173:                      {(['low', 'medium', 'high'] as const).map((p) => (
+src/components/PartyAdvisory.tsx:270:                        {result.keyPoints.map((point, i) => (
+src/components/PartyAdvisory.tsx:284:                        {result.recommendations.map((rec, i) => (
+src/components/OptimizedScheduleView.tsx:159:        Object.entries(conflicts).map(([date, msgs]) => (
+src/components/OptimizedScheduleView.tsx:162:            {msgs.map((msg, i) => (
+src/components/OptimizedScheduleView.tsx:299:        const newEvents = data.items.map((event: any) => ({
+src/components/OptimizedScheduleView.tsx:309:           const existingIds = new Set(prev.map(e => `${e.name}-${e.date}`));
+src/components/OptimizedScheduleView.tsx:440:        const newMeetings = vevents.map(vevent => {
+src/components/OptimizedScheduleView.tsx:526:      await updateMeetings(prev => [...prev, ...parsedData.meetings.map((m: any) => ({ ...m, id: Math.random().toString(36).substr(2, 9) }))]);
+src/components/OptimizedScheduleView.tsx:529:      await updateTasks(prev => [...prev, ...parsedData.tasks.map((t: any) => ({ ...t, id: Math.random().toString(36).substr(2, 9) }))]);
+src/components/OptimizedScheduleView.tsx:532:      await updateEvents(prev => [...prev, ...parsedData.events.map((e: any) => ({ ...e, id: Math.random().toString(36).substr(2, 9) }))]);
+src/components/OptimizedScheduleView.tsx:801:          {weekDays.map((day, idx) => {
+src/components/OptimizedScheduleView.tsx:846:                  {dayEvents.map((e, k) => (
+src/components/OptimizedScheduleView.tsx:863:                  {dayTasks.map((t, k) => (
+src/components/OptimizedScheduleView.tsx:881:                    dayMeetings.map((m, k) => (
+src/components/OptimizedScheduleView.tsx:1038:                          await updateTasks(prev => prev.map(t => t.id === selectedItem.id ? updatedItem : t));
+src/hooks/usePartyReviewRules.ts:73:        const snapshotRules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ReviewRule));
+src/hooks/useDraftingRules.ts:43:        const snapshotRules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DraftingRule));
+src/hooks/useChat.ts:100:      const history = snapshot.docs.map(doc => ({
+src/hooks/useChat.ts:143:              ${history.map(m => `${m.role === 'user' ? 'Người dùng' : 'AI'}: ${m.content}`).join('\n')}`
+src/hooks/useChat.ts:237:- Cuộc họp/Lịch công tác: ${meetings.length > 0 ? meetings.map(m => `${m.date} ${m.time}: ${m.name} (${m.location})`).join('; ') : 'Không có lịch họp.'}
+src/hooks/useChat.ts:238:- Nhiệm vụ: ${tasks.length > 0 ? tasks.map(t => `${t.title} (Hạn: ${t.deadline}, Trạng thái: ${t.status})`).join('; ') : 'Không có nhiệm vụ.'}
+src/hooks/useChat.ts:239:- Sự kiện: ${events.length > 0 ? events.map(e => `${e.date}: ${e.name}`).join('; ') : 'Không có sự kiện.'}
+src/hooks/useChat.ts:240:- Sinh nhật: ${birthdays.length > 0 ? birthdays.map(b => `${b.date}: ${b.name}`).join('; ') : 'Không có thông tin sinh nhật.'}
+src/hooks/useChat.ts:275:              ${messages.slice(-15).map(m => `${m.role === 'user' ? 'Người dùng' : 'AI'}: ${m.content}`).join('\n')}
+src/hooks/useChat.ts:303:        setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, content: aiText } : m));
+src/hooks/useChat.ts:368:        setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, content: aiText } : m));
+src/hooks/useChat.ts:372:      setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, title: finalTitle } : m));
+src/hooks/useKnowledge.ts:237:      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+src/hooks/useKnowledge.ts:272:      const content = itemsToSummarize.map(k => `Tiêu đề: ${k.title}\nNội dung: ${k.content}`).join('\n\n');
+src/hooks/useReviewCriteria.ts:44:        setCriteria(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ReviewCriteria)));
+src/hooks/useTasks.ts:66:      const loadedTasks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+src/hooks/useTasks.ts:77:      const loadedTasks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+src/hooks/useTasks.ts:166:          setTasks(current => current.map(ct => ct.id === t.id ? updatedTask : ct));
+src/hooks/useTasks.ts:170:          setTasks(current => current.map(ct => ct.id === t.id ? updatedTask : ct));
+src/hooks/useTasks.ts:221:      Danh sách nhiệm vụ: ${JSON.stringify(tasks.filter(t => t.status !== 'Completed').map(t => ({ id: t.id, title: t.title, description: t.description, deadline: t.deadline })))}`;
+src/hooks/useTasks.ts:232:        const updatedTasks = tasks.map(t => {
+src/hooks/useNotifications.ts:159:        .map(doc => {
+src/hooks/useNotifications.ts:208:      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+src/hooks/useNotifications.ts:227:      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+src/hooks/useConclusionCreator.ts:187:    setSegments(prev => prev.map(s => s.id === id ? { ...s, selectedVersion: newContent } : s));
+src/hooks/useConclusionCreator.ts:199:      const evaluation = segments.filter(s => s.category === 'evaluation').map(s => s.selectedVersion).join('\n');
+src/hooks/useConclusionCreator.ts:200:      const tasks = segments.filter(s => s.category === 'task').map(s => s.selectedVersion).join('\n');
+src/hooks/useConclusionCreator.ts:201:      const organizationTasks = segments.filter(s => s.category === 'organization').map(s => s.selectedVersion).join('\n');
+src/hooks/useConclusionCreator.ts:202:      const others = segments.filter(s => s.category === 'general').map(s => s.selectedVersion).join('\n');
+src/services/backupService.ts:35:  backup.data.tasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+src/services/backupService.ts:39:  backup.data.meetings = meetingsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+src/services/backupService.ts:43:  backup.data.events = eventsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+src/services/backupService.ts:47:  backup.data.birthdays = birthdaysSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+src/services/backupService.ts:52:  backup.data.party_documents = knowledgeSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+src/services/backupService.ts:57:  backup.data.task_journals = journalsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+src/services/backupService.ts:133:  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+src/lib/firestore-errors.ts:41:      providerInfo: currentUser?.providerData.map((provider: any) => ({
+src/lib/pdf-utils.ts:18:      text += content.items.map((item: any) => item.str).join(' ') + '\n';
+src/lib/graphrag-utils.ts:14:  const scoredNodes = knowledgeArray.map(node => {
+src/lib/graphrag-utils.ts:34:  const topNodes = scoredNodes.filter(n => n.score > 0).slice(0, 5).map(n => n.node);
+src/lib/graphrag-utils.ts:69:    const nodesText = optimizedKnowledge.map(k => {
+src/lib/graphrag-utils.ts:72:          .map(o => o.id);
+src/lib/logService.ts:36:    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ActivityLog[];
+src/context/KnowledgeContext.tsx:177:      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+src/context/KnowledgeContext.tsx:383:      const content = itemsToSummarize.map(k => `Tiêu đề: ${k.title}\nNội dung: ${k.content}`).join('\n\n');
+src/context/HistoryContext.tsx:60:      const newLogs = snapshot.docs.map(doc => ({
+src/context/ChatContext.tsx:84:      const history = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+src/context/ChatContext.tsx:121:${history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}` }]
+src/context/ChatContext.tsx:194:            .map(k => ({
+src/context/ChatContext.tsx:209:      const knowledgeContext = relevantKnowledge.map((k, i) => `${i+1}. [${k.category || 'Chung'}]: ${k.content}`).join('\n');
+src/context/ChatContext.tsx:230:- Cuộc họp/Lịch công tác: ${meetings.length > 0 ? meetings.map(m => `${m.date} ${m.time}: ${m.name} (${m.location})`).join('; ') : 'Không có lịch họp.'}
+src/context/ChatContext.tsx:231:- Nhiệm vụ: ${tasks.length > 0 ? tasks.map(t => `${t.title} (Hạn: ${t.deadline}, Trạng thái: ${t.status})`).join('; ') : 'Không có nhiệm vụ.'}
+src/context/ChatContext.tsx:232:- Sự kiện: ${events.length > 0 ? events.map(e => `${e.date}: ${e.name}`).join('; ') : 'Không có sự kiện.'}
+src/context/ChatContext.tsx:233:- Sinh nhật: ${birthdays.length > 0 ? birthdays.map(b => `${b.date}: ${b.name}`).join('; ') : 'Không có thông tin sinh nhật.'}
+src/context/ChatContext.tsx:244:          parts: [{ text: `${instruction}\n\n${scheduleContext}\n\nKNOWLEDGE:\n${knowledgeContext || 'Chưa có thông tin.'}\n\nHISTORY:\n${messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n')}\n\nUSER: ${userMessage.content}` }]
+src/context/ChatContext.tsx:255:        setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, content: aiText } : m));
+src/context/DashboardContext.tsx:107:      setTasks(snap.docs.map(d => ({ id: d.id, ...d.data() } as Task)));
+src/context/DashboardContext.tsx:115:      setMeetings(snap.docs.map(d => ({ id: d.id, ...d.data() } as Meeting)));
+src/context/DashboardContext.tsx:123:      setBirthdays(snap.docs.map(d => ({ id: d.id, ...d.data() } as Birthday)));
+src/context/DashboardContext.tsx:130:      setEvents(snap.docs.map(d => ({ id: d.id, ...d.data() } as Event)));
+src/context/DashboardContext.tsx:316:      const taskBrief = tasks.slice(0, 5).map(t => `- ${t.title} (${t.status})`).join('\n');
+src/context/DashboardContext.tsx:317:      const meetingBrief = meetings.slice(0, 3).map(m => `- ${m.time}: ${m.name}`).join('\n');
+src/App.tsx:437:              updateTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'Completed', progress: 100, completedAt: Date.now() } : t));

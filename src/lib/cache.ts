@@ -20,7 +20,7 @@ export interface CacheSchema {
 
 let dbPromise: Promise<IDBPDatabase<any>> | null = null;
 
-export const getDB = () => {
+const getDB = () => {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
@@ -52,11 +52,3 @@ export const getCachedData = async (storeName: keyof CacheSchema, key: string) =
   }
 };
 
-export const clearCache = async (storeName: keyof CacheSchema) => {
-  try {
-    const db = await getDB();
-    await db.clear(storeName);
-  } catch (error) {
-    console.warn(`Clearing cache failed for ${storeName}:`, error);
-  }
-};
