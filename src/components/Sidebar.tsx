@@ -166,8 +166,13 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
       {/* Header Section */}
       <div className={cn("p-6 flex flex-col gap-4 shrink-0 border-b border-slate-100", isCollapsed && "items-center px-0 p-4")}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-sm text-white font-bold text-xl">
-            <ShieldCheck size={24} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-slate-200 bg-white">
+            <img 
+              src="https://i.imgur.com/S9tvwYs.png" 
+              alt="Logo" 
+              className="w-full h-full object-contain p-1"
+              referrerPolicy="no-referrer"
+            />
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
