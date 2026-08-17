@@ -1,0 +1,1590 @@
+import React, { useState, useMemo, memo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Search, 
+  Plus, 
+  MoreHorizontal, 
+  CheckSquare, 
+  Calendar, 
+  AlertCircle,
+  Clock,
+  Trash2,
+  Edit,
+  X,
+  Save,
+  Filter,
+  GripVertical,
+  Sparkles,
+  LayoutGrid,
+  List as ListIcon,
+  CheckCircle2,
+  Timer,
+  MessageCircle,
+  Send,
+  Copy,
+  RotateCcw
+} from 'lucide-react';
+import { Task } from '../constants';
+import { cn } from '../lib/utils';
+import { generateContentWithRetry } from '../lib/ai-utils';
+import { ToastType } from './ui/Toast';
+import { ConfirmationModal } from './ui/ConfirmationModal';
+import { AICreateTasksModal } from './AICreateTasksModal';
+import { DEFAULT_TASKS_DATA } from '../data/defaultSchedule';
+
+const STAFF_PHONES: Record<string, string> = {
+  "Nguyễn Minh Huy": "0988123456",
+  "Lê Thị Kiều Oanh": "0912345678",
+  "Trần Quốc Bảo": "0903456789",
+  "Nguyễn Thị Thu Phương": "0976543210",
+  "Nguyễn Hồng Tú": "0983111222",
+  "Nguyễn Khánh Linh": "0945678901",
+  "Lê Hồng Quân": "0934567890",
+  "Nguyễn Đình Cảnh": "0966222333",
+  "Bồ Thị Ngọc Linh": "0909123456",
+  "Nguyễn Thị Thanh Loan": "0918777888",
+  "Nguyễn Thị Thùy Linh": "0977888999",
+  "Lê Minh Trí": "0933444555",
+  "Đỗ Thị Thanh Sang": "0912223344",
+  "Nguyễn Thị Thanh Tuyền": "0989555666",
+  "Lê Thị Hằng Nga": "0908666777",
+  "Chu Lê Anh Thư": "0944333222",
+  "Hồ Trung Tín": "0963222111",
+  "Võ Thành Trung": "0907555444"
+};
+
+interface TaskManagementProps {
+  tasks: Task[];
+  setTasks: (updater: Task[] | ((prev: Task[]) => Task[])) => void;
+  showToast: (message: string, type?: ToastType) => void;
+  onSaveTasks?: (tasks: Task[]) => void;
+  saveToKnowledge?: (task: Task) => void;
+  isEmbedded?: boolean;
+}
+
+type TaskStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold' | 'In Review';
+type ViewMode = 'kanban' | 'list';
+
+export const TaskManagement: React.FC<TaskManagementProps> = memo(({ tasks, setTasks, showToast, onSaveTasks, saveToKnowledge, isEmbedded }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [isExtractModalOpen, setIsExtractModalOpen] = useState(false);
+  
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+
+  // Zalo messaging state variables
+  const [zaloModalOpen, setZaloModalOpen] = useState(false);
+  const [zaloTask, setZaloTask] = useState<Task | null>(null);
+  const [zaloPhone, setZaloPhone] = useState('');
+  const [zaloMessage, setZaloMessage] = useState('');
+  const [zaloRecipientName, setZaloRecipientName] = useState('');
+  const [isOptimizingZalo, setIsOptimizingZalo] = useState(false);
+
+  const handleOpenZaloModal = (task: Task) => {
+    setZaloTask(task);
+    const assignee = task.assignee || '';
+    setZaloRecipientName(assignee);
+    
+    // Find matching phone number
+    const matchedPhone = STAFF_PHONES[assignee] || '';
+    setZaloPhone(matchedPhone);
+    
+    // Generate default message text
+    const assigneeText = assignee ? `đồng chí ${assignee}` : 'đồng chí';
+    const priorityText = task.priority === 'high' ? 'CAO (Khẩn)' : task.priority === 'medium' ? 'Trung bình' : 'Thấp';
+    const statusText = task.status === 'Pending' ? 'Chờ xử lý' :
+                       task.status === 'In Progress' ? 'Đang thực hiện' :
+                       task.status === 'In Review' ? 'Đang xem xét' :
+                       task.status === 'On Hold' ? 'Tạm hoãn' : 'Hoàn thành';
+    
+    const msg = `[HỆ THỐNG CHỈ HUY CHIẾN LƯỢC 8.0]
+Kính gửi ${assigneeText},
+
+Tôi xin gửi thông tin nhắc nhở điều hành nhiệm vụ sau:
+- Nhiệm vụ: ${task.title}
+${task.description ? `- Nội dung chi tiết: ${task.description}\n` : ''}- Mức độ ưu tiên: ${priorityText}
+- Hạn hoàn thành: ${task.deadline}${task.time ? ` vào lúc ${task.time}` : ''}
+- Trạng thái hiện tại: ${statusText}
+
+Đề nghị đồng chí chủ động triển khai, phối hợp thực hiện bảo đảm đúng tiến độ, chất lượng và tuyệt đối an toàn thông tin theo quy định của Đảng ủy.
+
+Trân trọng cảm ơn đồng chí,
+Nguyễn Minh Huy - Chánh Văn phòng Đảng ủy.`;
+    
+    setZaloMessage(msg);
+    setZaloModalOpen(true);
+  };
+
+  const optimizeZaloMessage = async () => {
+    if (!zaloMessage.trim()) return;
+    setIsOptimizingZalo(true);
+    try {
+      const prompt = `Hãy viết lại tin nhắn nhắc nhở sau để cực kỳ ngắn gọn, súc tích, trang trọng, lịch sự, chuẩn công sở Việt Nam nhưng vẫn đầy đủ thông tin cốt lõi. Hãy tối ưu hóa cấu trúc để người đọc dễ nắm bắt ngay qua tin nhắn Zalo.
+Nhiệm vụ: ${zaloTask?.title}
+Nội dung gốc:
+${zaloMessage}
+
+Chỉ trả về duy nhất nội dung tin nhắn mới đã được tối ưu hóa, KHÔNG thêm lời chào mở đầu của AI (như "Dưới đây là...", "Đây là tin nhắn..."), KHÔNG thêm dấu ngoặc kép bọc ngoài tin nhắn, giữ nguyên chữ ký từ Chánh Văn phòng Nguyễn Minh Huy.`;
+
+      const response = await generateContentWithRetry(prompt);
+      if (response && response.text) {
+        setZaloMessage(response.text.trim());
+        showToast("Đã tối ưu hóa nội dung bằng AI!", "success");
+      } else {
+        showToast("Không nhận được phản hồi từ AI", "warning");
+      }
+    } catch (err) {
+      console.error("AI Zalo optimization failed:", err);
+      showToast("Không thể dùng AI tối ưu hóa, vui lòng thử lại.", "error");
+    } finally {
+      setIsOptimizingZalo(false);
+    }
+  };
+
+  const handleSendZalo = () => {
+    if (!zaloPhone) {
+      showToast("Vui lòng nhập số điện thoại người nhận!", "error");
+      return;
+    }
+    const cleanPhone = zaloPhone.trim().replace(/\s+/g, '');
+    if (!/^[0-9+]{9,15}$/.test(cleanPhone)) {
+      showToast("Số điện thoại không hợp lệ! Vui lòng nhập đúng số điện thoại (ví dụ: 0988123456).", "error");
+      return;
+    }
+    
+    try {
+      // Copy to clipboard
+      navigator.clipboard.writeText(zaloMessage);
+      showToast("Đã sao chép nội dung nhắc nhở! Đang mở Zalo...", "success");
+      
+      // Open Zalo private chat link
+      window.open(`https://zalo.me/${cleanPhone}`, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+      showToast("Không thể sao chép tự động. Vui lòng sao chép thủ công và gửi.", "warning");
+    }
+  };
+
+  const handleCopyZaloMessage = () => {
+    try {
+      navigator.clipboard.writeText(zaloMessage);
+      showToast("Đã sao chép nội dung tin nhắn thành công!", "success");
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+      showToast("Sao chép thất bại. Vui lòng bôi đen và sao chép thủ công.", "error");
+    }
+  };
+
+  const toggleSelectTask = (id: string) => {
+    const newSelected = new Set(selectedTasks);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedTasks(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedTasks.size === filteredTasks.length) {
+      setSelectedTasks(new Set());
+    } else {
+      setSelectedTasks(new Set(filteredTasks.map(t => t.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedTasks.size === 0) return;
+    setBulkDeleteModalOpen(true);
+  };
+
+  const confirmBulkDelete = () => {
+    const updatedTasks = tasks.filter(t => !selectedTasks.has(t.id));
+    setTasks(updatedTasks);
+    if (onSaveTasks) onSaveTasks(updatedTasks);
+    setSelectedTasks(new Set());
+    showToast(`Đã xóa ${selectedTasks.size} nhiệm vụ!`, "success");
+    setBulkDeleteModalOpen(false);
+  };
+
+  const handleBulkStatus = (status: TaskStatus) => {
+    if (selectedTasks.size === 0) return;
+    const updatedTasks = tasks.map(t => selectedTasks.has(t.id) ? { ...t, status } : t);
+    setTasks(updatedTasks);
+    if (onSaveTasks) onSaveTasks(updatedTasks);
+    setSelectedTasks(new Set());
+    showToast(`Đã cập nhật trạng thái cho ${selectedTasks.size} nhiệm vụ!`, "success");
+  };
+
+  const handleAddExtractedTasks = (extractedTasks: any[]) => {
+    const updatedTasks = [...tasks, ...extractedTasks];
+    setTasks(updatedTasks);
+    if (onSaveTasks) onSaveTasks(updatedTasks);
+    showToast(`Đã thêm ${extractedTasks.length} nhiệm vụ từ văn bản!`, "success");
+  };
+
+  const handleRestoreDefaultTasks = () => {
+    setTasks(DEFAULT_TASKS_DATA);
+    if (onSaveTasks) onSaveTasks(DEFAULT_TASKS_DATA);
+    showToast("Đã nạp danh sách nhiệm vụ chuẩn Đảng ủy thành công!", "success");
+  };
+
+  // Form state
+  const [formData, setFormData] = useState<{ 
+    title: string; 
+    description: string;
+    deadline: string; 
+    time: string;
+    priority: 'high' | 'medium' | 'low'; 
+    status: TaskStatus; 
+    progress?: number;
+    aiSuggestion?: string; 
+    assignee?: string; 
+    isImportant?: boolean;
+    category?: string;
+    estimatedTime?: string;
+  }>({
+    title: '',
+    description: '',
+    deadline: '',
+    time: '',
+    priority: 'medium',
+    status: 'Pending',
+    progress: 0,
+    aiSuggestion: '',
+    assignee: '',
+    isImportant: false,
+    category: '',
+    estimatedTime: ''
+  });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const analyzeTask = async () => {
+    if (!formData.title) {
+      showToast("Vui lòng nhập tên nhiệm vụ để phân tích", "error");
+      return;
+    }
+    setIsAnalyzing(true);
+    try {
+      const prompt = `Phân tích nhiệm vụ sau và đề xuất mức độ ưu tiên (high, medium, low) cùng với một lời khuyên/gợi ý ngắn gọn (dưới 50 từ) để thực hiện nhiệm vụ này hiệu quả.
+Nhiệm vụ: "${formData.title}"
+
+Trả về kết quả dưới dạng JSON với định dạng:
+{
+  "priority": "high" | "medium" | "low",
+  "suggestion": "lời khuyên ngắn gọn"
+}`;
+      const response = await generateContentWithRetry({
+        model: 'gemini-3.7-flash',
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: 'application/json',
+        }
+      });
+      
+      if (response.text) {
+        const result = JSON.parse(response.text);
+        setFormData(prev => ({
+          ...prev,
+          priority: result.priority || prev.priority,
+          aiSuggestion: result.suggestion || ''
+        }));
+        showToast("Đã phân tích và cập nhật đề xuất", "success");
+      }
+    } catch (error) {
+      console.error("Error analyzing task:", error);
+      showToast("Lỗi khi phân tích nhiệm vụ", "error");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const filteredTasks = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return tasks.filter(task => {
+      const matchesSearch = !term || task.title.toLowerCase().includes(term);
+      const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
+      return matchesSearch && matchesPriority;
+    });
+  }, [tasks, searchTerm, filterPriority]);
+
+  const sortTasks = (tasksToSort: Task[]) => {
+    return [...tasksToSort].sort((a, b) => {
+      const now = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
+      const aDeadline = new Date(a.deadline).getTime();
+      const bDeadline = new Date(b.deadline).getTime();
+      
+      const aIsOverdue = aDeadline < now && a.status !== 'Completed';
+      const bIsOverdue = bDeadline < now && b.status !== 'Completed';
+
+      if (aIsOverdue && !bIsOverdue) return -1;
+      if (!aIsOverdue && bIsOverdue) return 1;
+
+      const priorityWeight = { high: 3, medium: 2, low: 1 };
+      if (priorityWeight[a.priority] !== priorityWeight[b.priority]) {
+        return priorityWeight[b.priority] - priorityWeight[a.priority];
+      }
+
+      return aDeadline - bDeadline;
+    });
+  };
+
+  const tasksByStatus = useMemo(() => {
+    return {
+      'Pending': sortTasks(filteredTasks.filter(t => t.status === 'Pending')),
+      'In Progress': sortTasks(filteredTasks.filter(t => t.status === 'In Progress')),
+      'On Hold': sortTasks(filteredTasks.filter(t => t.status === 'On Hold')),
+      'In Review': sortTasks(filteredTasks.filter(t => t.status === 'In Review')),
+      'Completed': sortTasks(filteredTasks.filter(t => t.status === 'Completed'))
+    };
+  }, [filteredTasks]);
+
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [autoEnhance, setAutoEnhance] = useState(true);
+
+  const handleAddWithAI = async () => {
+    if (!formData.title || !formData.deadline) {
+      showToast("Vui lòng nhập đầy đủ thông tin!", "error");
+      return;
+    }
+    // Kiểm tra trùng lặp
+    if (tasks.some(t => t.title.trim().toLowerCase() === formData.title.trim().toLowerCase())) {
+      showToast("Nhiệm vụ này đã tồn tại trong hệ thống!", "warning");
+      return;
+    }
+
+    let finalTitle = formData.title;
+    let finalDesc = formData.description;
+    let finalPriority = formData.priority;
+    let finalCategory = formData.category;
+
+    if (autoEnhance) {
+      setIsEnhancing(true);
+      try {
+        const prompt = `Bạn là trợ lý AI thông minh chuyên quản lý công việc văn phòng.
+Người dùng đã nhập một nhiệm vụ thô sơ:
+Tiêu đề: "${formData.title}"
+Mô tả: "${formData.description}"
+
+Nhiệm vụ của bạn:
+1. Viết lại TIÊU ĐỀ ngắn gọn, chuyên nghiệp, đúng trọng tâm công việc.
+2. Nếu mô tả trống, hãy đưa ra một mô tả cơ bản các bước cần làm dựa vào tiêu đề. Nếu có mô tả, viết lại chi tiết, rành mạch, phân tích các bước cần thực hiện, làm rõ bản chất công việc. Đảm bảo ngôn từ lịch sự, chuẩn mực công sở.
+3. Nếu cần thiết, có thể đề xuất mức độ ưu tiên hoặc danh mục phù hợp.
+
+Trả về kết quả dưới dạng JSON theo định dạng sau:
+{
+  "title": "Tiêu đề mới chuyên nghiệp hơn",
+  "description": "Mô tả đã được phân tích chi tiết...",
+  "priority": "high" | "medium" | "low",
+  "category": "Danh mục đề xuất (tùy chọn)"
+}`;
+
+        const response = await generateContentWithRetry({
+          model: 'gemini-3.7-flash',
+          contents: [{ parts: [{ text: prompt }] }],
+          config: {
+            responseMimeType: 'application/json',
+          }
+        });
+
+        if (response.text) {
+          const result = JSON.parse(response.text);
+          finalTitle = result.title || finalTitle;
+          finalDesc = result.description || finalDesc;
+          if (result.priority) finalPriority = result.priority;
+          if (result.category && !finalCategory) finalCategory = result.category;
+          showToast("AI đã tinh chỉnh thông tin nhiệm vụ!", "success");
+        }
+      } catch (err) {
+        console.error("AI enhancement failed:", err);
+        showToast("Không thể dùng AI tinh chỉnh, dùng thông tin gốc.", "warning");
+      } finally {
+        setIsEnhancing(false);
+      }
+    }
+
+    const newTask: Task = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      title: finalTitle,
+      description: finalDesc,
+      deadline: formData.deadline,
+      time: formData.time,
+      priority: finalPriority,
+      status: formData.status,
+      progress: formData.progress || 0,
+      aiSuggestion: formData.aiSuggestion,
+      assignee: formData.assignee,
+      isImportant: formData.isImportant,
+      category: finalCategory,
+      estimatedTime: formData.estimatedTime,
+      createdAt: Date.now()
+    };
+    
+    if (saveToKnowledge && (newTask.status === 'Completed' || newTask.isImportant)) {
+      saveToKnowledge(newTask);
+    }
+    
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    if (onSaveTasks) onSaveTasks(updatedTasks);
+    
+    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+    setIsAdding(false);
+    showToast("Đã thêm nhiệm vụ mới!", "success");
+  };
+
+  const handleUpdate = () => {
+    if (!formData.title || !formData.deadline || !editingId) return;
+    
+    const updatedTask = { ...tasks.find(t => t.id === editingId), ...formData };
+    if (saveToKnowledge && (updatedTask.status === 'Completed' || updatedTask.isImportant)) {
+      saveToKnowledge(updatedTask as Task);
+    }
+    
+    const updatedTasks = tasks.map(t => t.id === editingId ? { ...t, ...formData } : t);
+    setTasks(updatedTasks);
+    if (onSaveTasks) onSaveTasks(updatedTasks);
+    
+    setEditingId(null);
+    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+    showToast("Đã cập nhật nhiệm vụ!", "success");
+  };
+
+  const handleDelete = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    setTaskToDelete(task);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!taskToDelete) return;
+    const updatedTasks = tasks.filter(t => t.id !== taskToDelete.id);
+    setTasks(updatedTasks);
+    if (onSaveTasks) onSaveTasks(updatedTasks);
+    showToast("Đã xóa nhiệm vụ!", "success");
+    setTaskToDelete(null);
+    setDeleteModalOpen(false);
+  };
+
+  const startEdit = (task: Task) => {
+    setEditingId(task.id);
+    setFormData({
+      title: task.title,
+      description: task.description || '',
+      deadline: task.deadline,
+      time: task.time || '',
+      priority: task.priority,
+      status: task.status,
+      progress: task.progress || 0,
+      aiSuggestion: task.aiSuggestion || '',
+      assignee: task.assignee || '',
+      isImportant: task.isImportant || false,
+      category: task.category || '',
+      estimatedTime: task.estimatedTime || ''
+    });
+    setIsAdding(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+    setIsAdding(false);
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedTaskId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    // Small delay to allow the drag image to be captured before adding opacity
+    setTimeout(() => {
+      const el = document.getElementById(`task-${id}`);
+      if (el) el.classList.add('opacity-50');
+    }, 0);
+  };
+
+  const handleDragEnd = (e: React.DragEvent, id: string) => {
+    setDraggedTaskId(null);
+    const el = document.getElementById(`task-${id}`);
+    if (el) el.classList.remove('opacity-50');
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, status: TaskStatus) => {
+    e.preventDefault();
+    if (!draggedTaskId) return;
+
+    const taskToMove = tasks.find(t => t.id === draggedTaskId);
+    if (taskToMove && taskToMove.status !== status) {
+      const updatedTasks = tasks.map(t => 
+        t.id === draggedTaskId ? { ...t, status } : t
+      );
+      setTasks(updatedTasks);
+      if (onSaveTasks) onSaveTasks(updatedTasks);
+      showToast(`Đã chuyển sang: ${status}`, "success");
+    }
+    setDraggedTaskId(null);
+  };
+
+  const ColumnHeader = ({ title, count, colorClass }: { title: string, count: number, colorClass: string }) => (
+    <div className="flex items-center justify-between mb-4 px-2">
+      <div className="flex items-center gap-2">
+        <div className={cn("w-3 h-3 rounded-full", colorClass)} />
+        <h3 className="font-bold text-slate-700 uppercase tracking-wider text-sm">{title}</h3>
+      </div>
+      <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">
+        {count}
+      </span>
+    </div>
+  );
+
+  const TaskCard = ({ task }: { task: Task }) => {
+    const isOverdue = new Date(task.deadline) < new Date(new Date().setHours(0, 0, 0, 0)) && task.status !== 'Completed';
+    
+    return (
+    <div 
+      id={`task-${task.id}`}
+      draggable
+      onDragStart={(e) => handleDragStart(e, task.id)}
+      onDragEnd={(e) => handleDragEnd(e, task.id)}
+      className={cn(
+        "bg-white p-4 rounded-xl border shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group relative",
+        isOverdue ? "border-rose-300 bg-rose-50/30" : "border-slate-200"
+      )}
+      style={{
+        ...(task.status === 'Pending' && !isOverdue ? { backgroundColor: '#eff6ff' } :
+           task.status === 'In Progress' && !isOverdue ? { backgroundColor: '#fff7ed' } :
+           task.status === 'Completed' ? { backgroundColor: '#f0fdf4' } :
+           {}),
+        borderLeft: task.priority === 'high' ? '4px solid #ef4444' : 
+                    task.priority === 'medium' ? '4px solid #f59e0b' : 
+                    '4px solid #10b981'
+      }}
+    >
+      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 backdrop-blur rounded-md shadow-sm border border-slate-100 p-0.5 z-10">
+        <button 
+          onClick={() => handleOpenZaloModal(task)} 
+          className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+          title="Gửi tin nhắn Zalo điều hành"
+        >
+          <MessageCircle size={14} />
+        </button>
+        <button onClick={() => startEdit(task)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md">
+          <Edit size={14} />
+        </button>
+        <button onClick={() => handleDelete(task.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md">
+          <Trash2 size={14} />
+        </button>
+      </div>
+      
+      <div className="flex items-start gap-2 mb-2 pr-12">
+        <GripVertical size={16} className="text-slate-300 mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-1 mb-1">
+            {task.isSystem && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[8px] font-black uppercase tracking-tighter border border-blue-100">
+                Hệ thống
+              </span>
+            )}
+            {isOverdue && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[8px] font-black uppercase tracking-tighter border border-rose-200 animate-pulse">
+                Quá hạn
+              </span>
+            )}
+          </div>
+          <h4 className={cn(
+            "text-sm font-bold leading-snug",
+            task.status === 'Completed' ? "text-slate-400 line-through" : "text-slate-800"
+          )}>
+            {task.title}
+          </h4>
+          
+          {task.description && (
+            <p className="mt-1 text-xs text-slate-500 line-clamp-2">{task.description}</p>
+          )}
+
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {task.category && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-medium border border-slate-200">
+                {task.category}
+              </span>
+            )}
+            {task.estimatedTime && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-medium border border-blue-100">
+                <Timer size={10} />
+                {task.estimatedTime}
+              </span>
+            )}
+          </div>
+
+          {task.assignee && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600">
+              <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold">
+                {task.assignee.charAt(0).toUpperCase()}
+              </div>
+              <span className="font-medium">{task.assignee}</span>
+            </div>
+          )}
+          {task.aiSuggestion && (
+            <div className="mt-2 flex items-start gap-1.5 text-xs text-slate-600 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100/50">
+              <Sparkles size={12} className="text-indigo-500 shrink-0 mt-0.5" />
+              <p className="leading-relaxed line-clamp-2" title={task.aiSuggestion}>{task.aiSuggestion}</p>
+            </div>
+          )}
+
+          {task.progress !== undefined && (
+            <div className="mt-3">
+              <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1">
+                <span>Tiến độ hoàn thành</span>
+                <span>{task.progress}%</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div 
+                  className={cn("h-full rounded-full transition-all duration-300", 
+                    task.progress === 100 ? "bg-emerald-500" : "bg-indigo-500"
+                  )}
+                  style={{ width: `${task.progress}%` }} 
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mt-4 pl-6">
+        <div className={cn(
+          "flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-md font-mono font-medium border",
+          isOverdue
+            ? "text-rose-600 bg-rose-50 border-rose-100" 
+            : "text-slate-500 bg-slate-50 border-slate-200"
+        )}>
+          <Calendar size={12} />
+          {task.deadline} {task.time && `| ${task.time}`}
+        </div>
+
+        <span className={cn(
+          "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
+          task.priority === 'high' && "bg-rose-50 text-rose-700",
+          task.priority === 'medium' && "bg-amber-50 text-amber-700",
+          task.priority === 'low' && "bg-emerald-50 text-emerald-700"
+        )}>
+          {task.priority === 'high' && <AlertCircle size={10} />}
+          {task.priority === 'medium' && <Clock size={10} />}
+          {task.priority === 'low' && <CheckSquare size={10} />}
+          {task.priority === 'high' ? 'Cao' : task.priority === 'medium' ? 'TB' : 'Thấp'}
+        </span>
+      </div>
+    </div>
+  )};
+
+  const stats = useMemo(() => {
+    const now = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
+    let overdue = 0;
+    
+    tasks.forEach(t => {
+      if (t.status !== 'Completed' && new Date(t.deadline).getTime() < now) {
+        overdue++;
+      }
+    });
+
+    return {
+      total: tasks.length,
+      pending: tasks.filter(t => t.status === 'Pending').length,
+      inProgress: tasks.filter(t => t.status === 'In Progress').length,
+      completed: tasks.filter(t => t.status === 'Completed').length,
+      overdue
+    };
+  }, [tasks]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn("max-w-7xl mx-auto space-y-6 flex flex-col h-full", !isEmbedded && "p-8")}
+    >
+      {!isEmbedded && (
+        <div className="flex items-end justify-between shrink-0">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Quản lý Nhiệm vụ</h2>
+            <p className="text-slate-500 mt-2 text-sm font-medium">Theo dõi và quản lý công việc hiệu quả</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleRestoreDefaultTasks}
+              className="px-3.5 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+              title="Khôi phục danh sách nhiệm vụ Đảng ủy chuẩn"
+            >
+              <RotateCcw size={15} className="text-emerald-600" />
+              Nạp nhiệm vụ mẫu
+            </button>
+            <button
+              onClick={() => setIsExtractModalOpen(true)}
+              className="px-4 py-2 bg-slate-100 text-indigo-600 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-200 transition-all flex items-center gap-2"
+            >
+              <Sparkles size={16} />
+              Tạo từ văn bản
+            </button>
+            <button 
+              onClick={() => {
+                setEditingId(null);
+                setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+                setIsAdding(true);
+              }}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+            >
+              <Plus size={16} />
+              Thêm nhiệm vụ
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Dashboard Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 shrink-0">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center">
+          <span className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Tổng số</span>
+          <span className="text-2xl font-black text-slate-800">{stats.total}</span>
+        </div>
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center">
+          <span className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Chờ xử lý</span>
+          <span className="text-2xl font-black text-slate-700">{stats.pending}</span>
+        </div>
+        <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 shadow-sm flex flex-col justify-center">
+          <span className="text-indigo-600 text-xs font-bold uppercase tracking-wider mb-1">Đang thực hiện</span>
+          <span className="text-2xl font-black text-indigo-700">{stats.inProgress}</span>
+        </div>
+        <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-center">
+          <span className="text-emerald-600 text-xs font-bold uppercase tracking-wider mb-1">Hoàn thành</span>
+          <span className="text-2xl font-black text-emerald-700">{stats.completed}</span>
+        </div>
+        <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 shadow-sm flex flex-col justify-center">
+          <span className="text-rose-600 text-xs font-bold uppercase tracking-wider mb-1">Quá hạn</span>
+          <span className="text-2xl font-black text-rose-700">{stats.overdue}</span>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center shrink-0 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="relative w-full sm:w-96 group flex items-center gap-2">
+          {isEmbedded && (
+            <button 
+              onClick={() => {
+                setEditingId(null);
+                setFormData({ title: '', description: '', deadline: '', time: '', priority: 'medium', status: 'Pending', progress: 0, aiSuggestion: '', assignee: '', isImportant: false, category: '', estimatedTime: '' });
+                setIsAdding(true);
+              }}
+              className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all shadow-sm shrink-0"
+              title="Thêm nhiệm vụ"
+            >
+              <Plus size={18} />
+            </button>
+          )}
+          <div className="relative flex-1 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+            <input 
+              type="text" 
+              placeholder="Tìm kiếm nhiệm vụ..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+            {(['all', 'high', 'medium', 'low'] as const).map((priority) => (
+              <button
+                key={priority}
+                onClick={() => setFilterPriority(priority)}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-xs font-bold transition-all capitalize",
+                  filterPriority === priority 
+                    ? "bg-white text-slate-900 shadow-sm" 
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                )}
+              >
+                {priority === 'all' ? 'Tất cả' : priority === 'high' ? 'Cao' : priority === 'medium' ? 'TB' : 'Thấp'}
+              </button>
+            ))}
+          </div>
+          
+          <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+          
+          <div className="flex gap-1 p-1 bg-slate-100 rounded-xl">
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                viewMode === 'kanban' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              )}
+              title="Giao diện Kanban"
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                viewMode === 'list' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              )}
+              title="Giao diện Danh sách"
+            >
+              <ListIcon size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0 flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
+        {viewMode === 'kanban' ? (
+          /* Kanban Board */
+          <div className={cn("flex gap-6 min-w-max flex-1 transition-all duration-300", isAdding ? "w-[calc(100%-350px)]" : "w-full")}>
+            {/* Pending Column */}
+            <div 
+              className="w-80 flex flex-col bg-slate-50/50 rounded-2xl border border-slate-200 p-4"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'Pending')}
+            >
+              <ColumnHeader title="Chờ xử lý (Pending)" count={tasksByStatus['Pending'].length} colorClass="bg-slate-400" />
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+                {tasksByStatus['Pending'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+                {tasksByStatus['Pending'].length === 0 && (
+                  <div className="h-24 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-sm font-medium">
+                    Kéo thả vào đây
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* In Progress Column */}
+            <div 
+              className="w-80 flex flex-col bg-indigo-50/30 rounded-2xl border border-indigo-100 p-4"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'In Progress')}
+            >
+              <ColumnHeader title="Đang thực hiện (In Progress)" count={tasksByStatus['In Progress'].length} colorClass="bg-indigo-500" />
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+                {tasksByStatus['In Progress'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+                {tasksByStatus['In Progress'].length === 0 && (
+                  <div className="h-24 border-2 border-dashed border-indigo-200 rounded-xl flex items-center justify-center text-indigo-400 text-sm font-medium">
+                    Kéo thả vào đây
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* In Review Column */}
+            <div 
+              className="w-80 flex flex-col bg-amber-50/30 rounded-2xl border border-amber-100 p-4"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'In Review')}
+            >
+              <ColumnHeader title="Đang xem xét (In Review)" count={tasksByStatus['In Review'].length} colorClass="bg-amber-500" />
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+                {tasksByStatus['In Review'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+                {tasksByStatus['In Review'].length === 0 && (
+                  <div className="h-24 border-2 border-dashed border-amber-200 rounded-xl flex items-center justify-center text-amber-400 text-sm font-medium">
+                    Kéo thả vào đây
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* On Hold Column */}
+            <div 
+              className="w-80 flex flex-col bg-slate-100/50 rounded-2xl border border-slate-200 p-4"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'On Hold')}
+            >
+              <ColumnHeader title="Tạm hoãn (On Hold)" count={tasksByStatus['On Hold'].length} colorClass="bg-slate-500" />
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+                {tasksByStatus['On Hold'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+                {tasksByStatus['On Hold'].length === 0 && (
+                  <div className="h-24 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-sm font-medium">
+                    Kéo thả vào đây
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Completed Column */}
+            <div 
+              className="w-80 flex flex-col bg-emerald-50/30 rounded-2xl border border-emerald-100 p-4"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'Completed')}
+            >
+              <ColumnHeader title="Hoàn thành (Completed)" count={tasksByStatus['Completed'].length} colorClass="bg-emerald-500" />
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+                {tasksByStatus['Completed'].map((task, k) => <TaskCard key={`${task.id || 'tsk'}-${k}`} task={task} />)}
+                {tasksByStatus['Completed'].length === 0 && (
+                  <div className="h-24 border-2 border-dashed border-emerald-200 rounded-xl flex items-center justify-center text-emerald-400 text-sm font-medium">
+                    Kéo thả vào đây
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* List View */
+          <div className={cn("flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col", isAdding ? "w-[calc(100%-350px)]" : "w-full")}>
+            {selectedTasks.size > 0 && (
+              <div className="bg-indigo-50 px-4 py-3 border-b border-indigo-100 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                <span className="text-sm font-bold text-indigo-700">
+                  Đã chọn {selectedTasks.size} nhiệm vụ
+                </span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleBulkStatus('Pending')} className="px-3 py-1.5 bg-white text-slate-600 text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+                    Chuyển Chờ xử lý
+                  </button>
+                  <button onClick={() => handleBulkStatus('In Progress')} className="px-3 py-1.5 bg-white text-indigo-600 text-xs font-bold rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors">
+                    Chuyển Đang thực hiện
+                  </button>
+                  <button onClick={() => handleBulkStatus('In Review')} className="px-3 py-1.5 bg-white text-amber-600 text-xs font-bold rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors">
+                    Chuyển Đang xem xét
+                  </button>
+                  <button onClick={() => handleBulkStatus('On Hold')} className="px-3 py-1.5 bg-white text-slate-600 text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+                    Chuyển Tạm hoãn
+                  </button>
+                  <button onClick={() => handleBulkStatus('Completed')} className="px-3 py-1.5 bg-white text-emerald-600 text-xs font-bold rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors">
+                    Đánh dấu Hoàn thành
+                  </button>
+                  <div className="w-px h-4 bg-indigo-200 mx-1"></div>
+                  <button onClick={handleBulkDelete} className="px-3 py-1.5 bg-rose-50 text-rose-600 text-xs font-bold rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors">
+                    Xóa đã chọn
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="overflow-x-auto flex-1 custom-scrollbar">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
+                    <th className="p-4 w-10">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedTasks.size === filteredTasks.length && filteredTasks.length > 0}
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                      />
+                    </th>
+                    <th className="p-4 font-bold">Tên nhiệm vụ</th>
+                    <th className="p-4 font-bold">Trạng thái</th>
+                    <th className="p-4 font-bold">Mức độ</th>
+                    <th className="p-4 font-bold">Hạn chót</th>
+                    <th className="p-4 font-bold">Phụ trách</th>
+                    <th className="p-4 font-bold text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredTasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-slate-500">
+                        Không tìm thấy nhiệm vụ nào.
+                      </td>
+                    </tr>
+                  ) : (
+                    sortTasks(filteredTasks).map((task, k) => {
+                      const isOverdue = new Date(task.deadline) < new Date(new Date().setHours(0, 0, 0, 0)) && task.status !== 'Completed';
+                      return (
+                        <tr key={`${task.id || 'tsk'}-${k}`} className={cn("hover:bg-slate-50 transition-colors group", selectedTasks.has(task.id) && "bg-indigo-50/30")}>
+                          <td className="p-4">
+                            <input 
+                              type="checkbox" 
+                              checked={selectedTasks.has(task.id)}
+                              onChange={() => toggleSelectTask(task.id)}
+                              className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                            />
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <button 
+                                onClick={() => {
+                                  const newStatus: Task['status'] = task.status === 'Completed' ? 'Pending' : 'Completed';
+                                  const updatedTasks = tasks.map(t => t.id === task.id ? { ...t, status: newStatus } : t);
+                                  setTasks(updatedTasks);
+                                  if (onSaveTasks) onSaveTasks(updatedTasks);
+                                }}
+                                className={cn(
+                                  "shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors",
+                                  task.status === 'Completed' 
+                                    ? "bg-emerald-500 border-emerald-500 text-white" 
+                                    : "border-slate-300 text-transparent hover:border-indigo-500"
+                                )}
+                              >
+                                <CheckSquare size={14} />
+                              </button>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className={cn(
+                                    "font-bold text-sm",
+                                    task.status === 'Completed' ? "text-slate-400 line-through" : "text-slate-800"
+                                  )}>
+                                    {task.title}
+                                  </span>
+                                  {isOverdue && (
+                                    <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold uppercase tracking-wider">Quá hạn</span>
+                                  )}
+                                </div>
+                                {task.description && (
+                                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{task.description}</p>
+                                )}
+                                <div className="flex items-center gap-2 mt-1">
+                                  {task.category && (
+                                    <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{task.category}</span>
+                                  )}
+                                  {task.estimatedTime && (
+                                    <span className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 flex items-center gap-1">
+                                      <Timer size={10} />
+                                      {task.estimatedTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className={cn(
+                              "inline-flex items-center px-2 py-1 rounded-md text-xs font-bold",
+                              task.status === 'Pending' ? "bg-slate-100 text-slate-700" :
+                              task.status === 'In Progress' ? "bg-indigo-50 text-indigo-700" :
+                              task.status === 'In Review' ? "bg-amber-50 text-amber-700" :
+                              task.status === 'On Hold' ? "bg-slate-200 text-slate-800" :
+                              "bg-emerald-50 text-emerald-700"
+                            )}>
+                              {task.status === 'Pending' ? 'Chờ xử lý' : 
+                               task.status === 'In Progress' ? 'Đang thực hiện' : 
+                               task.status === 'In Review' ? 'Đang xem xét' :
+                               task.status === 'On Hold' ? 'Tạm hoãn' :
+                               'Hoàn thành'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className={cn(
+                              "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
+                              task.priority === 'high' && "bg-rose-50 text-rose-700",
+                              task.priority === 'medium' && "bg-amber-50 text-amber-700",
+                              task.priority === 'low' && "bg-emerald-50 text-emerald-700"
+                            )}>
+                              {task.priority === 'high' && <AlertCircle size={10} />}
+                              {task.priority === 'medium' && <Clock size={10} />}
+                              {task.priority === 'low' && <CheckSquare size={10} />}
+                              {task.priority === 'high' ? 'Cao' : task.priority === 'medium' ? 'TB' : 'Thấp'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div className={cn(
+                              "flex items-center gap-1.5 text-xs font-mono font-medium",
+                              isOverdue ? "text-rose-600" : "text-slate-600"
+                            )}>
+                              <Calendar size={14} />
+                              {task.deadline} {task.time && <span className="text-indigo-600 ml-1">({task.time})</span>}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            {task.assignee ? (
+                              <div className="flex items-center gap-2 text-sm text-slate-700">
+                                <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                                  {task.assignee.charAt(0).toUpperCase()}
+                                </div>
+                                {task.assignee}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 text-sm">-</span>
+                            )}
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => handleOpenZaloModal(task)} 
+                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-md animate-in fade-in"
+                                title="Gửi tin nhắn Zalo điều hành"
+                              >
+                                <MessageCircle size={16} />
+                              </button>
+                              <button onClick={() => startEdit(task)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md">
+                                <Edit size={16} />
+                              </button>
+                              <button onClick={() => handleDelete(task.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Add/Edit Form Sidebar */}
+        <AnimatePresence>
+          {isAdding && (
+            <motion.div 
+              initial={{ opacity: 0, x: 20, width: 0 }}
+              animate={{ opacity: 1, x: 0, width: 350 }}
+              exit={{ opacity: 0, x: 20, width: 0 }}
+              className="shrink-0"
+            >
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-lg p-6 sticky top-0 w-[350px]">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {editingId ? 'Cập nhật nhiệm vụ' : 'Thêm nhiệm vụ mới'}
+                  </h3>
+                  <button 
+                    onClick={cancelEdit}
+                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Tên nhiệm vụ
+                      </label>
+                      <button
+                        onClick={analyzeTask}
+                        disabled={isAnalyzing || !formData.title}
+                        className="text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
+                        title="AI phân tích và đề xuất"
+                      >
+                        {isAnalyzing ? <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /> : <Sparkles size={12} />}
+                        AI Phân tích
+                      </button>
+                    </div>
+                    <input 
+                      type="text" 
+                      value={formData.title}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      placeholder="Nhập tên nhiệm vụ..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Mô tả chi tiết
+                    </label>
+                    <textarea 
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      placeholder="Nhập mô tả chi tiết..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none min-h-[80px]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Danh mục
+                      </label>
+                      <input 
+                        type="text" 
+                        value={formData.category || ''}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                        placeholder="VD: Công việc, Cá nhân..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Thời gian dự kiến
+                      </label>
+                      <input 
+                        type="text" 
+                        value={formData.estimatedTime || ''}
+                        onChange={(e) => setFormData({...formData, estimatedTime: e.target.value})}
+                        placeholder="VD: 2 giờ, 1 ngày..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {formData.aiSuggestion && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3"
+                    >
+                      <label className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-1.5">
+                        <Sparkles size={12} /> Gợi ý từ AI
+                      </label>
+                      <textarea
+                        value={formData.aiSuggestion}
+                        onChange={(e) => setFormData({...formData, aiSuggestion: e.target.value})}
+                        className="w-full bg-white border border-indigo-100 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none min-h-[60px]"
+                        placeholder="Gợi ý của AI..."
+                      />
+                    </motion.div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Hạn chót
+                      </label>
+                      <input 
+                        type="date" 
+                        value={formData.deadline}
+                        onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono text-slate-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Giờ cụ thể
+                      </label>
+                      <input 
+                        type="time" 
+                        value={formData.time}
+                        onChange={(e) => setFormData({...formData, time: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono text-slate-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer mb-4">
+                      <input
+                        type="checkbox"
+                        checked={formData.isImportant || false}
+                        onChange={(e) => setFormData({...formData, isImportant: e.target.checked})}
+                        className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-bold text-slate-700">Đánh dấu quan trọng</span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Người phụ trách
+                    </label>
+                    <input 
+                      type="text" 
+                      value={formData.assignee || ''}
+                      onChange={(e) => setFormData({...formData, assignee: e.target.value})}
+                      placeholder="Tên người phụ trách..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Trạng thái
+                      </label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      >
+                        <option value="Pending">Chờ xử lý</option>
+                        <option value="In Progress">Đang thực hiện</option>
+                        <option value="In Review">Đang xem xét</option>
+                        <option value="On Hold">Tạm hoãn</option>
+                        <option value="Completed">Hoàn thành</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Tiến độ (%)
+                      </label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={formData.progress || 0}
+                          onChange={(e) => {
+                            const newProgress = parseInt(e.target.value);
+                            setFormData({
+                              ...formData, 
+                              progress: newProgress,
+                              status: newProgress === 100 ? 'Completed' : (newProgress > 0 && formData.status === 'Pending' ? 'In Progress' : formData.status)
+                            });
+                          }}
+                          className="flex-1 w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                        />
+                        <span className="text-sm font-bold w-10 text-right">{formData.progress || 0}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Mức độ ưu tiên
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['low', 'medium', 'high'] as const).map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setFormData({...formData, priority: p})}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all",
+                            formData.priority === p
+                              ? p === 'high' ? "bg-rose-50 text-rose-700 border-rose-200 shadow-sm" :
+                                p === 'medium' ? "bg-amber-50 text-amber-700 border-amber-200 shadow-sm" :
+                                "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm"
+                              : "bg-white text-slate-400 border-slate-200 hover:bg-slate-50"
+                          )}
+                        >
+                          {p === 'high' ? 'Cao' : p === 'medium' ? 'TB' : 'Thấp'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {!editingId && (
+                    <div>
+                      <label className="flex items-center gap-2 cursor-pointer mb-2">
+                        <input
+                          type="checkbox"
+                          checked={autoEnhance}
+                          onChange={(e) => setAutoEnhance(e.target.checked)}
+                          className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                        />
+                        <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5"><Sparkles size={14} className="text-indigo-500"/> Tự động AI tinh chỉnh</span>
+                      </label>
+                      <p className="text-[10px] text-slate-500">AI tự động chuẩn hóa lại Tiêu đề, Mô tả và phân loại chuyên nghiệp hơn trước khi lưu.</p>
+                    </div>
+                  )}
+
+                  <div className="pt-4 flex gap-3">
+                    <button 
+                      onClick={cancelEdit}
+                      className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all"
+                    >
+                      Hủy bỏ
+                    </button>
+                    <button 
+                      onClick={editingId ? handleUpdate : handleAddWithAI}
+                      disabled={isEnhancing}
+                      className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {isEnhancing ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : editingId ? (
+                        <Save size={16} />
+                      ) : (
+                        <Plus size={16} />
+                      )}
+                      {isEnhancing ? 'AI Đang xử lý...' : editingId ? 'Cập nhật' : 'Thêm mới'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setTaskToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Xác nhận xóa"
+        message={taskToDelete?.isSystem 
+          ? "Đây là nhiệm vụ hệ thống quan trọng. Bạn có chắc chắn muốn xóa?" 
+          : `Bạn có chắc chắn muốn xóa nhiệm vụ "${taskToDelete?.title}"?`}
+        confirmText="Xóa nhiệm vụ"
+        cancelText="Hủy"
+        type="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => setBulkDeleteModalOpen(false)}
+        onConfirm={confirmBulkDelete}
+        title="Xóa hàng loạt"
+        message={`Đồng chí có chắc chắn muốn xóa ${selectedTasks.size} nhiệm vụ đã chọn? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa tất cả"
+        cancelText="Hủy"
+        type="danger"
+      />
+
+      <AICreateTasksModal
+        isOpen={isExtractModalOpen}
+        onClose={() => setIsExtractModalOpen(false)}
+        onAddTasks={handleAddExtractedTasks}
+      />
+
+      <AnimatePresence>
+        {zaloModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Overlay */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setZaloModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
+            />
+            
+            {/* Modal Content */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <MessageCircle size={20} className="text-blue-100" />
+                    Gửi Điều Hành Zalo (Hệ thống v8.0)
+                  </h3>
+                  <p className="text-xs text-blue-100 mt-1">Soạn thảo, tối ưu và chuyển tiếp nội dung nhắc nhở công việc qua Zalo</p>
+                </div>
+                <button 
+                  onClick={() => setZaloModalOpen(false)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto space-y-4 flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Recipient Name with datalist */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Đồng chí nhận tin
+                    </label>
+                    <input 
+                      type="text" 
+                      list="zalo-staff-names"
+                      value={zaloRecipientName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setZaloRecipientName(val);
+                        if (STAFF_PHONES[val]) {
+                          setZaloPhone(STAFF_PHONES[val]);
+                        }
+                      }}
+                      placeholder="Chọn hoặc nhập tên đồng chí..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-bold text-slate-800"
+                    />
+                    <datalist id="zalo-staff-names">
+                      {Object.keys(STAFF_PHONES).map((name) => (
+                        <option key={name} value={name} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  {/* Zalo Phone Number */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Số điện thoại Zalo
+                    </label>
+                    <input 
+                      type="text" 
+                      value={zaloPhone}
+                      onChange={(e) => setZaloPhone(e.target.value)}
+                      placeholder="Nhập số điện thoại Zalo..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-slate-800 font-semibold"
+                    />
+                  </div>
+                </div>
+
+                {/* Message Content Area */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Nội dung tin nhắn nhắc nhở
+                    </label>
+                    <button
+                      onClick={optimizeZaloMessage}
+                      disabled={isOptimizingZalo}
+                      className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 disabled:opacity-50 text-[11px] font-bold rounded-lg border border-indigo-200 flex items-center gap-1.5 transition-colors"
+                      title="Sử dụng Trí tuệ Nhân tạo để tinh chỉnh văn phong công sở chuyên nghiệp nhất"
+                    >
+                      {isOptimizingZalo ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                          <span>AI đang tối ưu...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={12} className="text-indigo-500" />
+                          <span>AI Tối ưu hóa tin nhắn</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <textarea 
+                    value={zaloMessage}
+                    onChange={(e) => setZaloMessage(e.target.value)}
+                    rows={8}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all leading-relaxed text-slate-700 custom-scrollbar"
+                    placeholder="Nhập nội dung nhắc nhở..."
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1 font-medium italic">
+                    *Mẹo: Đồng chí có thể chỉnh sửa tự do nội dung trên trước khi thực hiện gửi.
+                  </p>
+                </div>
+
+                {/* Guide banner */}
+                <div className="p-3.5 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1 bg-blue-100 rounded text-blue-600 mt-0.5 animate-pulse">
+                    <MessageCircle size={14} />
+                  </div>
+                  <div className="text-[11px] text-blue-800 leading-relaxed font-medium">
+                    <strong className="block text-blue-900 mb-0.5">Hướng dẫn chuyển tiếp Zalo liên thông:</strong>
+                    Khi nhấn <strong>"Mở Chat & Gửi Zalo"</strong>, hệ thống sẽ tự động sao chép nội dung tin nhắn vào bộ nhớ đệm (Clipboard) và mở liên kết trực tiếp tới cuộc trò chuyện Zalo của đồng chí đó. Bạn chỉ cần nhấn <strong>dán (Ctrl+V)</strong> và nhấn gửi trong cửa sổ chat Zalo vừa mở.
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-slate-50 border-t border-slate-100 p-4 flex items-center justify-end gap-3 shrink-0">
+                <button 
+                  onClick={() => setZaloModalOpen(false)}
+                  className="px-4 py-2 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold uppercase tracking-wider rounded-xl border border-slate-200 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button 
+                  onClick={handleCopyZaloMessage}
+                  className="px-4 py-2 bg-slate-100 text-indigo-600 hover:bg-slate-200 text-xs font-bold uppercase tracking-wider rounded-xl border border-slate-200 transition-colors flex items-center gap-2"
+                >
+                  <Copy size={14} />
+                  Sao chép nội dung
+                </button>
+                <button 
+                  onClick={handleSendZalo}
+                  className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-500 text-xs font-bold uppercase tracking-wider rounded-xl shadow-md shadow-blue-600/10 transition-all flex items-center gap-2"
+                >
+                  <Send size={14} />
+                  Mở Chat & Gửi Zalo
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+});
+
+TaskManagement.displayName = 'TaskManagement';

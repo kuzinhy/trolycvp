@@ -1,0 +1,231 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "vice_chief", "staff", "user"] },
+        "departmentId": { "type": "string", "description": "Reference to Department" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Department or unit within the organization",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "managerId": { "type": "string", "description": "User ID of the department manager" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "A calendar event",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns the event" },
+        "title": { "type": "string", "description": "The title of the event" },
+        "start": { "type": "string", "format": "date-time", "description": "The start time of the event" },
+        "end": { "type": "string", "format": "date-time", "description": "The end time of the event" },
+        "category": { "type": "string", "description": "The category of the event" },
+        "description": { "type": "string", "description": "The description of the event" }
+      },
+      "required": ["userId", "title", "start", "end"]
+    },
+    "ViceChiefTask": {
+      "title": "Vice Chief Task",
+      "description": "A task assigned to a vice chief or staff",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "importance": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "status": { "type": "string", "enum": ["pending", "in_progress", "completed", "cancelled"] },
+        "progress": { "type": "integer", "description": "Percentage of completion (0-100)" },
+        "category": { "type": "string", "description": "Task category for filtering" },
+        "assigneeId": { "type": "string", "description": "User ID of the person assigned to this task" },
+        "departmentId": { "type": "string", "description": "Department this task belongs to" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string", "description": "User ID of the creator" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "importance", "status", "progress", "assigneeId", "createdBy"]
+    },
+    "ViceChiefAssignment": {
+      "title": "Vice Chief Assignment",
+      "description": "Assignment of a user to a vice chief slot",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["userId", "displayName"]
+    },
+    "KnowledgeItem": {
+      "title": "Knowledge Item",
+      "description": "A document or piece of knowledge in the system",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "summary": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "unitId": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "authorName": { "type": "string" },
+        "isImportant": { "type": "boolean" },
+        "isPublic": { "type": "boolean" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "deadline": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed"] },
+        "version": { "type": "string" },
+        "reviewStatus": { "type": "string", "enum": ["draft", "in_review", "approved", "published"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "unitId", "authorUid"]
+    },
+    "WorkLog": {
+      "title": "Work Log",
+      "description": "Daily work report for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "unitId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "tasks": { "type": "array", "items": { "$ref": "WorkTask" } },
+        "additionalTasks": { "type": "array", "items": { "$ref": "WorkTask" } },
+        "calendarTasks": { "type": "array", "items": { "$ref": "WorkTask" } },
+        "notes": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date"]
+    },
+    "WorkTask": {
+      "title": "Work Task",
+      "description": "A single task within a work log",
+      "type": "object",
+      "properties": {
+        "task_name": { "type": "string" },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["completed", "not completed"] },
+        "source": { "type": "string", "enum": ["fixed", "additional", "calendar"] }
+      },
+      "required": ["task_name", "priority", "status"]
+    },
+    "ConclusionDraft": {
+      "title": "Conclusion Draft",
+      "description": "A professional draft for a meeting conclusion with version tracking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "unitId": { "type": "string" },
+        "meetingName": { "type": "string" },
+        "meetingDate": { "type": "string", "format": "date-time" },
+        "directives": { "type": "array", "items": { "$ref": "DirectiveIdea" } },
+        "finalReport": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "final", "archived"] },
+        "version": { "type": "integer" },
+        "parentDraftId": { "type": "string" },
+        "referencedItems": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "type": { "type": "string", "enum": ["brain", "note"] }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "meetingName"]
+    },
+    "DirectiveIdea": {
+      "title": "Directive Idea",
+      "description": "A single directive idea with source tracking and edit history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rawText": { "type": "string" },
+        "selectedText": { "type": "string" },
+        "type": { "type": "string" },
+        "subject": { "type": "string" },
+        "action": { "type": "string" },
+        "deadline": { "type": "string" },
+        "tone": { "type": "string", "enum": ["formal", "concise", "full"] },
+        "groupTag": { "type": "string" },
+        "order": { "type": "integer" },
+        "source": { 
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["manual", "brain", "note"] },
+            "id": { "type": "string" },
+            "originalContent": { "type": "string" }
+          }
+        },
+        "editHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "required": ["id", "rawText", "selectedText", "tone"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "Collection of users"
+    },
+    "/departments/{departmentId}": {
+      "schema": { "$ref": "Department" },
+      "description": "Collection of departments"
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "Event" },
+      "description": "Collection of calendar events"
+    },
+    "/vice_chief_tasks/{taskId}": {
+      "schema": { "$ref": "ViceChiefTask" },
+      "description": "Tasks for vice chiefs"
+    },
+    "/vice_chief_assignments/{assignmentId}": {
+      "schema": { "$ref": "ViceChiefAssignment" },
+      "description": "Assignments of vice chiefs to columns"
+    },
+    "/party_documents/{docId}": {
+      "schema": { "$ref": "KnowledgeItem" },
+      "description": "Collection of knowledge documents"
+    },
+    "/work_logs/{logId}": {
+      "schema": { "$ref": "WorkLog" },
+      "description": "Daily work logs for users"
+    },
+    "/conclusion_drafts/{draftId}": {
+      "schema": { "$ref": "ConclusionDraft" },
+      "description": "Meeting conclusion drafts"
+    }
+  }
+}

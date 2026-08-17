@@ -1,0 +1,193 @@
+@import "tailwindcss";
+@import "react-big-calendar/lib/css/react-big-calendar.css";
+@import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  :root {
+    --background: 210 40% 98%; 
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --accent: 221 83% 53%;
+    --accent-foreground: 210 40% 98%;
+    
+    /* Futuristic OS Vars - Updated for Light-Blue Theme */
+    --os-dark: #f8fafc;
+    --os-slate: #f1f5f9;
+    --os-cyan: #3b82f6; 
+    --os-blue: #2563eb; 
+    --os-indigo: #4338ca;
+    --os-glow: rgba(59, 130, 246, 0.1);
+    --glass: rgba(255, 255, 255, 0.8);
+  }
+
+  .dark {
+    --background: 226 55% 10%; 
+    --foreground: 210 40% 98%;
+    --card: 226 50% 14%;
+    --card-foreground: 210 40% 98%;
+    --primary: 217 91% 60%; 
+    --primary-foreground: 222 47% 4%;
+    --secondary: 226 40% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 226 40% 20%;
+    --muted-foreground: 215 20% 65%;
+    --border: 226 40% 25%;
+    --input: 226 40% 25%;
+    --ring: 217 91% 60%;
+    --accent: 214 100% 50%; 
+    --accent-foreground: 222 10% 10%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased selection:bg-blue-600 selection:text-white overflow-hidden;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.05) 0px, transparent 50%);
+  }
+}
+
+/* Version 8.0: High-Tech Aesthetics */
+.os-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+}
+
+.os-scanline {
+  display: none;
+}
+
+.os-noise {
+  display: none;
+}
+
+.os-flicker {
+  /* Disabled flicker for high performance */
+}
+
+@keyframes scan {
+  from { top: -100px; }
+  to { top: 100vh; }
+}
+
+/* Performance Optimized OS Components */
+.os-card {
+  @apply bg-white border border-slate-200/90 rounded-2xl transition-all duration-200 hover:border-blue-400 hover:shadow-md relative overflow-hidden;
+}
+
+.os-card-neon {
+  @apply bg-white border border-blue-100 rounded-2xl shadow-sm overflow-hidden relative;
+}
+
+.os-card-neon::after {
+  content: "";
+  @apply absolute top-0 left-0 w-full h-full pointer-events-none border-t border-white rounded-2xl;
+}
+
+.os-glass {
+  @apply bg-white border border-slate-200 rounded-xl shadow-md;
+}
+
+.os-cyber-border {
+  @apply relative;
+}
+
+.os-glow-text {
+  @apply text-blue-600 font-semibold;
+}
+
+.os-btn {
+  @apply relative inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-150 active:scale-98 disabled:opacity-50 overflow-hidden;
+}
+
+.os-btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 shadow-sm border-none;
+}
+
+.os-btn-outline {
+  @apply bg-transparent border border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300;
+}
+
+/* Animations */
+.animate-float {
+  /* Disabled continuous float for smooth UI */
+}
+
+.animate-spin-slow {
+  /* Disabled continuous spin for smooth UI */
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ==========================================================================
+   DISPLAY DENSITY: COMPACT MODE OVERRIDES
+   Tối ưu hóa mật độ hiển thị, giảm khoảng cách dư thừa khi ở chế độ Compact
+   ========================================================================== */
+.is-compact-mode {
+  /* Giảm khoảng cách và bo góc của các thẻ card công nghệ */
+  .os-card, .os-card-neon {
+    @apply p-4 rounded-2xl gap-3;
+  }
+  
+  /* Thu gọn chiều cao của các dòng bảng danh sách nhiệm vụ/lịch họp */
+  table td, table th {
+    @apply py-2 px-3 text-xs;
+  }
+  
+  /* Giảm kích thước khoảng cách của các lưới bento và danh sách */
+  .grid {
+    gap: 0.75rem !important;
+  }
+  
+  /* Thu gọn kích thước của các nút bấm */
+  .os-btn {
+    @apply py-2 px-4 rounded-xl text-[9px] tracking-wider;
+  }
+  
+  /* Tiết kiệm không gian tiêu đề mô-đun */
+  .heading-pro {
+    @apply text-base tracking-tight;
+  }
+  
+  /* Giảm bớt padding trong các thành phần biểu mẫu và đầu vào */
+  input, select, textarea {
+    @apply py-2 px-3 text-xs rounded-lg;
+  }
+}
+
