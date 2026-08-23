@@ -10,7 +10,14 @@ import {
   ChevronLeft,
   ChevronRight,
   BrainCircuit,
-  BarChart3
+  BarChart3,
+  FolderKanban,
+  Kanban,
+  GitBranch,
+  Users,
+  Sliders,
+  Layers,
+  Network
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -169,16 +176,26 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
       )}
 
       {/* Navigation Section */}
-      <div className="flex-1 overflow-y-auto px-4 space-y-1 custom-scrollbar py-2">
-        <div className="mb-4">
-          {!isCollapsed && <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-3">Hệ thống Điều hành</p>}
+      <div className="flex-1 overflow-y-auto px-4 space-y-4 custom-scrollbar py-2">
+        {/* Group 1: Hệ thống Điều hành */}
+        <div>
+          {!isCollapsed && <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-3">Điều hành Chiến lược</p>}
           <div className="space-y-0.5">
-            {(!searchTerm || "dashboard".includes(searchTerm.toLowerCase()) || "tổng hợp".includes(searchTerm.toLowerCase())) && (
+            {(!searchTerm || "dashboard".includes(searchTerm.toLowerCase()) || "tổng quan".includes(searchTerm.toLowerCase())) && (
               <NavButton 
                 active={currentTab === 'dashboard'} 
                 onClick={() => onNavigate('dashboard')} 
                 icon={<BarChart3 size={16} className="text-rose-600" />} 
                 label="Tổng quan (Dashboard)" 
+                collapsed={isCollapsed}
+              />
+            )}
+            {(!searchTerm || "dự án".includes(searchTerm.toLowerCase()) || "hồ sơ".includes(searchTerm.toLowerCase())) && (
+              <NavButton 
+                active={currentTab === 'projects'} 
+                onClick={() => onNavigate('projects')} 
+                icon={<FolderKanban size={16} className="text-blue-600" />} 
+                label="Dự án & Hồ sơ" 
                 collapsed={isCollapsed}
               />
             )}
@@ -191,7 +208,16 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                 collapsed={isCollapsed}
               />
             )}
-            {(!searchTerm || "lịch làm việc".includes(searchTerm.toLowerCase())) && (
+            {(!searchTerm || "gantt".includes(searchTerm.toLowerCase()) || "sơ đồ".includes(searchTerm.toLowerCase())) && (
+              <NavButton 
+                active={currentTab === 'gantt'} 
+                onClick={() => onNavigate('gantt')} 
+                icon={<Kanban size={16} className="text-purple-600" />} 
+                label="Sơ đồ Gantt Timeline" 
+                collapsed={isCollapsed}
+              />
+            )}
+            {(!searchTerm || "lịch công tác".includes(searchTerm.toLowerCase())) && (
               <NavButton 
                 active={currentTab === 'work-schedule'} 
                 onClick={() => onNavigate('work-schedule')} 
@@ -200,7 +226,30 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                 collapsed={isCollapsed}
               />
             )}
-            {(!searchTerm || "trợ lý ai".includes(searchTerm.toLowerCase())) && (
+          </div>
+        </div>
+
+        {/* Group 2: Quy trình Làm việc */}
+        <div>
+          {!isCollapsed && <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-3">Quy trình & Nghiệp vụ</p>}
+          <div className="space-y-0.5">
+            {(!searchTerm || "quy trình".includes(searchTerm.toLowerCase())) && (
+              <NavButton 
+                active={currentTab === 'workflows'} 
+                onClick={() => onNavigate('workflows')} 
+                icon={<GitBranch size={16} className="text-amber-600" />} 
+                label="Quy trình Làm việc" 
+                collapsed={isCollapsed}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Group 3: Bộ não AI & Tri thức */}
+        <div>
+          {!isCollapsed && <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-3">Bộ não AI & Tri thức</p>}
+          <div className="space-y-0.5">
+            {(!searchTerm || "trợ lý ai".includes(searchTerm.toLowerCase()) || "chat".includes(searchTerm.toLowerCase())) && (
               <NavButton 
                 active={currentTab === 'chat'} 
                 onClick={() => onNavigate('chat')} 
@@ -209,12 +258,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                 collapsed={isCollapsed}
               />
             )}
-            {(!searchTerm || "tri thức".includes(searchTerm.toLowerCase())) && (
+            {(!searchTerm || "tri thức".includes(searchTerm.toLowerCase()) || "mnn".includes(searchTerm.toLowerCase())) && (
               <NavButton 
-                active={currentTab === 'knowledge'} 
+                active={currentTab === 'knowledge' || currentTab === 'mnn-knowledge'} 
                 onClick={() => onNavigate('knowledge')} 
-                icon={<Database size={16} />} 
-                label="Cơ sở Tri thức" 
+                icon={<Network size={16} className="text-indigo-600" />} 
+                label="Kho Tri Thức MNN" 
                 collapsed={isCollapsed}
               />
             )}

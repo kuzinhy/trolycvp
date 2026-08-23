@@ -1202,9 +1202,50 @@ app.post("/api/github/save-birthdays", async (req, res) => {
 app.get("/api/config", (req, res) => {
   res.json({
     githubOwner: process.env.GITHUB_OWNER || "kuzinhy",
-    githubRepo: process.env.GITHUB_REPO || "TroLyBiThu",
+    githubRepo: process.env.GITHUB_REPO || "trolycvp",
     githubBranch: process.env.GITHUB_BRANCH || "main",
   });
+});
+
+// GitHub connection verification endpoint
+app.get("/api/github/verify", async (req, res) => {
+  const token = process.env.GITHUB_TOKEN;
+  const owner = process.env.GITHUB_OWNER || "kuzinhy";
+  const repo = process.env.GITHUB_REPO || "trolycvp";
+  const branch = process.env.GITHUB_BRANCH || "main";
+
+  if (!token) {
+    return res.json({ connected: false, repo: `${owner}/${repo}`, branch, error: "Thiếu GITHUB_TOKEN" });
+  }
+
+  try {
+    const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/branches/${branch}`, {
+      headers: {
+        Authorization: `token ${token}`,
+        "User-Agent": "Strategic-Command-App/6.0",
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    res.json({
+      connected: true,
+      repo: `${owner}/${repo}`,
+      branch,
+      lastCommit: {
+        sha: response.data.commit.sha.substring(0, 7),
+        message: response.data.commit.commit.message,
+        date: response.data.commit.commit.committer.date,
+        author: response.data.commit.commit.author.name
+      }
+    });
+  } catch (error: any) {
+    res.json({
+      connected: false,
+      repo: `${owner}/${repo}`,
+      branch,
+      error: error.response?.data?.message || error.message
+    });
+  }
 });
 
 // API route for reverse geocoding (Identify Ward)

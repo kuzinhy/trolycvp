@@ -48,7 +48,10 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({ tasks, meeting
         const pendingTasks = tasks.filter(t => t.status !== 'Completed');
         const overdueTasks = tasks.filter(t => t.status !== 'Completed' && t.deadline && new Date(t.deadline) < today);
 
-        const prompt = `Bạn là Trợ lý Chỉ huy Elite. Hãy viết một bản tin "Chào buổi sáng" (Morning Briefing) cực kỳ ngắn gọn (dưới 100 từ), chuyên nghiệp và sắc bén cho ${userInfo?.displayName || 'Chỉ huy'}.
+        const hour = today.getHours();
+        const timeOfDay = hour >= 5 && hour < 12 ? 'buổi sáng' : hour >= 12 && hour < 18 ? 'buổi chiều' : 'buổi tối';
+
+        const prompt = `Bạn là Trợ lý Chỉ huy Elite. Hãy viết một bản tin "Chào ${timeOfDay}" (Briefing) cực kỳ ngắn gọn (dưới 100 từ), chuyên nghiệp và sắc bén cho ${userInfo?.displayName || 'Chỉ huy'}.
         
         Dữ liệu hôm nay (${format(today, 'EEEE, dd/MM/yyyy', { locale: vi })}):
         - Cuộc họp: ${todayMeetings.length}
@@ -57,7 +60,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({ tasks, meeting
         - Nhiệm vụ quá hạn: ${overdueTasks.length}
         
         Yêu cầu trình bày:
-        1. Lời chào ngắn gọn.
+        1. Lời chào ${timeOfDay} ngắn gọn, trang trọng.
         2. Tóm tắt 3 điểm quan trọng nhất (mỗi điểm một dòng, có dấu gạch đầu dòng).
         3. 1 câu châm ngôn hoặc lời khuyên chiến lược (xuống dòng mới).
         4. Sử dụng Markdown, đảm bảo các phần được ngăn cách bằng dòng trống để dễ đọc.
@@ -71,7 +74,9 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({ tasks, meeting
         setBriefing(response.text || 'Không thể tạo bản tin lúc này.');
       } catch (error) {
         console.error('Error generating briefing:', error);
-        setBriefing('Chào buổi sáng Chỉ huy! Hệ thống đang phân tích dữ liệu.');
+        const hour = new Date().getHours();
+        const timeOfDay = hour >= 5 && hour < 12 ? 'buổi sáng' : hour >= 12 && hour < 18 ? 'buổi chiều' : 'buổi tối';
+        setBriefing(`Chào ${timeOfDay} Chỉ huy! Hệ thống đang phân tích dữ liệu.`);
       } finally {
         setIsLoading(false);
       }

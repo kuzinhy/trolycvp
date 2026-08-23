@@ -31,6 +31,7 @@ import { KnowledgeItem } from './KnowledgeItem';
 import { PendingKnowledgeList } from './PendingKnowledgeList';
 import { AIReviewModal } from './AIReviewModal';
 import { KnowledgeDetailModal } from './KnowledgeDetailModal';
+import { MNNKnowledgeVaultModule } from './MNNKnowledgeVaultModule';
 
 export interface KnowledgeModuleProps {
   aiKnowledge: any[];
@@ -265,7 +266,7 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
   const [filterCategory, setFilterCategory] = useState('Tất cả');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<'list' | 'history'>('list');
+  const [activeView, setActiveView] = useState<'mnn' | 'list' | 'history'>('mnn');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
@@ -413,24 +414,36 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
         isAdmin={isAdmin}
       />
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <button 
+            onClick={() => setActiveView('mnn')}
+            className={cn(
+              "px-5 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer",
+              activeView === 'mnn' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+            )}
+          >
+            <Brain className="w-4 h-4 text-amber-300" />
+            Mạng Nơ-ron MNN (Tự học & Tự suy luận)
+          </button>
           <button 
             onClick={() => setActiveView('list')}
             className={cn(
-              "px-6 py-2 rounded-xl font-bold text-sm transition-all",
-              activeView === 'list' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white text-muted-foreground hover:bg-slate-50"
+              "px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer",
+              activeView === 'list' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
             )}
           >
+            <FileText className="w-4 h-4" />
             Danh mục tài liệu
           </button>
           <button 
             onClick={() => setActiveView('history')}
             className={cn(
-              "px-6 py-2 rounded-xl font-bold text-sm transition-all",
-              activeView === 'history' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white text-muted-foreground hover:bg-slate-50"
+              "px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer",
+              activeView === 'history' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
             )}
           >
+            <Clock className="w-4 h-4" />
             Nhật ký hoạt động
           </button>
         </div>
@@ -446,7 +459,13 @@ export const KnowledgeModule: React.FC<KnowledgeModuleProps> = (props) => {
         )}
       </div>
 
-      {activeView === 'list' ? (
+      {activeView === 'mnn' ? (
+        <MNNKnowledgeVaultModule 
+          aiKnowledge={aiKnowledge} 
+          showToast={showToast} 
+          addManualKnowledge={addManualKnowledge}
+        />
+      ) : activeView === 'list' ? (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
           {/* Left Column: List */}
           <div className="xl:col-span-8 space-y-8">

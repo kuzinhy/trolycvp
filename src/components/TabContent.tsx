@@ -34,6 +34,11 @@ const SystemHistoryModule = lazy(() => import('./SystemHistoryModule').then(m =>
 const UserManualModule = lazy(() => import('./UserManualModule').then(m => ({ default: m.UserManualModule })));
 const SecurityMonitorModule = lazy(() => import('./SecurityMonitorModule').then(m => ({ default: m.SecurityMonitorModule })));
 const AIAnalysisModule = lazy(() => import('./AIAnalysisModule').then(m => ({ default: m.AIAnalysisModule })));
+const ProjectsModule = lazy(() => import('./ProjectsModule').then(m => ({ default: m.ProjectsModule })));
+const GanttChartModule = lazy(() => import('./GanttChartModule').then(m => ({ default: m.GanttChartModule })));
+const WorkflowModule = lazy(() => import('./WorkflowModule').then(m => ({ default: m.WorkflowModule })));
+const StaffDirectoryModule = lazy(() => import('./StaffDirectoryModule').then(m => ({ default: m.StaffDirectoryModule })));
+const AutomationsSettingsModule = lazy(() => import('./AutomationsSettingsModule').then(m => ({ default: m.AutomationsSettingsModule })));
 
 // Preload primary frequently accessed modules on background idle
 if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
@@ -79,6 +84,49 @@ export const TabContent = memo(({
             showToast={showToast}
           />
         );
+
+      case 'projects':
+        return (
+          <ProjectsModule 
+            tasks={dashboard.tasks}
+            setTasks={dashboard.updateTasks as any}
+            showToast={showToast}
+            navigateTo={navigateTo}
+          />
+        );
+
+      case 'gantt':
+        return (
+          <GanttChartModule 
+            tasks={dashboard.tasks}
+            showToast={showToast}
+            navigateTo={navigateTo}
+          />
+        );
+
+      case 'workflows':
+        return (
+          <WorkflowModule 
+            tasks={dashboard.tasks}
+            showToast={showToast}
+            navigateTo={navigateTo}
+          />
+        );
+
+      case 'staff':
+        return (
+          <StaffDirectoryModule 
+            showToast={showToast}
+            navigateTo={navigateTo}
+          />
+        );
+
+      case 'automations':
+        return (
+          <AutomationsSettingsModule 
+            showToast={showToast}
+          />
+        );
       
       case 'dashboard-elite':
         return (
@@ -106,6 +154,7 @@ export const TabContent = memo(({
         );
 
       case 'knowledge':
+      case 'mnn-knowledge':
         return (
           <KnowledgeModule 
             {...knowledge}

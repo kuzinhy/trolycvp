@@ -465,7 +465,9 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const taskBrief = tasks.slice(0, 5).map(t => `- ${t.title} (${t.status})`).join('\n');
       const meetingBrief = meetings.slice(0, 3).map(m => `- ${m.time}: ${m.name}`).join('\n');
       
-      const prompt = `Hôm nay là ${today}. Đây là lịch trình của tôi cực kỳ tóm tắt:\nNHIỆM VỤ:\n${taskBrief}\nLỊCH HỌP:\n${meetingBrief}\n\nHãy viết một câu chào buổi sáng truyền cảm hứng và tóm tắt ngắn gọn 3 điểm cần lưu ý nhất. Trình bày đẹp bằng Markdown.`;
+      const hour = new Date().getHours();
+      const timeOfDay = hour >= 5 && hour < 12 ? 'buổi sáng' : hour >= 12 && hour < 18 ? 'buổi chiều' : 'buổi tối';
+      const prompt = `Hôm nay là ${today} (${timeOfDay}). Đây là lịch trình của tôi cực kỳ tóm tắt:\nNHIỆM VỤ:\n${taskBrief}\nLỊCH HỌP:\n${meetingBrief}\n\nHãy viết một lời chào ${timeOfDay} chuyên nghiệp, truyền cảm hứng và tóm tắt ngắn gọn 3 điểm cần lưu ý nhất cho Đồng chí Nguyễn Minh Huy. Trình bày đẹp bằng Markdown.`;
       
       const response = await generateContentWithRetry({
         model: "gemini-3.7-flash",
@@ -473,11 +475,13 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
       
       const text = response?.text || (response as any)?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      setSmartBriefing(text || "Chào buổi sáng đồng chí! Chúc một ngày làm việc hiệu quả và thành công.");
+      setSmartBriefing(text || `Chào ${timeOfDay} đồng chí! Chúc một ngày làm việc hiệu quả và thành công.`);
     } catch (e) {
-      console.error("Lỗi tạo bản tin sáng:", e);
-      showToast("Lỗi khi tạo bản tin sáng.", "error");
-      setSmartBriefing("Chào buổi sáng đồng chí! Hệ thống chưa thể kết nối AI để tạo bản tin cá nhân hóa lúc này. Vui lòng thử lại sau.");
+      console.error("Lỗi tạo bản tin:", e);
+      showToast("Lỗi khi tạo bản tin.", "error");
+      const hour = new Date().getHours();
+      const timeOfDay = hour >= 5 && hour < 12 ? 'buổi sáng' : hour >= 12 && hour < 18 ? 'buổi chiều' : 'buổi tối';
+      setSmartBriefing(`Chào ${timeOfDay} đồng chí! Hệ thống chưa thể kết nối AI để tạo bản tin cá nhân hóa lúc này. Vui lòng thử lại sau.`);
     } finally {
       setIsGeneratingBriefing(false);
     }

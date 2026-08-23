@@ -136,7 +136,7 @@ export const Header: React.FC<HeaderProps> = memo(({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 md:gap-6 shrink-0">
+      <div className="flex items-center gap-2 md:gap-4 shrink-0">
         {/* Dropdown Menu Cá nhân & Chỉ số Hệ thống */}
         <div className="relative">
           <button 
@@ -265,20 +265,20 @@ export const Header: React.FC<HeaderProps> = memo(({
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-1.5">
+                      <div className="grid grid-cols-3 gap-1.5">
                         <button
                           onClick={() => {
                             setIsHubOpen(false);
                             onNavigate('task-journal');
                           }}
-                          className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/70 rounded-xl text-left transition-all cursor-pointer group"
+                          className="flex items-center gap-1.5 p-2 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/70 rounded-xl text-left transition-all cursor-pointer group"
                         >
-                          <div className="p-1.5 bg-white group-hover:bg-rose-50 text-slate-600 group-hover:text-rose-600 rounded-lg border border-slate-200/50 transition-colors shrink-0">
+                          <div className="p-1 bg-white group-hover:bg-rose-50 text-slate-600 group-hover:text-rose-600 rounded-lg border border-slate-200/50 transition-colors shrink-0">
                             <FileText size={13} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-slate-800 truncate leading-tight">Nhật ký công tác</p>
-                            <p className="text-[9px] text-slate-400 font-medium truncate">Sổ tay cá nhân</p>
+                            <p className="text-[10px] font-bold text-slate-800 truncate leading-tight">Nhật ký</p>
+                            <p className="text-[8px] text-slate-400 font-medium truncate">Sổ tay</p>
                           </div>
                         </button>
 
@@ -287,14 +287,30 @@ export const Header: React.FC<HeaderProps> = memo(({
                             setIsHubOpen(false);
                             onNavigate('assignment-tracking');
                           }}
-                          className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/70 rounded-xl text-left transition-all cursor-pointer group"
+                          className="flex items-center gap-1.5 p-2 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/70 rounded-xl text-left transition-all cursor-pointer group"
                         >
-                          <div className="p-1.5 bg-white group-hover:bg-blue-50 text-slate-600 group-hover:text-blue-600 rounded-lg border border-slate-200/50 transition-colors shrink-0">
+                          <div className="p-1 bg-white group-hover:bg-blue-50 text-slate-600 group-hover:text-blue-600 rounded-lg border border-slate-200/50 transition-colors shrink-0">
                             <CheckCircle size={13} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-slate-800 truncate leading-tight">Nhiệm vụ của tôi</p>
-                            <p className="text-[9px] text-slate-400 font-medium truncate">Theo dõi tiến độ</p>
+                            <p className="text-[10px] font-bold text-slate-800 truncate leading-tight">Nhiệm vụ</p>
+                            <p className="text-[8px] text-slate-400 font-medium truncate">Tiến độ</p>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setIsHubOpen(false);
+                            onNavigate('staff');
+                          }}
+                          className="flex items-center gap-1.5 p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200/70 rounded-xl text-left transition-all cursor-pointer group"
+                        >
+                          <div className="p-1 bg-white group-hover:bg-emerald-100 text-slate-600 group-hover:text-emerald-700 rounded-lg border border-slate-200/50 transition-colors shrink-0">
+                            <Users size={13} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-slate-800 group-hover:text-emerald-900 truncate leading-tight">Cán bộ</p>
+                            <p className="text-[8px] text-slate-400 font-medium truncate">Danh bạ</p>
                           </div>
                         </button>
                       </div>

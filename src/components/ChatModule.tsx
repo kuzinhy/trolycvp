@@ -317,86 +317,102 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
       />
 
       {/* Header */}
-      <div className="px-4 py-3 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between sticky top-0 z-20">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-500/20">
-            <BrainCircuit className="text-white" size={16} />
+      <div className="px-4 py-2.5 bg-white border-b border-slate-200/80 flex items-center justify-between sticky top-0 z-20 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-700 to-purple-800 text-white flex items-center justify-center shadow-md shadow-blue-600/20">
+            <BrainCircuit size={17} />
           </div>
           <div>
-            <h2 className="text-xs font-bold text-slate-900 tracking-tight">Trợ lý Chỉ huy Elite v8.0</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-extrabold text-slate-900 tracking-tight">Trợ lý Tham mưu AI</h2>
+              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-extrabold rounded-full border border-blue-200/60 uppercase tracking-wider">
+                Elite v8.0
+              </span>
+            </div>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shadow-sm shadow-blue-500/50"></div>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Strategic Context: Active</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px] font-medium text-slate-500">Sẵn sàng tham mưu chỉ đạo • Tri thức Đảng ủy</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+
+        <div className="flex items-center gap-1.5">
           <div className={cn(
-            "flex items-center bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg overflow-hidden transition-all duration-300",
-            showSearch ? "w-40 sm:w-56 opacity-100 px-2" : "w-0 opacity-0 border-none"
+            "flex items-center bg-slate-100 border border-slate-200 rounded-lg overflow-hidden transition-all duration-300",
+            showSearch ? "w-44 sm:w-60 opacity-100 px-2" : "w-0 opacity-0 border-none"
           )}>
-            <Search size={12} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+            <Search size={13} className="text-slate-400 shrink-0" />
             <input 
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm kiếm..."
-              className="w-full px-2 py-1.5 text-[11px] bg-transparent focus:outline-none text-[hsl(var(--foreground))]"
+              placeholder="Tìm trong hội thoại..."
+              className="w-full px-2 py-1 text-xs bg-transparent focus:outline-none text-slate-800"
             />
             {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="p-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
-                <X size={10} />
+              <button onClick={() => setSearchTerm('')} className="p-1 text-slate-400 hover:text-slate-600">
+                <X size={12} />
               </button>
             )}
           </div>
 
           <button 
-             onClick={() => setShowSearch(!showSearch)}
-             className={cn(
-               "p-2 rounded-lg transition-all duration-200",
-               showSearch ? "bg-[hsl(var(--accent)/0.1)] text-[hsl(var(--accent))]" : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"
-             )}
-             title="Tìm kiếm"
-           >
-             <Search size={16} />
-           </button>
+            onClick={() => setShowSearch(!showSearch)}
+            className={cn(
+              "p-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1 border",
+              showSearch 
+                ? "bg-blue-50 text-blue-700 border-blue-200" 
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+            )}
+            title="Tìm kiếm hội thoại"
+          >
+            <Search size={14} />
+          </button>
 
           <button 
             onClick={() => setIsSimpleMode && setIsSimpleMode(!isSimpleMode)}
             className={cn(
-              "p-2 rounded-lg transition-all duration-300 shadow-sm border flex items-center justify-center",
-              isSimpleMode ? "bg-amber-500 text-white border-amber-400 shadow-amber-500/20" : "bg-white text-slate-400 hover:text-amber-600 hover:bg-amber-50 border-slate-200"
-             )}
-            title="Chế độ đơn thuần"
+              "p-1.5 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1 border",
+              isSimpleMode 
+                ? "bg-amber-500 text-white border-amber-400 shadow-xs" 
+                : "bg-white text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-700"
+            )}
+            title="Tự động rút gọn câu trả lời"
           >
-            <Sparkles size={16} className={cn(isSimpleMode && "animate-pulse")} />
+            <Sparkles size={14} className={cn(isSimpleMode && "animate-pulse")} />
+            <span className="hidden sm:inline text-[11px]">Đơn thuần</span>
           </button>
           
           <button 
             onClick={() => setIsSearchEnabled && setIsSearchEnabled(!isSearchEnabled)}
-             className={cn(
-               "p-2 rounded-lg transition-all duration-300 shadow-sm border flex items-center justify-center",
-               isSearchEnabled ? "bg-blue-600 text-white border-blue-500 shadow-blue-500/20" : "bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-slate-200"
-             )}
-            title="Search AI"
+            className={cn(
+              "p-1.5 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1 border",
+              isSearchEnabled 
+                ? "bg-blue-600 text-white border-blue-500 shadow-xs" 
+                : "bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-700"
+            )}
+            title="Bật/Tắt tìm kiếm Google Search AI"
           >
-            <Zap size={16} className={cn(isSearchEnabled && "animate-pulse")} />
+            <Zap size={14} className={cn(isSearchEnabled && "animate-pulse")} />
+            <span className="hidden sm:inline text-[11px]">Tra cứu AI</span>
           </button>
 
-          <div className="flex items-center gap-1 ml-1 pl-1 border-l border-slate-100">
+          <div className="flex items-center gap-1 pl-1 border-l border-slate-200">
             <button 
               onClick={() => setIsHistorySidebarOpen(true)}
-              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
-              title="Lịch sử"
+              className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 rounded-lg transition-all flex items-center gap-1"
+              title="Xem lịch sử"
             >
-              <Database size={16} />
+              <History size={14} />
+              <span className="hidden md:inline text-[11px] font-bold">Lịch sử</span>
             </button>
+
             <button 
               onClick={onClearChat}
-              className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all duration-200"
-              title="Xóa chat"
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-lg transition-all"
+              title="Xóa đoạn chat hiện tại"
             >
-              <Trash2 size={16} />
+              <Trash2 size={14} />
             </button>
           </div>
         </div>
@@ -501,35 +517,93 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
             className="flex-1 overflow-y-auto px-2 md:px-4 py-4 space-y-6 custom-scrollbar scroll-smooth"
           >
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto py-8">
-            <div className="w-16 h-16 rounded-2xl bg-blue-600 shadow-xl shadow-blue-500/20 flex items-center justify-center mb-4 animate-bounce-slow border border-white/20">
-              <BrainCircuit size={32} className="text-white" />
-            </div>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-2 uppercase tracking-tighter italic">Trung tâm Chỉ huy Elite</h3>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-bold max-w-lg uppercase tracking-wide">
-              Hệ thống đã sẵn sàng tham mưu.
-            </p>
+          <div className="h-full flex flex-col items-center justify-center text-center px-3 max-w-3xl mx-auto py-4 my-auto">
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 w-full max-w-3xl">
-              {TASK_TYPES.map((task) => (
-                <button 
-                  key={task.id}
-                  onClick={() => {
-                    setInput(task.promptPrefix);
-                    inputRef.current?.focus();
-                  }}
-                  className="p-4 bg-white border border-slate-200 rounded-xl text-left hover:border-blue-500 hover:shadow-md hover:-translate-y-0.5 transition-all group shadow-sm"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                      <Sparkles size={14} />
-                    </div>
-                    <span className="text-xs font-black text-slate-900 uppercase tracking-wider">{task.label}</span>
+            {/* Consolidated All-in-One AI Command Card */}
+            <div className="w-full bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-5 text-left space-y-4">
+              
+              {/* Header Banner Section */}
+              <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white p-4 sm:p-5 rounded-xl border border-slate-800 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1 z-10">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-blue-600/30 text-blue-300 border border-blue-500/30 text-[9px] font-extrabold rounded-full uppercase tracking-wider">
+                      Trợ lý AI • Cấp ủy
+                    </span>
+                    <span className="text-slate-500 text-xs">•</span>
+                    <span className="text-[11px] text-slate-300 font-medium">Văn phòng Đảng ủy</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 font-medium">{task.description}</p>
-                </button>
-              ))}
+
+                  <h3 className="text-base sm:text-lg font-extrabold tracking-tight">
+                    Chào Đồng chí Nguyễn Minh Huy 👋
+                  </h3>
+                  <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+                    Sẵn sàng hỗ trợ soạn thảo văn bản Đảng, tóm tắt báo cáo, tra cứu tri thức và tham mưu chỉ đạo.
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-white/10 rounded-xl backdrop-blur-xs border border-white/10 shrink-0 self-start sm:self-center">
+                  <BrainCircuit size={28} className="text-blue-300" />
+                </div>
+              </div>
+
+              {/* Quick Prompt Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 mr-1">
+                  <Zap size={12} className="text-amber-500" /> Mẫu soạn thảo:
+                </span>
+                {[
+                  'Dự thảo Nghị quyết T3/2026',
+                  'Tờ trình Chuyển đổi số',
+                  'Kế hoạch Kiểm tra Giám sát',
+                  'Mẫu Kết luận Hội nghị'
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setInput(`Hãy giúp tôi xây dựng ${chip}: `);
+                      inputRef.current?.focus();
+                    }}
+                    className="px-2.5 py-1 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-xs font-semibold rounded-lg transition-all border border-slate-200 hover:border-blue-300 cursor-pointer active:scale-95"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
+              {/* 4 Task Type Shortcuts Grid */}
+              <div className="pt-2 border-t border-slate-100">
+                <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">
+                  Tác vụ Thường dùng
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {TASK_TYPES.map((task) => (
+                    <button 
+                      key={task.id}
+                      onClick={() => {
+                        setInput(task.promptPrefix);
+                        inputRef.current?.focus();
+                      }}
+                      className="p-3 bg-slate-50/80 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-400 rounded-xl text-left transition-all group flex items-center gap-3 cursor-pointer"
+                    >
+                      <div className="p-2 bg-white group-hover:bg-blue-600 text-blue-600 group-hover:text-white rounded-lg border border-slate-200/60 transition-colors shrink-0 shadow-2xs">
+                        <Sparkles size={14} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-extrabold text-slate-800 group-hover:text-blue-700 transition-colors truncate">
+                          {task.label}
+                        </div>
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                          {task.description}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
             </div>
+
           </div>
         ) : (
           <div className="max-w-6xl mx-auto space-y-6">
@@ -555,8 +629,8 @@ export const ChatModule: React.FC<ChatModuleProps> = memo(({
                     msg.role === 'user' ? "items-end text-right" : "items-start"
                   )}>
                     <div className="flex items-center gap-2 mb-1 px-1">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                        {msg.role === 'user' ? 'Giao thức người dùng' : 'Phản hồi tham mưu AI'}
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {msg.role === 'user' ? 'Đồng chí Nguyễn Minh Huy' : 'Trợ lý Tham mưu AI'}
                       </span>
                     </div>
                     

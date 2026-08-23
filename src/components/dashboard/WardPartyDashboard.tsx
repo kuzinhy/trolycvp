@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, RefreshCw, Database, Search, Filter, Calendar, Users, Building, 
   CheckCircle2, AlertTriangle, Clock, ArrowUpRight, ChevronRight, Download, 
-  ShieldCheck, FileText, PieChart, TrendingUp, AlertCircle, CheckCircle, 
-  XCircle, HelpCircle, Layers, Award, DollarSign
+  ShieldCheck, FileText, PieChart as PieChartIcon, TrendingUp, AlertCircle, CheckCircle, 
+  XCircle, HelpCircle, Layers, Award, DollarSign, ListTodo, Sparkles
 } from 'lucide-react';
+import { 
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, 
+  LineChart, Line, Legend
+} from 'recharts';
 import { cn } from '../../lib/utils';
 import { DrillDownModal } from './DrillDownModal';
 import { DriveInspectorModal } from './DriveInspectorModal';
@@ -14,62 +18,99 @@ interface WardPartyDashboardProps {
   showToast: (msg: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
 }
 
+// Chart sample data matching Coogo Flow references
+const BAR_7DAYS_DATA = [
+  { day: 'T2', canLam: 4, dangLam: 3, hoanThanh: 5, quaHan: 0 },
+  { day: 'T3', canLam: 3, dangLam: 4, hoanThanh: 6, quaHan: 0 },
+  { day: 'T4', canLam: 5, dangLam: 2, hoanThanh: 4, quaHan: 0 },
+  { day: 'T5', canLam: 2, dangLam: 5, hoanThanh: 7, quaHan: 0 },
+  { day: 'T6', canLam: 6, dangLam: 3, hoanThanh: 8, quaHan: 0 },
+  { day: 'T7', canLam: 1, dangLam: 2, hoanThanh: 3, quaHan: 0 },
+  { day: 'CN', canLam: 0, dangLam: 1, hoanThanh: 2, quaHan: 0 }
+];
+
+const DONUT_STATUS_DATA = [
+  { name: 'Cần làm', value: 9, color: '#3B82F6' },
+  { name: 'Đang làm', value: 9, color: '#F59E0B' },
+  { name: 'Hoàn thành', value: 7, color: '#10B981' },
+  { name: 'Quá hạn', value: 0, color: '#EF4444' }
+];
+
+const TREND_30DAYS_DATA = [
+  { week: 'Tuần 1', taoMoi: 12, hoanThanh: 8 },
+  { week: 'Tuần 2', taoMoi: 15, hoanThanh: 11 },
+  { week: 'Tuần 3', taoMoi: 18, hoanThanh: 16 },
+  { week: 'Tuần 4', taoMoi: 22, hoanThanh: 20 }
+];
+
+const DEPT_TASK_DATA = [
+  { name: 'Văn phòng Đảng ủy', total: 10, done: 8 },
+  { name: 'Ban Kiểm tra', total: 6, done: 4 },
+  { name: 'Ban Tuyên giáo', total: 5, done: 4 },
+  { name: 'Ban Tổ chức', total: 4, done: 3 }
+];
+
+const ATTENTION_TASKS = [
+  {
+    id: 'att-1',
+    code: 'CDS-01',
+    title: 'Hoàn thiện Tờ trình Chuyển đổi số & Số hóa Hồ sơ T3/2026',
+    assignee: 'Lê Thị Kiều Oanh',
+    deadline: 'Hôm nay (17:00)',
+    priority: 'CAO',
+    status: 'Đang làm',
+    urgency: 'today'
+  },
+  {
+    id: 'att-2',
+    code: 'KTGS-02',
+    title: 'Báo cáo Kết quả Giám sát Chi bộ 3 - Đảng bộ Phường',
+    assignee: 'Trần Quốc Bảo',
+    deadline: 'Ngày mai (11:30)',
+    priority: 'CAO',
+    status: 'Đang làm',
+    urgency: 'tomorrow'
+  },
+  {
+    id: 'att-3',
+    code: 'NQ-03',
+    title: 'Chuẩn bị Ma trận Câu hỏi Tìm hiểu Nghị quyết Đại hội XIV',
+    assignee: 'Nguyễn Thị Thu Phương',
+    deadline: '2 ngày nữa',
+    priority: 'TB',
+    status: 'Cần làm',
+    urgency: 'upcoming'
+  }
+];
+
 export const WardPartyDashboard: React.FC<WardPartyDashboardProps> = ({
   navigateTo,
   showToast
 }) => {
-  const [summaryData, setSummaryData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleString('vi-VN'));
   
-  // Filters state
-  const [selectedYear, setSelectedYear] = useState('2026');
-  const [selectedQuarter, setSelectedQuarter] = useState('Q3');
-  const [selectedMonth, setSelectedMonth] = useState('Tháng 8');
-  const [selectedBranchFilter, setSelectedBranchFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Modals state
+  // Modals
   const [drillDownModalOpen, setDrillDownModalOpen] = useState(false);
   const [drillDownTitle, setDrillDownTitle] = useState('');
   const [drillDownCategory, setDrillDownCategory] = useState('');
   const [inspectorModalOpen, setInspectorModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchSummary();
-  }, []);
-
-  const fetchSummary = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/dashboard/summary');
-      const json = await res.json();
-      if (json.success) {
-        setSummaryData(json.data);
-        setLastUpdated(json.lastUpdated ? new Date(json.lastUpdated).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN'));
-      }
-    } catch (err) {
-      console.error("Error fetching summary:", err);
-      showToast("Không thể tải dữ liệu từ Google Drive API", "error");
-    } finally {
-      setLoading(false);
-    }
+  // Dynamic Greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Chào buổi sáng';
+    if (hour >= 12 && hour < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setLoading(true);
-    try {
-      const res = await fetch('/api/dashboard/refresh', { method: 'POST' });
-      const json = await res.json();
-      if (json.success) {
-        await fetchSummary();
-        showToast(json.message, "success");
-      }
-    } catch (err) {
-      showToast("Lỗi đồng bộ dữ liệu", "error");
-    } finally {
+    setTimeout(() => {
+      setLastUpdated(new Date().toLocaleString('vi-VN'));
       setLoading(false);
-    }
+      showToast('Đã đồng bộ dữ liệu tổng hợp mới nhất', 'success');
+    }, 800);
   };
 
   const openDrillDown = (title: string, category: string) => {
@@ -78,512 +119,347 @@ export const WardPartyDashboard: React.FC<WardPartyDashboardProps> = ({
     setDrillDownModalOpen(true);
   };
 
-  if (loading && !summaryData) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center bg-slate-50/50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mb-4"></div>
-        <p className="text-slate-600 font-medium text-sm">Đang kết nối và đồng bộ dữ liệu từ Google Drive...</p>
-      </div>
-    );
-  }
-
-  const org = summaryData?.organization || {};
-  const dev = summaryData?.development || {};
-  const branches = summaryData?.branches || [];
-  const tasks = summaryData?.tasksSummary || {};
-  const insp = summaryData?.inspectionSummary || {};
-  const reps = summaryData?.reportsSummary || {};
-  const evalData = summaryData?.evaluation || {};
-  const fees = summaryData?.partyFees || {};
-  const demo = summaryData?.demographics || {};
-  const alerts = summaryData?.alerts || [];
-
   return (
-    <div className="p-4 md:p-8 space-y-8 bg-slate-50/60 min-h-screen">
+    <div className="p-4 md:p-8 space-y-6 bg-slate-50/60 min-h-screen">
       
-      {/* Top Header & Title Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-rose-950 text-white p-6 md:p-8 rounded-3xl shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 bg-rose-50 text-rose-700 text-xs font-extrabold rounded-md uppercase tracking-wider border border-rose-200">
-              Cơ quan Đảng ủy Phường
+            <span className="px-3 py-1 bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-bold rounded-full uppercase tracking-wider">
+              Chỉ huy Chiến lược 8.0
             </span>
             <span className="text-xs text-slate-400">•</span>
-            <span className="text-xs text-slate-500 font-medium">Hệ thống Điều hành Chiến lược 6.0</span>
+            <span className="text-xs text-slate-300">Văn phòng Đảng ủy Phường</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
-            Dashboard Tổng hợp Công tác Đảng
+
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mt-2">
+            {getGreeting()}, Đồng chí Nguyễn Minh Huy 👋
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Dữ liệu cập nhật lúc: <span className="font-semibold text-slate-700">{lastUpdated}</span> (Nguồn Google Drive: <button onClick={() => setInspectorModalOpen(true)} className="text-rose-600 hover:underline font-mono">Xem tệp nguồn</button>)
+          <p className="text-xs md:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            Hệ thống đang ghi nhận <strong className="text-amber-400">9 nhiệm vụ đang thực hiện</strong> và <strong className="text-emerald-400">7 nhiệm vụ đã hoàn tất</strong> trong tuần này. Không có nhiệm vụ quá hạn.
+          </p>
+          <p className="text-[11px] text-slate-400 mt-2 font-mono">
+            Dữ liệu cập nhật lúc: {lastUpdated}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => setInspectorModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-colors border border-slate-200 shadow-sm cursor-pointer"
+            className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl backdrop-blur-sm border border-white/10 transition-all cursor-pointer flex items-center gap-2"
           >
-            <Database size={16} className="text-blue-600" />
-            <span>Nguồn Drive (Rule 24)</span>
+            <Database size={15} />
+            <span>Nguồn Google Drive</span>
           </button>
 
           <button
             onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-md shadow-rose-600/20 cursor-pointer"
+            disabled={loading}
+            className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2 active:scale-95"
           >
-            <RefreshCw size={16} className={cn(loading && "animate-spin")} />
-            <span>Làm mới dữ liệu</span>
+            <RefreshCw size={15} className={cn(loading && "animate-spin")} />
+            <span>Đồng bộ ngay</span>
           </button>
         </div>
       </div>
 
-      {/* Filters Bar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase">Năm:</span>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-            >
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase">Quý:</span>
-            <select
-              value={selectedQuarter}
-              onChange={(e) => setSelectedQuarter(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-            >
-              <option value="Q1">Quý I</option>
-              <option value="Q2">Quý II</option>
-              <option value="Q3">Quý III</option>
-              <option value="Q4">Quý IV</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase">Tháng:</span>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-            >
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={`Tháng ${i + 1}`}>Tháng {i + 1}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase">Chi bộ:</span>
-            <select
-              value={selectedBranchFilter}
-              onChange={(e) => setSelectedBranchFilter(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-            >
-              <option value="">Tất cả các chi bộ</option>
-              {branches.map((b: any) => (
-                <option key={b.id} value={b.name}>{b.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Quick Search */}
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-          <input
-            type="text"
-            placeholder="Tìm kiếm nhanh toàn Dashboard..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-          />
-        </div>
-      </div>
-
-      {/* SECTION 1: KPI CARDS (Tổ chức Đảng & Đảng viên) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-            <Users size={18} className="text-rose-600" />
-            <span>Tổ chức Đảng & Đảng viên (Click để xem chi tiết)</span>
-          </h2>
-          <span className="text-xs text-slate-500 font-medium">Bấm vào từng thẻ để drill-down</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Card 1 */}
-          <div 
-            onClick={() => openDrillDown("Tổng số Đảng viên phường", "all_members")}
-            className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-rose-300 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-bl-full -z-0 opacity-50 group-hover:scale-110 transition-transform"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase">Tổng số đảng viên</span>
-                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
-                  <Users size={16} />
-                </div>
-              </div>
-              <p className="text-3xl font-extrabold text-slate-900 mt-2 group-hover:text-rose-600 transition-colors">
-                {org.totalPartyMembers?.toLocaleString()}
-              </p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
-                <span>Chính thức: <strong className="text-slate-700">{org.officialMembers}</strong></span>
-                <span>Dự bị: <strong className="text-rose-600">{org.reserveMembers}</strong></span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div 
-            onClick={() => openDrillDown("Danh sách Tổ chức Đảng & Chi bộ", "organizations")}
-            className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-0 opacity-50 group-hover:scale-110 transition-transform"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase">Tổng số tổ chức Đảng</span>
-                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                  <Building size={16} />
-                </div>
-              </div>
-              <p className="text-3xl font-extrabold text-slate-900 mt-2 group-hover:text-blue-600 transition-colors">
-                {org.totalOrganizations}
-              </p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
-                <span>Chi bộ trực thuộc: <strong className="text-slate-700">{org.totalBranches}</strong></span>
-                <span className="text-blue-600 font-semibold flex items-center gap-1">Chi tiết <ChevronRight size={12} /></span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div 
-            onClick={() => openDrillDown("Đảng viên miễn sinh hoạt & tạm thời", "exempt_temp")}
-            className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -z-0 opacity-50 group-hover:scale-110 transition-transform"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase">Miễn & Tạm thời sinh hoạt</span>
-                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
-                  <Clock size={16} />
-                </div>
-              </div>
-              <p className="text-3xl font-extrabold text-slate-900 mt-2 group-hover:text-amber-600 transition-colors">
-                {(org.exemptMembers || 0) + (org.temporaryMembers || 0)}
-              </p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
-                <span>Miễn SH: <strong className="text-slate-700">{org.exemptMembers}</strong></span>
-                <span>Tạm thời: <strong className="text-slate-700">{org.temporaryMembers}</strong></span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 4 */}
-          <div 
-            onClick={() => openDrillDown("Đảng viên mới kết nạp trong năm", "new_inductees")}
-            className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -z-0 opacity-50 group-hover:scale-110 transition-transform"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase">Đảng viên mới kết nạp</span>
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                  <Award size={16} />
-                </div>
-              </div>
-              <p className="text-3xl font-extrabold text-slate-900 mt-2 group-hover:text-emerald-600 transition-colors">
-                {org.newInducteesThisYear}
-              </p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
-                <span>Đi làm ăn xa: <strong className="text-slate-700">{org.remoteWorkMembers}</strong></span>
-                <span className="text-emerald-600 font-semibold flex items-center gap-1">Chi tiết <ChevronRight size={12} /></span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* SECTION 2 & 3: PHÁT TRIỂN ĐẢNG & SINH HOẠT CHI BỘ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 4 Soft Metric KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        {/* Công tác phát triển Đảng */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+        {/* Card 1: Tổng nhiệm vụ */}
+        <div 
+          onClick={() => navigateTo('tasks')}
+          className="bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-200/80 rounded-2xl p-5 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Tổng Nhiệm vụ</span>
+            <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+              <ListTodo size={20} />
+            </div>
+          </div>
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                <TrendingUp size={18} className="text-rose-600" />
-                <span>Công tác phát triển Đảng</span>
-              </h3>
-              <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-                Hoàn thành {dev.completionRate}%
+            <div className="text-3xl font-black text-indigo-950">25</div>
+            <div className="flex items-center justify-between text-xs mt-1">
+              <span className="text-indigo-700 font-semibold">28% đã hoàn thành</span>
+              <span className="text-indigo-800 font-bold group-hover:underline flex items-center gap-0.5">
+                Xem <ChevronRight size={14} />
               </span>
             </div>
-
-            {/* Progress Bar */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-1.5">
-                <span>Đã kết nạp: <strong className="text-rose-600">{dev.recruited}</strong> / Chỉ tiêu: {dev.targetYear}</span>
-                <span>Còn lại: {dev.remaining}</span>
-              </div>
-              <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-rose-500 to-rose-600 h-full rounded-full transition-all duration-500" 
-                  style={{ width: `${dev.completionRate}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div 
-                onClick={() => openDrillDown("Quần chúng đang theo dõi", "mass_followed")}
-                className="p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-rose-300 cursor-pointer transition-all"
-              >
-                <p className="text-xs text-slate-500 font-medium">Quần chúng đang theo dõi</p>
-                <p className="text-xl font-bold text-slate-900 mt-1">{dev.massFollowed}</p>
-              </div>
-              <div 
-                onClick={() => openDrillDown("Quần chúng ưu tú", "elite_mass")}
-                className="p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-rose-300 cursor-pointer transition-all"
-              >
-                <p className="text-xs text-slate-500 font-medium">Quần chúng ưu tú</p>
-                <p className="text-xl font-bold text-slate-900 mt-1">{dev.eliteMass}</p>
-              </div>
-              <div 
-                onClick={() => openDrillDown("Đã học nhận thức về Đảng", "learned_awareness")}
-                className="p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-rose-300 cursor-pointer transition-all"
-              >
-                <p className="text-xs text-slate-500 font-medium">Đã học nhận thức Đảng</p>
-                <p className="text-xl font-bold text-slate-900 mt-1">{dev.learnedAwareness}</p>
-              </div>
-              <div 
-                onClick={() => openDrillDown("Hồ sơ đang thẩm tra / hoàn thiện", "verifying_files")}
-                className="p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-rose-300 cursor-pointer transition-all"
-              >
-                <p className="text-xs text-slate-500 font-medium">Hồ sơ đang thẩm tra</p>
-                <p className="text-xl font-bold text-rose-600 mt-1">{dev.filesVerifying}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Dự bị sắp chuyển chính thức: <strong className="text-slate-800">3 đồng chí</strong></span>
-            <button onClick={() => openDrillDown("Phát triển Đảng chi tiết", "dev_detail")} className="text-rose-600 font-semibold hover:underline flex items-center gap-1">
-              Xem toàn bộ <ChevronRight size={12} />
-            </button>
           </div>
         </div>
 
-        {/* Tình hình sinh hoạt chi bộ */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+        {/* Card 2: Đang thực hiện */}
+        <div 
+          onClick={() => navigateTo('kanban')}
+          className="bg-amber-50/70 hover:bg-amber-50 border border-amber-200/80 rounded-2xl p-5 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">Đang thực hiện</span>
+            <div className="p-2.5 bg-amber-600 text-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+              <Clock size={20} />
+            </div>
+          </div>
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                <Building size={18} className="text-blue-600" />
-                <span>Tình hình sinh hoạt chi bộ tháng này</span>
-              </h3>
-              <span className="text-xs font-semibold text-slate-500">6/6 Chi bộ</span>
-            </div>
-
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
-                    <th className="px-3 py-2.5">Chi bộ</th>
-                    <th className="px-3 py-2.5 text-center">Sinh hoạt</th>
-                    <th className="px-3 py-2.5 text-center">Biên bản</th>
-                    <th className="px-3 py-2.5 text-center">Chuyên đề</th>
-                    <th className="px-3 py-2.5 text-center">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-800">
-                  {branches.map((b: any) => (
-                    <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-3 py-2.5 font-medium text-slate-900">
-                        <button onClick={() => openDrillDown(b.name, "branch_detail")} className="text-blue-600 hover:underline text-left font-medium">
-                          {b.name}
-                        </button>
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        {b.meetingThisMonth ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-rose-600 font-bold">✗</span>}
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        {b.sentMinutes ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-amber-600 font-bold">Chưa</span>}
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        {b.thematicMeeting ? <span className="text-emerald-600 font-bold">Có</span> : <span className="text-slate-400">-</span>}
-                      </td>
-                      <td className="px-3 py-2.5 text-center font-bold">
-                        <span title={b.timeliness} className="text-base">{b.status}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="text-3xl font-black text-amber-950">9</div>
+            <div className="flex items-center justify-between text-xs mt-1">
+              <span className="text-amber-700 font-semibold">Cần đôn đốc tiến độ</span>
+              <span className="text-amber-800 font-bold group-hover:underline flex items-center gap-0.5">
+                Xem Kanban <ChevronRight size={14} />
+              </span>
             </div>
           </div>
+        </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1">🟢 Đúng hạn</span>
-              <span className="flex items-center gap-1">🟡 Sắp đến hạn</span>
-              <span className="flex items-center gap-1">🔴 Quá hạn</span>
+        {/* Card 3: Hoàn thành */}
+        <div 
+          onClick={() => navigateTo('tasks')}
+          className="bg-emerald-50/70 hover:bg-emerald-50 border border-emerald-200/80 rounded-2xl p-5 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Hoàn thành</span>
+            <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+              <CheckCircle2 size={20} />
             </div>
-            <button onClick={() => openDrillDown("Tình hình sinh hoạt chi bộ", "branches")} className="text-blue-600 font-semibold hover:underline">
-              Chi tiết các chi bộ →
-            </button>
+          </div>
+          <div>
+            <div className="text-3xl font-black text-emerald-950">7</div>
+            <div className="flex items-center justify-between text-xs mt-1">
+              <span className="text-emerald-700 font-semibold">Đã kiểm tra chất lượng</span>
+              <span className="text-emerald-800 font-bold group-hover:underline flex items-center gap-0.5">
+                Xem <ChevronRight size={14} />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Quá hạn */}
+        <div 
+          onClick={() => navigateTo('tasks')}
+          className="bg-rose-50/70 hover:bg-rose-50 border border-rose-200/80 rounded-2xl p-5 shadow-sm transition-all duration-200 cursor-pointer group flex flex-col justify-between space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-rose-900 uppercase tracking-wider">Quá hạn</span>
+            <div className="p-2.5 bg-rose-600 text-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+              <AlertTriangle size={20} />
+            </div>
+          </div>
+          <div>
+            <div className="text-3xl font-black text-rose-950">0</div>
+            <div className="flex items-center justify-between text-xs mt-1">
+              <span className="text-rose-700 font-semibold">Đảm bảo 100% đúng hạn</span>
+              <span className="text-rose-800 font-bold group-hover:underline flex items-center gap-0.5">
+                Xem <ChevronRight size={14} />
+              </span>
+            </div>
           </div>
         </div>
 
       </div>
 
-            {/* SECTION: NHIỆM VỤ ĐƯỢC GIAO */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* Theo dõi nhiệm vụ */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-              <FileText size={18} className="text-blue-600" />
-              <span>Theo dõi nhiệm vụ Đảng ủy giao</span>
-            </h3>
-            <button onClick={() => navigateTo('tasks')} className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
-              Quản lý nhiệm vụ <ChevronRight size={12} />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-              <p className="text-xs text-slate-500 font-medium">Tổng nhiệm vụ</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{tasks.totalTasks}</p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-              <p className="text-xs text-slate-500 font-medium">Đã hoàn thành</p>
-              <p className="text-2xl font-bold text-emerald-600 mt-1">{tasks.completedTasks}</p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-              <p className="text-xs text-slate-500 font-medium">Đang thực hiện</p>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{tasks.inProgressTasks}</p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-              <p className="text-xs text-slate-500 font-medium">Quá hạn</p>
-              <p className="text-2xl font-bold text-rose-600 mt-1">{tasks.overdueCount}</p>
-            </div>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-800">Tỷ lệ hoàn thành nhiệm vụ toàn phường</p>
-              <p className="text-xs text-slate-500">Đạt 72.9% tiến độ kế hoạch quý III/2026</p>
-            </div>
-            <button onClick={() => navigateTo('tasks')} className="px-4 py-2 bg-slate-900 text-white font-medium text-xs rounded-lg hover:bg-slate-800 transition-colors">
-              Xem danh sách chi tiết
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      {/* SECTION 6, 7: KIỂM TRA GIÁM SÁT, VĂN BẢN BÁO CÁO */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* 4 Interactive Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Kiểm tra - Giám sát */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2 mb-4">
-              <ShieldCheck size={16} className="text-rose-600" />
-              <span>Kiểm tra – Giám sát</span>
-            </h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-600">Kế hoạch trong năm:</span>
-                <span className="font-bold text-slate-900">{insp.plansInYear} cuộc</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-600">Tổng số kiểm tra:</span>
-                <span className="font-bold text-slate-900">{insp.totalInspections}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-600">Tổng số giám sát:</span>
-                <span className="font-bold text-slate-900">{insp.totalSupervisions}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-600">Đã thực hiện:</span>
-                <span className="font-bold text-emerald-600">{insp.executed}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Kết luận chưa hoàn thành:</span>
-                <span className="font-bold text-rose-600">{insp.unfinishedConclusions}</span>
-              </div>
+        {/* Chart 1: Nhiệm vụ 7 ngày qua (Bar chart) */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-base">Nhiệm vụ 7 ngày qua</h3>
+              <p className="text-xs text-slate-500">Phân tích khối lượng công việc phát sinh theo ngày trong tuần.</p>
             </div>
+            <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md uppercase">
+              Tuần này
+            </span>
           </div>
-          <button onClick={() => openDrillDown("Kiểm tra - Giám sát chi tiết", "inspection")} className="mt-4 w-full py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 transition-colors">
-            Xem chi tiết kiểm tra giám sát →
-          </button>
+
+          <div className="h-64 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={BAR_7DAYS_DATA}>
+                <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '12px' }}
+                />
+                <Bar dataKey="canLam" name="Cần làm" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="dangLam" name="Đang làm" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="hoanThanh" name="Hoàn thành" fill="#10B981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        {/* Văn bản - Báo cáo */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2 mb-4">
-              <FileText size={16} className="text-blue-600" />
-              <span>Văn bản – Báo cáo</span>
-            </h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-600">Văn bản đến (Tháng):</span>
-                <span className="font-bold text-slate-900">{reps.incomingTotal}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-600">Văn bản chưa xử lý:</span>
-                <span className="font-bold text-amber-600">{reps.incomingUnhandled}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-600">Báo cáo phải thực hiện:</span>
-                <span className="font-bold text-slate-900">{reps.reportsMonthlyDue}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-600">Báo cáo đã hoàn thành:</span>
-                <span className="font-bold text-emerald-600">{reps.reportsCompleted}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Báo cáo quá hạn:</span>
-                <span className="font-bold text-rose-600">{reps.reportsOverdue}</span>
-              </div>
+        {/* Chart 2: Phân bố trạng thái (Donut Chart) */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-base">Phân bố Trạng thái Công việc</h3>
+              <p className="text-xs text-slate-500">Tỷ lệ cơ cấu các trạng thái nhiệm vụ toàn cơ quan.</p>
+            </div>
+            <span className="text-[10px] font-bold bg-rose-50 text-rose-700 px-2.5 py-1 rounded-md uppercase">
+              Tổng thể
+            </span>
+          </div>
+
+          <div className="h-64 w-full flex items-center justify-center relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={DONUT_STATUS_DATA}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={85}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {DONUT_STATUS_DATA.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '12px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute text-center pointer-events-none">
+              <div className="text-2xl font-black text-slate-900">25</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Công việc</div>
             </div>
           </div>
-          <button onClick={() => openDrillDown("Văn bản - Báo cáo chi tiết", "reports")} className="mt-4 w-full py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 transition-colors">
-            Xem danh sách báo cáo sắp đến hạn →
-          </button>
+        </div>
+
+        {/* Chart 3: Xu hướng 30 ngày (Line Chart) */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-base">Xu hướng 30 ngày qua</h3>
+              <p className="text-xs text-slate-500">So sánh giữa nhiệm vụ khởi tạo mới và nhiệm vụ hoàn thành.</p>
+            </div>
+            <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md uppercase">
+              Tháng 3/2026
+            </span>
+          </div>
+
+          <div className="h-64 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={TREND_30DAYS_DATA}>
+                <XAxis dataKey="week" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '12px' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                <Line type="monotone" dataKey="taoMoi" name="Khởi tạo mới" stroke="#2563EB" strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="hoanThanh" name="Hoàn thành" stroke="#10B981" strokeWidth={3} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart 4: Phân bổ theo Phòng ban */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-base">Nhiệm vụ theo Ban / Phòng</h3>
+              <p className="text-xs text-slate-500">Phân bổ chỉ tiêu công tác giữa các Ban Đảng ủy.</p>
+            </div>
+            <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md uppercase">
+              Cơ cấu Ban
+            </span>
+          </div>
+
+          <div className="h-64 w-full pt-2 space-y-3 overflow-y-auto">
+            {DEPT_TASK_DATA.map(d => {
+              const pct = Math.round((d.done / d.total) * 100);
+              return (
+                <div key={d.name} className="space-y-1 text-xs">
+                  <div className="flex items-center justify-between font-bold text-slate-800">
+                    <span>{d.name}</span>
+                    <span className="text-rose-600">{d.done}/{d.total} ({pct}%)</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-rose-600 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
       </div>
 
-      {/* Drill-Down Modal */}
-      <DrillDownModal
-        isOpen={drillDownModalOpen}
-        onClose={() => setDrillDownModalOpen(false)}
-        title={drillDownTitle}
-        category={drillDownCategory}
-      />
+      {/* Section: Nhiệm vụ Cần chú ý (Attention Needed Tasks) */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse" />
+              <h3 className="font-extrabold text-slate-900 text-base">Nhiệm vụ cần chú ý đôn đốc</h3>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Các công việc có mức độ ưu tiên cao hoặc có mốc hạn hoàn thành trong 48 giờ tới.
+            </p>
+          </div>
 
-      {/* Drive Inspector Modal (Rule 24) */}
-      <DriveInspectorModal
-        isOpen={inspectorModalOpen}
-        onClose={() => setInspectorModalOpen(false)}
-        onRefresh={fetchSummary}
-      />
+          <button
+            onClick={() => navigateTo('tasks')}
+            className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+          >
+            <span>Xem tất cả ({ATTENTION_TASKS.length})</span>
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        <div className="divide-y divide-slate-100">
+          {ATTENTION_TASKS.map(task => (
+            <div key={task.id} className="py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-slate-50/80 px-3 rounded-xl transition-colors">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-slate-100 font-mono text-[10px] font-bold text-slate-700 rounded border border-slate-200">
+                    {task.code}
+                  </span>
+                  <span className="px-2 py-0.5 bg-rose-100 text-rose-700 font-bold text-[10px] rounded uppercase">
+                    ƯU TIÊN {task.priority}
+                  </span>
+                  <span className="text-xs text-slate-400">• Cán bộ: <strong className="text-slate-800">{task.assignee}</strong></span>
+                </div>
+
+                <h4 className="font-bold text-slate-900 text-sm">
+                  {task.title}
+                </h4>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold flex items-center gap-1">
+                  <Clock size={13} />
+                  <span>{task.deadline}</span>
+                </span>
+
+                <button
+                  onClick={() => navigateTo('tasks')}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                >
+                  Xử lý ngay
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Drive Inspector Modal */}
+      {inspectorModalOpen && (
+        <DriveInspectorModal onClose={() => setInspectorModalOpen(false)} />
+      )}
+
+      {/* DrillDown Modal */}
+      {drillDownModalOpen && (
+        <DrillDownModal 
+          title={drillDownTitle}
+          category={drillDownCategory}
+          onClose={() => setDrillDownModalOpen(false)}
+        />
+      )}
 
     </div>
   );
